@@ -1,0 +1,24 @@
+1: 2 3 4 5 6
+2: 7 8 9 10
+3: 11 12 13 14
+4: 15 16 17 18
+18: 19 20
+
+
+Nr. 1:
+
+.next vom letzten Nachbarn zeigt auf den Knoten, der am nächsten dran ist
+Bsp 1 zeigt auf 2 3 4 5 6, 6 zeigt auf die Kinder von 2, das letzte Kind von 2 zeigt auf die Kinder von 3...
+
+Vorteil:
+
+keine zusätzliche Datenstruktur zum Reihenfolge festlegen
+
+Nachteil:
+
+zusätzlicher Zeitaufwand, man muss zum Beispiel alle Kinder von 2 zuerst durchgehen, damit man am Ende .next die nächsten Kinder von 3 anhängen kann
+
+Parallelisierung:
+
+Falls man davon ausgeht, dass jeder Kern seine Knoten besitzt und Nachrichten an die Kerne schickt die als nächstes dran sind
+schwierig! 
