@@ -95,13 +95,38 @@ int main(){
 
 void bfs(unsigned char *level, uint64_t *buffer, uint64_t buffer_size, uint64_t *index_of_node, uint64_t nodes_owned){
     unsigned char *next_level = (unsigned char *) calloc(1, nodes_owned / BITS);
-    char next_round = 1;
-    while (next_round){
-        next_round = 0;
-        
+    char oneChildisVisited = 3;
+    uint64_t i;
+    while (oneChildisVisited){
+        //oneChildisVisited = 0;
+        for (i = 0; i < nodes_owned; i++){
+            if (((unsigned char) pow(2,(i % BITS))) & level[(i / BITS)]){
+                uint64_t j = index_of_node[i];
+                for (; j < buffer_size && j < index_of_node[i+1]; j++){
+                    next_level[(buffer[j]/BITS)] = next_level[(buffer[j]/BITS)] | (unsigned char) pow(2,(buffer[j] % BITS));
+                    //oneChildisVisited = 1;
+                }
+            }
+        }
+        printf("Next level:\n");
+        for (i = 0; i < nodes_owned; i++){
+            if (((unsigned char) pow(2,(i % BITS))) & next_level[(i / BITS)]){
+                printf("%llu,",(unsigned long long) i);
+            }
+        }
+        printf("\n");
+
+        // SEND MESSAGE THAT THERE ARE CHILDS TO EVALUATE, CAN BE ONE BYTE FROM ALL PROCS
+        // AFTER SEND LEVEL BUFFER
+        memcpy((void *)level,(void *)next_level,(nodes_owned/BITS));
+        memset(next_level, 0, (nodes_owned/BITS));
+
+        oneChildisVisited--;
     }
+
     free(next_level);
 }
+
 
 void create_node_edge_lists(uint64_t nodes, uint64_t edges, uint64_t *startVertex, uint64_t *endVertex, struct edge **node_edge_list, uint64_t *count_edges_per_node){
     uint64_t i;
