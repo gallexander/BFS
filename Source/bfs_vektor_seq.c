@@ -19,7 +19,7 @@ int main(){
     struct edge **node_edge_list = (struct edge **) calloc(nodes, 8);
 	uint64_t *count_edges_per_node = (uint64_t *) calloc(nodes, I64_BYTES);
 
-    double time = mytime();
+    
 
     generate_graph(SCALE, EDGEFACTOR, initiator, startVertex, endVertex);
     create_node_edge_lists(nodes, edges, startVertex, endVertex, node_edge_list, count_edges_per_node);
@@ -51,11 +51,11 @@ int main(){
     //SCATTER LEVEL BUFFER
 
     //BFS
-
-    bfs(level, buffer, buffer_size, count_edges_per_node, nodes);
+    double time = mytime();
+    bfs(level, buffer, buffer_size, count_edges_per_node, nodes, 0);
 
 	//OUTPUT
-    uint64_t j;
+    /*uint64_t j;
     struct edge *p;
     for (j = 0; j < nodes; j++){
         printf("%llu:%llu Elements:", (unsigned long long) j, (unsigned long long) count_edges_per_node[j]);
@@ -78,7 +78,7 @@ int main(){
 	for (j = 0; j < nodes; j++){
 		printf("%llu,", (unsigned long long) count_edges_per_node[j]);
 	}
-	printf("\n");
+	printf("\n");*/
 
     time = mytime() - time;
     printf("Time: %f\n", time/1000000);
@@ -93,7 +93,7 @@ int main(){
     return 0;
 }
 
-void bfs(unsigned char *level, uint64_t *buffer, uint64_t buffer_size, uint64_t *index_of_node, uint64_t nodes_owned){
+void bfs(unsigned char *level, uint64_t *buffer, uint64_t buffer_size, uint64_t *index_of_node, uint64_t nodes_owned, int proc){
     unsigned char *next_level = (unsigned char *) calloc(pow(2,SCALE) / BITS, 1);
     unsigned char *visited = (unsigned char *) calloc(nodes_owned / BITS, 1);
     char oneChildisVisited = 1;
@@ -101,20 +101,27 @@ void bfs(unsigned char *level, uint64_t *buffer, uint64_t buffer_size, uint64_t 
     unsigned char position;
     while (oneChildisVisited){
         oneChildisVisited = 0;
-        printf("Visit this round:");
+        //printf("Visit this round:");
         for (i = 0; i < nodes_owned; i++){
             position = (unsigned char) pow(2,(i % BITS));
             if (position & level[(i / BITS)] & ~visited[(i / BITS)]){
                 visited[(i / BITS)] = visited[(i / BITS)] | position;
-                printf("%llu,",(unsigned long long) i);
+                //printf("%llu,", (unsigned long long) i);
                 uint64_t j = index_of_node[i];
-                for (; j < buffer_size && j < index_of_node[i+1]; j++){
-                    next_level[(buffer[j]/BITS)] = next_level[(buffer[j]/BITS)] | (unsigned char) pow(2,(buffer[j] % BITS));
-                    oneChildisVisited = 1;
+                if (i == nodes_owned -1){
+                    for (; j < buffer_size; j++){
+                        next_level[(buffer[j]/BITS)] = next_level[(buffer[j]/BITS)] | (unsigned char) pow(2,(buffer[j] % BITS));
+                        oneChildisVisited = 1;
+                    }
+                }else{
+                    for (; j < buffer_size && j < index_of_node[i+1]; j++){
+                        next_level[(buffer[j]/BITS)] = next_level[(buffer[j]/BITS)] | (unsigned char) pow(2,(buffer[j] % BITS));
+                        oneChildisVisited = 1;
+                    }
                 }
             }
         }
-        printf("\n");
+        //printf("\n");
         /*printf("Next level:\n");
         for (i = 0; i < nodes_owned; i++){
             if (((unsigned char) pow(2,(i % BITS))) & next_level[(i / BITS)]){
