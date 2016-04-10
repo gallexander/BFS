@@ -15,6 +15,7 @@ int main(){
     uint64_t *parents = (uint64_t *) calloc(nodes, I64_BYTES);
     unsigned char *level = (unsigned char *) calloc(1, nodes / BITS); //LEVEL BUFFER FOR MASTER
     float initiator[] = {0.25,0.25,0.25,0.25};
+    double time = mytime();
     
     struct edge **node_edge_list = (struct edge **) calloc(nodes, 8);
 	uint64_t *count_edges_per_node = (uint64_t *) calloc(nodes, I64_BYTES);
@@ -51,7 +52,9 @@ int main(){
     //SCATTER LEVEL BUFFER
 
     //BFS
-    double time = mytime();
+    time = mytime() - time;
+    printf("Time for generating and scattering: %f\n", time/1000000);
+    time = mytime();
     bfs(level, buffer, buffer_size, count_edges_per_node, nodes, 0);
 
 	//OUTPUT
@@ -81,7 +84,7 @@ int main(){
 	printf("\n");*/
 
     time = mytime() - time;
-    printf("Time: %f\n", time/1000000);
+    printf("Time for bfs searching: %f\n", time/1000000);
 
     free(startVertex);
     free(endVertex);
@@ -99,6 +102,7 @@ void bfs(unsigned char *level, uint64_t *buffer, uint64_t buffer_size, uint64_t 
     char oneChildisVisited = 1;
     uint64_t i;
     unsigned char position;
+    int rounds = 0;
     while (oneChildisVisited){
         oneChildisVisited = 0;
         //printf("Visit this round:");
@@ -136,8 +140,9 @@ void bfs(unsigned char *level, uint64_t *buffer, uint64_t buffer_size, uint64_t 
         // NEXT STEPS ARE JUST FOR SEQ ALGO
         memcpy((void *)level,(void *)next_level,(nodes_owned/BITS));
         memset(next_level, 0, (nodes_owned/BITS));
+        rounds++;
     }
-
+    printf("round: %i\n", rounds);
     free(visited);
     free(next_level);
 }

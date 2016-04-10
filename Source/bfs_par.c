@@ -30,6 +30,7 @@ int main(int argc, char *argv[]){
     unsigned char *level_recvbuf = (unsigned char *) calloc(nodes / BITS / procs, 1);
     uint64_t *count_edges_per_node_recvbuf = (uint64_t *) calloc(nodes / procs, I64_BYTES);
     if (my_rank == 0){
+        double time = mytime();
         uint64_t *startVertex = (uint64_t *) calloc(edges, I64_BYTES);
         uint64_t *endVertex = (uint64_t *) calloc(edges, I64_BYTES);
         buffer_send_counts = (int *) calloc(procs, sizeof(int));
@@ -87,7 +88,9 @@ int main(int argc, char *argv[]){
         MPI_Scatter((void *)level,nodes / BITS / procs,MPI_UNSIGNED_CHAR, (void *)level_recvbuf, nodes / BITS / procs, MPI_UNSIGNED_CHAR, 0, MPI_COMM_WORLD);
         
         //BFS
-        double time = mytime();
+        time = mytime() - time;
+        printf("Time for generating and scattering: %f\n", time/1000000);
+        time = mytime();
         bfs(level_recvbuf, buffer_recvbuf, buffer_recv_size, count_edges_per_node_recvbuf, (nodes / procs), procs);
 
 	    //OUTPUT
@@ -117,7 +120,7 @@ int main(int argc, char *argv[]){
 	    printf("\n");
         */
         time = mytime() - time;
-        printf("Time: %f\n", time/1000000);
+        printf("Time for bfs searching: %f\n", time/1000000);
 
         free(buffer_send_counts);
         free(buffer_displs);

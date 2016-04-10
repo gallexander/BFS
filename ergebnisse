@@ -1,0 +1,123 @@
+#define SCALE 22
+#define EDGEFACTOR 16
+
+[e1026090@jupiter ~]$ ./seq
+Time for generating and scattering: 354.850563
+Time for bfs searching: 11.719215
+
+[e1026090@jupiter ~]$ mpirun -np 2 ./par
+Time for generating and scattering: 346.405863
+round: 10
+Time for bfs searching: 6.263686
+round: 10
+
+[e1026090@jupiter ~]$ mpirun -np 4 ./par
+Time for generating and scattering: 345.550227
+round: 9
+Time for bfs searching: 3.104846
+round: 9
+round: 9
+round: 9
+
+[e1026090@jupiter ~]$ mpirun -np 8 ./par
+Time for generating and scattering: 345.028514
+round: 9
+Time for bfs searching: 1.642465
+round: 9
+round: 9
+round: 9
+round: 9
+round: 9
+round: 9
+round: 9
+
+[e1026090@jupiter ~]$ mpirun -host jupiter1 -np 8 -host jupiter2 -np 8 ./par
+round: 10
+round: 10
+round: 10
+round: 10
+round: 10
+round: 10
+Time for generating and scattering: 370.434490
+round: 10
+Time for bfs searching: 1.010234
+round: 10
+round: 10
+round: 10
+round: 10
+round: 10
+round: 10
+round: 10
+round: 10
+round: 10
+
+[e1026090@jupiter ~]$ mpirun -host jupiter1 -np 8 -host jupiter2 -np 8 -host jupiter3 -np 8 -host jupiter4 -np 8 ./par
+round: 10
+round: 10
+round: 10
+round: 10
+Time for generating and scattering: 369.509057
+round: 10
+Time for bfs searching: 0.827098
+round: 10
+round: 10
+round: 10
+round: 10
+round: 10
+round: 10
+round: 10
+round: 10
+round: 10
+round: 10
+round: 10
+round: 10
+round: 10
+round: 10
+round: 10
+round: 10
+round: 10
+round: 10
+round: 10
+round: 10
+round: 10
+round: 10
+round: 10
+round: 10
+round: 10
+round: 10
+round: 10
+
+#define SCALE 24
+#define EDGEFACTOR 16
+
+[e1026090@jupiter ~]$ ./seq
+Time for generating and scattering: 1718.769010
+round: 10
+Time for bfs searching: 51.910369
+
+[e1026090@jupiter ~]$ mpirun -np 2 ./par
+Time for generating and scattering: 1686.658155
+round: 10
+Time for bfs searching: 27.538211
+round: 10
+
+[e1026090@jupiter ~]$ mpirun -host jupiter1 -np 8 -host jupiter2 -np 8 ./parround: 10
+round: 10
+round: 10
+round: 10
+Time for generating and scattering: 1751.521782
+round: 10
+Time for bfs searching: 4.595239
+round: 10
+round: 10
+round: 10
+round: 10
+round: 10
+round: 10
+round: 10
+round: 10
+round: 10
+round: 10
+round: 10
+
+
