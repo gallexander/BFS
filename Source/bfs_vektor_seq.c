@@ -101,16 +101,15 @@ void bfs(unsigned char *level, uint64_t *buffer, uint64_t buffer_size, uint64_t 
     unsigned char *visited = (unsigned char *) calloc(nodes_owned / BITS, 1);
     char oneChildisVisited = 1;
     uint64_t i;
+    //uint64_t visited_count;
     unsigned char position;
-    int rounds = 0;
+    //int rounds = 0;
     while (oneChildisVisited){
         oneChildisVisited = 0;
-        //printf("Visit this round:");
         for (i = 0; i < nodes_owned; i++){
             position = (unsigned char) pow(2,(i % BITS));
             if (position & level[(i / BITS)] & ~visited[(i / BITS)]){
                 visited[(i / BITS)] = visited[(i / BITS)] | position;
-                //printf("%llu,", (unsigned long long) i);
                 uint64_t j = index_of_node[i];
                 if (i == nodes_owned -1){
                     for (; j < buffer_size; j++){
@@ -125,14 +124,6 @@ void bfs(unsigned char *level, uint64_t *buffer, uint64_t buffer_size, uint64_t 
                 }
             }
         }
-        //printf("\n");
-        /*printf("Next level:\n");
-        for (i = 0; i < nodes_owned; i++){
-            if (((unsigned char) pow(2,(i % BITS))) & next_level[(i / BITS)]){
-                printf("%llu,",(unsigned long long) i);
-            }
-        }
-        printf("\n");*/
 
         // SEND MESSAGE THAT THERE ARE CHILDS TO EVALUATE, CAN BE ONE BYTE FROM ALL PROCS
         // AFTER SEND LEVEL BUFFER, ALLTOALL
@@ -140,9 +131,16 @@ void bfs(unsigned char *level, uint64_t *buffer, uint64_t buffer_size, uint64_t 
         // NEXT STEPS ARE JUST FOR SEQ ALGO
         memcpy((void *)level,(void *)next_level,(nodes_owned/BITS));
         memset(next_level, 0, (nodes_owned/BITS));
-        rounds++;
+        //rounds++;
     }
-    printf("round: %i\n", rounds);
+    //printf("rounds: %i\n", rounds);
+    /*visited_count = 0;
+    for (i = 0; i < pow(2,SCALE); i++){
+        if (((unsigned char) pow(2,(i % BITS))) & visited[(i / BITS)]){
+            visited_count++;
+        }
+    }
+    printf("visited: %llu\n", (unsigned long long) visited_count);*/
     free(visited);
     free(next_level);
 }

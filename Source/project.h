@@ -6,14 +6,14 @@
 #include <string.h>
 #include <sys/time.h>
 
-#define SCALE 16       // 2^30 MALLOC MAX = SCALE 26 + EDGEFACTOR 16
-#define EDGEFACTOR 16
+#define SCALE 20       // 2^30 MALLOC MAX = SCALE 26 + EDGEFACTOR 16
+#define EDGEFACTOR 4
 
 #define I64_BYTES 8
 #define BLOCKS 4
 #define BITS 8
 
-#define ROOT 31
+#define ROOT 0
 
 struct edge {
     uint64_t end;

@@ -1,3 +1,8 @@
+MPILX_NODELIST=jupiter0,jupiter1,jupiter2,jupiter3,jupiter4,jupiter5,jupiter6,jupiter7,jupiter8,jupiter9,jupiter10,jupiter11,jupiter12,jupiter13,jupiter14,jupiter15,jupiter16,jupiter17,jupiter18,jupiter19,jupiter20,jupiter21,jupiter22,jupiter23,jupiter24,jupiter25,jupiter26,jupiter27,jupiter28,jupiter29,jupiter30,jupiter31,jupiter32,jupiter33,jupiter34,jupiter35 
+export MPILX_NODELIST
+
+[e1026090@jupiter ~]$ mpirun -node 0-3 -nnp 4 ./par --> funktioniert nicht, tut nichts mehr
+
 #define SCALE 22
 #define EDGEFACTOR 16
 
@@ -9,83 +14,29 @@ Time for bfs searching: 11.719215
 Time for generating and scattering: 346.405863
 round: 10
 Time for bfs searching: 6.263686
-round: 10
 
 [e1026090@jupiter ~]$ mpirun -np 4 ./par
 Time for generating and scattering: 345.550227
-round: 9
 Time for bfs searching: 3.104846
-round: 9
-round: 9
 round: 9
 
 [e1026090@jupiter ~]$ mpirun -np 8 ./par
 Time for generating and scattering: 345.028514
-round: 9
 Time for bfs searching: 1.642465
 round: 9
-round: 9
-round: 9
-round: 9
-round: 9
-round: 9
-round: 9
+
 
 [e1026090@jupiter ~]$ mpirun -host jupiter1 -np 8 -host jupiter2 -np 8 ./par
 round: 10
-round: 10
-round: 10
-round: 10
-round: 10
-round: 10
 Time for generating and scattering: 370.434490
-round: 10
 Time for bfs searching: 1.010234
-round: 10
-round: 10
-round: 10
-round: 10
-round: 10
-round: 10
-round: 10
-round: 10
-round: 10
+
 
 [e1026090@jupiter ~]$ mpirun -host jupiter1 -np 8 -host jupiter2 -np 8 -host jupiter3 -np 8 -host jupiter4 -np 8 ./par
-round: 10
-round: 10
-round: 10
-round: 10
 Time for generating and scattering: 369.509057
-round: 10
 Time for bfs searching: 0.827098
 round: 10
-round: 10
-round: 10
-round: 10
-round: 10
-round: 10
-round: 10
-round: 10
-round: 10
-round: 10
-round: 10
-round: 10
-round: 10
-round: 10
-round: 10
-round: 10
-round: 10
-round: 10
-round: 10
-round: 10
-round: 10
-round: 10
-round: 10
-round: 10
-round: 10
-round: 10
-round: 10
+
 
 #define SCALE 24
 #define EDGEFACTOR 16
@@ -101,23 +52,20 @@ round: 10
 Time for bfs searching: 27.538211
 round: 10
 
-[e1026090@jupiter ~]$ mpirun -host jupiter1 -np 8 -host jupiter2 -np 8 ./parround: 10
-round: 10
-round: 10
+[e1026090@jupiter ~]$ mpirun -host jupiter1 -np 8 -host jupiter2 -np 8 ./par
 round: 10
 Time for generating and scattering: 1751.521782
-round: 10
 Time for bfs searching: 4.595239
-round: 10
-round: 10
-round: 10
-round: 10
-round: 10
-round: 10
-round: 10
-round: 10
-round: 10
-round: 10
-round: 10
+
+[e1026090@jupiter ~]$ mpirun -host jupiter1 -np 8 -host jupiter2 -np 8 -host jupiter3 -np 8 -host jupiter4 -np 8 ./par
+Time for generating and scattering: 1782.370026
+Time for bfs searching: 2.920436
+
+[e1026090@jupiter ~]$ mpirun -host jupiter1 -np 8 -host jupiter2 -np 8 -host jupiter3 -np 8 -host jupiter4 -np 8 -host jupiter5 -np 8 -host jupiter6 -np 8 -host jupiter7 -np 8 -host jupiter8 -np 8 ./par
+Time for generating and scattering: 1780.490908
+Time for bfs searching: 2.751258
+
+
+
 
 
