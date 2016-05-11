@@ -1,2 +1,6 @@
-WARUM INT* bzw. INT bei SCATTERV bzw. SCATTER
+WARUM INT* bzw. INT bei mpi operationen?
 array[x] für x = 2^50 möglich?
+wie viel arbeitsspeicher kann ich maximal nutzen in bezug auf 2^?    ?
+jupiterliste erstellen?
+was ist NECmpi
+reicht nicht eig eine visited bitmap um verifizieren zu können ob gültiger breitensuche baum?
