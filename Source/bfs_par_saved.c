@@ -121,7 +121,6 @@ int main(int argc, char *argv[]){
         */
         time = mytime() - time;
         printf("Time for bfs searching: %f\n", time/1000000);
-        printf("%zu\n", sizeof(unsigned long long));
 
         free(buffer_send_counts);
         free(buffer_displs);
