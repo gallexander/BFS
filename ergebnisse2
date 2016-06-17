@@ -1,0 +1,76 @@
+SCALE 22
+EDGEFACTOR 4
+
+[e1026090@jupiter ~]$ mpirun -host jupiter1 -np 1 ./par
+Time for generating and scattering: 71.516787
+Time for bfs searching: 14.322063
+
+[e1026090@jupiter ~]$ mpirun -host jupiter1 -np 2 ./par
+Time for generating and scattering: 71.074316
+Time for bfs searching: 7.191137
+
+[e1026090@jupiter ~]$ mpirun -host jupiter1 -np 4 ./par
+Time for generating and scattering: 71.667024
+Time for bfs searching: 3.624339
+
+[e1026090@jupiter ~]$ mpirun -host jupiter1 -np 8 ./par
+Time for generating and scattering: 71.868302
+Time for bfs searching: 1.847186
+
+[e1026090@jupiter ~]$ mpirun -host jupiter1 -np 16 ./par
+Time for generating and scattering: 71.795941
+Time for bfs searching: 0.970461
+
+[e1026090@jupiter ~]$ mpirun -host jupiter1 -np 16 -host jupiter2 -np 16 ./par
+Time for generating and scattering: 78.301455
+Time for bfs searching: 0.718315
+
+[e1026090@jupiter ~]$ mpirun -host jupiter1 -np 16 -host jupiter2 -np 16 -host jupiter3 -np 16 -host jupiter4 -np 16 ./par
+Time for generating and scattering: 78.680866
+Time for bfs searching: 0.817814
+
+SCALE 23
+EDGEFACTOR 4
+
+[e1026090@jupiter ~]$ mpirun -host jupiter1 -np 1 ./par
+Time for generating and scattering: 151.001563
+Time for bfs searching: 32.189217
+
+[e1026090@jupiter ~]$ mpirun -host jupiter1 -np 2 ./par
+Time for generating and scattering: 150.288253
+Time for bfs searching: 14.429639
+
+[e1026090@jupiter ~]$ mpirun -host jupiter1 -np 4 ./par
+Time for generating and scattering: 149.650995
+Time for bfs searching: 7.580528
+
+[e1026090@jupiter ~]$ mpirun -host jupiter1 -np 8 ./par
+Time for generating and scattering: 150.740900
+Time for bfs searching: 3.720919
+
+[e1026090@jupiter ~]$ mpirun -host jupiter1 -np 16 ./par
+Time for generating and scattering: 150.239736
+Time for bfs searching: 1.960265
+
+[e1026090@jupiter ~]$ mpirun -host jupiter1 -np 16 -host jupiter2 -np 16 ./par
+Time for generating and scattering: 164.370905
+Time for bfs searching: 1.317743
+
+[e1026090@jupiter ~]$ mpirun -host jupiter1 -np 16 -host jupiter2 -np 16 -host jupiter3 -np 16 -host jupiter4 -np 16 ./par
+Time for generating and scattering: 163.695266
+Time for bfs searching: 1.315105
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

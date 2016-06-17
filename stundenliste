@@ -4,3 +4,7 @@ kronecker graph generator: 5
 beginn mit listen zu proggen: 4
 weiter behandlung als buffer und bfs: 6
 parallelisiert: 10
+
+50-60 Stunden geschätzt bis jetzt, Aufstellung folgt
+2 stunden: beschäftigung mit long bzw. reduce_scatter, beginn schriftliche arbeit
+2.5 stunden: bitmap auf long umgestellt, schreiben der arbeit

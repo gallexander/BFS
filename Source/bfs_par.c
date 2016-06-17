@@ -24,10 +24,10 @@ int main(int argc, char *argv[]){
     int *buffer_send_counts = NULL; 
     int *buffer_displs = NULL;
     uint64_t buffer_recv_size = 0;
-    unsigned char *level = NULL;    
+    unsigned long *level = NULL;    
     uint64_t *count_edges_per_node = NULL;
     uint64_t *buffer_recvbuf = NULL;
-    unsigned char *level_recvbuf = (unsigned char *) calloc(nodes / BITS / procs, 1);
+    unsigned long *level_recvbuf = (unsigned long *) calloc(nodes / BITS / procs, sizeof(unsigned long));
     uint64_t *count_edges_per_node_recvbuf = (uint64_t *) calloc(nodes / procs, I64_BYTES);
     if (my_rank == 0){
         double time = mytime();
@@ -36,7 +36,7 @@ int main(int argc, char *argv[]){
         buffer_send_counts = (int *) calloc(procs, sizeof(int));
         buffer_displs = (int *) calloc(procs, sizeof(int));
 
-        level = (unsigned char *) calloc(nodes / BITS, 1); //LEVEL BUFFER FOR MASTER
+        level = (unsigned long *) calloc(nodes / BITS, sizeof(unsigned long)); //LEVEL BUFFER FOR MASTER
         
         float initiator[] = {0.25,0.25,0.25,0.25};
         
@@ -81,11 +81,11 @@ int main(int argc, char *argv[]){
 	    }
 	
         //SET ROOT LEVEL
-        level[(ROOT/BITS)] = level[(ROOT/BITS)] | (unsigned char) pow(2,(ROOT % BITS));
+        level[(ROOT/BITS)] = level[(ROOT/BITS)] | (unsigned long) pow(2,(ROOT % BITS));
 
         //SCATTER LEVEL BUFFER
         
-        MPI_Scatter((void *)level,nodes / BITS / procs,MPI_UNSIGNED_CHAR, (void *)level_recvbuf, nodes / BITS / procs, MPI_UNSIGNED_CHAR, 0, MPI_COMM_WORLD);
+        MPI_Scatter((void *)level,nodes / BITS / procs,MPI_UNSIGNED_LONG, (void *)level_recvbuf, nodes / BITS / procs, MPI_UNSIGNED_LONG, 0, MPI_COMM_WORLD);
         
         //BFS
         time = mytime() - time;
@@ -121,7 +121,6 @@ int main(int argc, char *argv[]){
         */
         time = mytime() - time;
         printf("Time for bfs searching: %f\n", time/1000000);
-        printf("%zu\n", sizeof(unsigned long long));
 
         free(buffer_send_counts);
         free(buffer_displs);
@@ -152,7 +151,7 @@ int main(int argc, char *argv[]){
 		    prev = tmp;
 	    }
         // GET THE FIRST LEVEL
-        MPI_Scatter((void *)level,nodes / BITS / procs,MPI_UNSIGNED_CHAR, (void *)level_recvbuf, nodes / BITS / procs, MPI_UNSIGNED_CHAR, 0, MPI_COMM_WORLD);
+        MPI_Scatter((void *)level,nodes / BITS / procs,MPI_UNSIGNED_LONG, (void *)level_recvbuf, nodes / BITS / procs, MPI_UNSIGNED_LONG, 0, MPI_COMM_WORLD);
 
         bfs(level_recvbuf, buffer_recvbuf, buffer_recv_size, count_edges_per_node_recvbuf, (nodes / procs), procs);
     }
@@ -164,30 +163,30 @@ int main(int argc, char *argv[]){
     return 0;
 }
 
-void bfs(unsigned char *level, uint64_t *buffer, uint64_t buffer_size, uint64_t *index_of_node, uint64_t nodes_owned, int procs){
-    unsigned char *next_level = (unsigned char *) calloc(pow(2,SCALE) / BITS, 1);
-    unsigned char *level_alltoall = (unsigned char *) calloc(pow(2,SCALE) / BITS, 1);
-    unsigned char *visited = (unsigned char *) calloc(nodes_owned / BITS, 1);
+void bfs(unsigned long *level, uint64_t *buffer, uint64_t buffer_size, uint64_t *index_of_node, uint64_t nodes_owned, int procs){
+    unsigned long *next_level = (unsigned long *) calloc(pow(2,SCALE) / BITS, sizeof(unsigned long));
+    unsigned long *level_alltoall = (unsigned long *) calloc(pow(2,SCALE) / BITS, sizeof(unsigned long));
+    unsigned long *visited = (unsigned long *) calloc(nodes_owned / BITS, sizeof(unsigned long));
     char oneChildisVisited = 1;
     uint64_t i;
     //int rounds = 0;
     //uint64_t visited_count;
-    unsigned char position;
+    unsigned long position;
     while (oneChildisVisited){
         oneChildisVisited = 0;
         for (i = 0; i < nodes_owned; i++){
-            position = (unsigned char) pow(2,(i % BITS));
+            position = (unsigned long) pow(2,(i % BITS));
             if (position & level[(i / BITS)] & ~visited[(i / BITS)]){
                 visited[(i / BITS)] = visited[(i / BITS)] | position;
                 uint64_t j = index_of_node[i];
                 if (i == nodes_owned -1){
                     for (; j < buffer_size; j++){
-                        next_level[(buffer[j]/BITS)] = next_level[(buffer[j]/BITS)] | (unsigned char) pow(2,(buffer[j] % BITS));
+                        next_level[(buffer[j]/BITS)] = next_level[(buffer[j]/BITS)] | (unsigned long) pow(2,(buffer[j] % BITS));
                         oneChildisVisited = 1;
                     }
                 }else{
                     for (; j < buffer_size && j < index_of_node[i+1]; j++){
-                        next_level[(buffer[j]/BITS)] = next_level[(buffer[j]/BITS)] | (unsigned char) pow(2,(buffer[j] % BITS));
+                        next_level[(buffer[j]/BITS)] = next_level[(buffer[j]/BITS)] | (unsigned long) pow(2,(buffer[j] % BITS));
                         oneChildisVisited = 1;
                     }
                 }
@@ -200,7 +199,7 @@ void bfs(unsigned char *level, uint64_t *buffer, uint64_t buffer_size, uint64_t 
         oneChildisVisited = isVisited_reduced;
         // AFTER SEND LEVEL BUFFER, ALLTOALL
         if (oneChildisVisited){
-            MPI_Alltoall((void *) next_level, pow(2,SCALE) / BITS / procs, MPI_UNSIGNED_CHAR, (void *) level_alltoall, pow(2,SCALE) / BITS / procs, MPI_UNSIGNED_CHAR, MPI_COMM_WORLD);
+            MPI_Alltoall((void *) next_level, pow(2,SCALE) / BITS / procs, MPI_UNSIGNED_LONG, (void *) level_alltoall, pow(2,SCALE) / BITS / procs, MPI_UNSIGNED_LONG, MPI_COMM_WORLD);
 
             memset(level, 0, nodes_owned / BITS);
             for (i = 0; i < (pow(2,SCALE) / BITS); i++){
