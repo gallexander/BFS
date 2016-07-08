@@ -60,6 +60,26 @@ Time for bfs searching: 1.317743
 Time for generating and scattering: 163.695266
 Time for bfs searching: 1.315105
 
+#define SCALE 25
+#define EDGEFACTOR 4
+
+[e1026090@jupiter ~]$ ./kron
+Time for generating and writing the graph to a file: 636.896870
+[e1026090@jupiter ~]$ mpicc -Wall -o par bfs_par.c
+bfs_par.c: In Funktion »main«:
+bfs_par.c:41: Warnung: Variable »initiator« wird nicht verwendet
+bfs_par.c:16: Warnung: Variable »status« wird nicht verwendet
+bfs_par.c:14: Warnung: Variable »root« wird nicht verwendet
+bfs_par.c:11: Warnung: Variable »tag« wird nicht verwendet
+[e1026090@jupiter ~]$ mpirun -host jupiter1 -np 16 ./par
+Time for generating and scattering: 206.160913
+Time for bfs searching: 9.362862
+[e1026090@jupiter ~]$ mpirun -host jupiter1 -np 16 -host jupiter2 -np 16 ./par
+Time for generating and scattering: 164.124661
+Time for bfs searching: 5.341782
+
+
+
 
 
 

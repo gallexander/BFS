@@ -43,7 +43,9 @@ int main(int argc, char *argv[]){
         struct edge **node_edge_list = (struct edge **) calloc(nodes, 8);
 	    count_edges_per_node = (uint64_t *) calloc(nodes, I64_BYTES);
 
-        generate_graph(SCALE, EDGEFACTOR, initiator, startVertex, endVertex);
+        read_graph(SCALE, EDGEFACTOR, startVertex, endVertex);
+        //generate_graph(SCALE, EDGEFACTOR, initiator, startVertex, endVertex);
+        
         create_node_edge_lists(nodes, edges, startVertex, endVertex, node_edge_list, count_edges_per_node);
 	    //MAYBE CREATING BUFFERS WITH REALLOC, SO THERE ARE NOT LISTS, create_node_edge_lists, NECESSARY
 
@@ -89,7 +91,7 @@ int main(int argc, char *argv[]){
         
         //BFS
         time = mytime() - time;
-        printf("Time for generating and scattering: %f\n", time/1000000);
+        printf("Time for reading, generating edge buffer and scattering: %f\n", time/1000000);
         time = mytime();
         bfs(level_recvbuf, buffer_recvbuf, buffer_recv_size, count_edges_per_node_recvbuf, (nodes / procs), procs);
 
@@ -255,6 +257,16 @@ void create_node_edge_lists(uint64_t nodes, uint64_t edges, uint64_t *startVerte
             }
         }
     }
+}
+
+void read_graph(int scale, int edgefactor, uint64_t *startVertex, uint64_t *endVertex){
+    uint64_t i;
+    FILE *fp;
+    fp = fopen(GRAPHFILE, "r");
+    for (i = 0; i < pow(2,scale)*edgefactor; i++){
+        fscanf(fp, "%llu %llu\n", (unsigned long long *)(startVertex+i), (unsigned long long *)(endVertex+i));
+    }
+    fclose(fp);
 }
 
 uint64_t calculate_size(uint64_t *count_edges_per_node, uint64_t first, uint64_t last){
