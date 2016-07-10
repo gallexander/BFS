@@ -3,6 +3,22 @@
 \usepackage[utf8]{inputenc}
 \usepackage{graphicx}
 \usepackage{listings}
+\usepackage{xcolor}
+
+\lstdefinestyle{customc}{
+  belowcaptionskip=1\baselineskip,
+  breaklines=true,
+  frame=L,
+  xleftmargin=\parindent,
+  language=C,
+  showstringspaces=false,
+  basicstyle=\footnotesize\ttfamily,
+  keywordstyle=\bfseries\color{green!40!black},
+  commentstyle=\itshape\color{purple!40!black},
+  identifierstyle=\color{blue},
+  stringstyle=\color{orange}
+}
+\lstset{escapechar=@,style=customc}
 
 %opening
 \title{Parallel breadth-first search}
@@ -36,7 +52,7 @@ Then there starts the first round of the BFS. We take all nodes of the current l
 
 To make an algorithm parallel, the main problem is to split the work of the sequential algorithm into smaller pieces and assign that pieces of work to the existing cores of the system, which are in use. 
 The first approach of splitting the BFS is to split the nodes of each level and every core of the system just visit the neighbours of the owned nodes. The problem with this approach is that the communication expense is pretty high, because it's necessary to split the work every round (level) of the BFS algorithm.\\
-So the second approach is to divide all the existing nodes of the graph to the processors. With this approach the highest expense of communication is just at the beginning of the algorithm. After the processors just have to communicate, which node is in the current level. For instance if I have the root node at PROC 0, the whole work of level 0 is just at the processor with the number 0. But now PROC 0 has to tell the other processors, which nodes he has visited. So these processors have to prove if they have one of these visited nodes stored in their node list. If they have, it's their turn for the next level.
+So the second approach is to divide all the existing nodes and corresponding edges of the graph to the processors. With this approach the highest expense of communication is just at the beginning of the algorithm. After the processors just have to communicate, which node is in the current level. For instance if I have the root node at PROC 0, the whole work of level 0 is just at the processor with the number 0. But now PROC 0 has to tell the other processors, which nodes he has visited. So these processors have to prove if they have one of these visited nodes stored in their node list. If they have, it's their turn for the next level.
 
 \section{Implementation of the BFS and some improvements}
 \label{sec:implementations}
@@ -44,33 +60,46 @@ So the second approach is to divide all the existing nodes of the graph to the p
 \subsection{Parallel Implementation}
 \label{sec:parallel-impl}
 
-In this section will be an implementation of the parallel BFS in MPI.	The programming language is C.\\
-Because it would be too costly to type in the node data for a scale of \(2^{32}\) or higher, the first part of the program is to generate nodes. For the data generation I used a Kronecker generator. I will threat this type of generator in a separate section of this paper.
+In this section will be an implementation of the parallel BFS in MPI. The programming language is C, MPI is used to ensure the parallel solution.\\
+Because it would be too costly to type in the node data for a scale of \(2^{32}\) or higher, the first part of the program is to generate nodes. For the data generation we used a Kronecker generator. Later in this paper there will be a section of this Kronecker generator, which creates natural graphs. In an own program the kronecker generator generates an edge list, containing start vertices and end vertices. These edge list will be written into a file, so the graph don't have to be generated each time for new. For generation the following void function will be used:
 
 \begin{lstlisting}
 generate_graph(SCALE, EDGEFACTOR, initiator, startVertex, endVertex);
 \end{lstlisting}
 
-In this line the Kronecker generator fills the \(startVertex\) and \(endVertex\) arrays with random numbers of nodes. Each pair of \(startVertex[i]\) and \(endVertex[i]\), for \( 0 < i < N, N = count of nodes \). The \(SCALE\) parameter gives the generator the size of the graph and the \(EDGEFACTOR\) the ratio of the count of the edges to the count of the nodes. The \(initiator\) is a 2x2 map, filled with probabilities, which influences the functioning of the Kronecker generator.
+In this line the Kronecker generator fills the \lstinline{startVertex[i]} and \lstinline{endVertex[i]} arrays with random numbers of nodes. Each pair of \lstinline{startVertex[i]} and \lstinline{endVertex[i]}, for \( 0 < i < N, N = count of nodes \). The \lstinline{SCALE} parameter gives the generator the size of the graph and the \lstinline{EDGEFACTOR} the ratio of the count of the edges to the count of the nodes. The \lstinline{initiator} is a 2x2 map, filled with probabilities, which influences the functioning of the Kronecker generator. So after the generation our root proc reads the graph data from the file and brings the information in a more computeable form.
 
 \begin{lstlisting}
 create_node_edge_lists(nodes, edges, startVertex, endVertex, node_edge_list, count_edges_per_node);
+\end{lstlisting}
+Firstly the arrays of vertexes are converted to an array of nodes, where each entry of the array points to a list of nodes, which are neighbours of this specific entry.
+\begin{lstlisting}
 buffer = lists_to_buffer(&buffer_size, node_edge_list, count_edges_per_node, 0, nodes-1);
 \end{lstlisting}
+Secondly that array of nodes, where each entry points to a list, is transformed to a buffer, where the neighbours of the node 1 are at the beginning of the buffer, then the neighbours of the node 2 follow the neighbours of node 1, and so on.
+The next step is to calculate the amount of edges each proc of the system is receiving, so that the procs can allocate the necessary memory for their part of the buffer and scattering it from the root proc to all procs.  So far we just handled function, which were only processed by the root proc, but from now the functions in the future get called by the root AND all other procs. \\
+After that calling the function
+\begin{lstlisting}
+MPI_Scatterv((void *) buffer, buffer_send_counts, buffer_displs, MPI_UINT64_T, (void *) buffer_recvbuf, buffer_recv_size, MPI_UINT64_T, 0, MPI_COMM_WORLD);
+\end{lstlisting}
+the \lstinline{buffer} is scattered to all procs, which have already allocated the necessary space. \lstinline{buffer_send_counts} gives the information, how many units each proc gets. \lstinline{buffer_displs} is a vector, whichs shows the starting index of the buffer for each proc, so the right part of the entire buffer is chosen for each proc. \lstinline{buffer_recvbuf} ensures that every proc has a buffer to store the received information.\\
+As we already above-mentioned at the explanation of our approach of the parallel BFS there has to be a thinking in levels and there has to be a communcation, which procs must work at the next round/level.
+After that every proc (also the root proc) comes to the most relevant function of the algorithm.
+\begin{lstlisting}
+bfs(level_recvbuf, buffer_recvbuf, buffer_recv_size, count_edges_per_node_recvbuf, (nodes / procs), procs);
+\end{lstlisting}
 
-The next step is to bring the information of edges in a more computable form. Firstly the arrays of vertexes are converted to an array of nodes, where each entry of the array points to a list of nodes, which are neighbours of this specific entry. Secondly that array of nodes, where each entry points to a list, is transformed to a buffer, where the neighbours of the node 1 are at the beginning of the buffer, then the neighbours of the node 2 follow the neighbours of node 1, and so on.
-\\
 ...
 
 \section{Testing the algorithm on Jupiter}
 \label{sec:testing}
 
-\begin{figure}[htbp]
-	\centering
-	\includegraphics[width=15cm]{benchmark}%
-	\caption{Ergebnisse auf Jupiter}%
-	\label{fig:benchmark}
-\end{figure}
+%\begin{figure}[htbp]
+%	\centering
+%	\includegraphics[width=15cm]{benchmark}%
+%	\caption{Ergebnisse auf Jupiter}%
+%	\label{fig:benchmark}
+%\end{figure}
 
 \section{The graph500 project and my own realisation}
 \label{sec:graph500}
