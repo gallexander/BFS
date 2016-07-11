@@ -83,14 +83,39 @@ After that calling the function
 MPI_Scatterv((void *) buffer, buffer_send_counts, buffer_displs, MPI_UINT64_T, (void *) buffer_recvbuf, buffer_recv_size, MPI_UINT64_T, 0, MPI_COMM_WORLD);
 \end{lstlisting}
 the \lstinline{buffer} is scattered to all procs, which have already allocated the necessary space. \lstinline{buffer_send_counts} gives the information, how many units each proc gets. \lstinline{buffer_displs} is a vector, whichs shows the starting index of the buffer for each proc, so the right part of the entire buffer is chosen for each proc. \lstinline{buffer_recvbuf} ensures that every proc has a buffer to store the received information.\\
-As we already above-mentioned at the explanation of our approach of the parallel BFS there has to be a thinking in levels and there has to be a communcation, which procs must work at the next round/level.
-After that every proc (also the root proc) comes to the most relevant function of the algorithm.
+As we already above-mentioned at the explanation of our approach of the parallel BFS there has to be a thinking in levels and there has to be a communcation, which procs must work at the next round/level. For instance at the beginning just the root node is in the first level. So just the proc, which is responsible for the root node, is working in the first round. The next step is that the neighbours of the root node have their turn. All procs, which own one node of the second level, have to work in the next level. With
+\begin{lstlisting}
+MPI_Scatter((void *)level,nodes / BITS / procs,MPI_UNSIGNED_LONG, (void *)level_recvbuf, nodes / BITS / procs, MPI_UNSIGNED_LONG, 0, MPI_COMM_WORLD);
+\end{lstlisting}
+the nodes of the first round get scattered. \lstinline{level} is a bitmap of type \lstinline{unsigned long} with the nodes of the current round set to 1. \lstinline{nodes / BITS / procs} says how many units of type \lstinline{unsigned long} every proc (including the root node) is receiving. \\
+At the next instruction the procs (also the root proc) comes to the most relevant function of the algorithm.
 \begin{lstlisting}
 bfs(level_recvbuf, buffer_recvbuf, buffer_recv_size, count_edges_per_node_recvbuf, (nodes / procs), procs);
 \end{lstlisting}
-
-...
-
+Here is the beginning of the basic algorithm of our parallel BFS algorithm. All steps so far were a preparation. The edge list was transformed into a better computeable form and the root node had to scatter some important data to the other procs of the system.
+\subsubsection{Core of the parallel BFS solution}
+Firstly we will present the general parallel BFS algorithm in pseudo code.
+\begin{lstlisting}
+void bfs(){
+    char oneChildisVisited = 1;
+    while (oneChildisVisited){
+        oneChildisVisited = 0;
+        for (i = 0; i < size(nodes_owned); i++){
+        		if nodes_owned[i] is in current level{
+			for (j = 0; j < size(neighbours); j++){
+				if neighbours[j] is not visited {
+            				oneChildisVisited = 1;
+					set_nextlevel_bitmap(i); // sets the bitmap on position of neighbour[i] to 1
+            			}
+			}
+		}
+        }
+        allreduce(oneChildisVisited); // all procs get the information if there is a neighbour visited at all
+        if (oneChildisVisited){
+        		alltoall(next_level); // every proc has to send the bitmap of all visited neighbours to the other procs
+        }
+}
+\end{lstlisting}
 \section{Testing the algorithm on Jupiter}
 \label{sec:testing}
 
