@@ -1,1 +1,6 @@
 1: unsigned char bitmap in unsigned long bitmap verwandelt, visited ebenfalls in unsigned long
+2: edge list to graph in parallel: not finished
+	-liste von vektoren: jeder vektor zeigt auf eine liste
+	-liste von vektoren wird in buffer umgewandelt, der graph darstellt
+wie kann man das nun parallelisieren?
+	jeder proc erhält gewisse anzahl an edges von edge list, ist jedoch 			unsortiert! jeder proc macht sich seinen eigenen buffer oder liste?, der zu jeden vorkommenden Knoten in Edge List Eintrag macht

@@ -71,12 +71,38 @@ bfs_par.c:41: Warnung: Variable »initiator« wird nicht verwendet
 bfs_par.c:16: Warnung: Variable »status« wird nicht verwendet
 bfs_par.c:14: Warnung: Variable »root« wird nicht verwendet
 bfs_par.c:11: Warnung: Variable »tag« wird nicht verwendet
+
+[e1026090@jupiter ~]$ mpirun -host jupiter1 -np 1 ./par
+Time for generating and scattering: 209.442903
+Time for bfs searching: 124.501475
+
+[e1026090@jupiter ~]$ mpirun -host jupiter1 -np 2 ./par
+Time for generating and scattering: 206.821771
+Time for bfs searching: 62.673911
+
+[e1026090@jupiter ~]$ mpirun -host jupiter1 -np 4 ./par
+Time for generating and scattering: 204.477917
+Time for bfs searching: 32.574306
+
+[e1026090@jupiter ~]$ mpirun -host jupiter1 -np 8 ./par
+Time for generating and scattering: 163.052962
+Time for bfs searching: 16.547304
+
 [e1026090@jupiter ~]$ mpirun -host jupiter1 -np 16 ./par
 Time for generating and scattering: 206.160913
 Time for bfs searching: 9.362862
+
 [e1026090@jupiter ~]$ mpirun -host jupiter1 -np 16 -host jupiter2 -np 16 ./par
 Time for generating and scattering: 164.124661
 Time for bfs searching: 5.341782
+
+[e1026090@jupiter ~]$ mpirun -host jupiter1 -np 16 -host jupiter2 -np 16 -host jupiter3 -np 16 -host jupiter4 -np 16 ./par
+Time for generating and scattering: 165.615725
+Time for bfs searching: 3.986594
+
+
+
+
 
 
 

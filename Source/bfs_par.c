@@ -1,6 +1,10 @@
 #include "project.h"
 #include "mpi.h"
 
+/*
+ author: Alexander Gallauner
+*/
+
 double mytime(void){
     struct timeval now;
     gettimeofday(&now,NULL);
@@ -20,7 +24,6 @@ int main(int argc, char *argv[]){
     MPI_Comm_size (MPI_COMM_WORLD, &procs);
 
     uint64_t *buffer = NULL;
-    // WHY IS INT * AT SCATTERV NECESSARY
     int *buffer_send_counts = NULL; 
     int *buffer_displs = NULL;
     uint64_t buffer_recv_size = 0;
@@ -44,7 +47,6 @@ int main(int argc, char *argv[]){
 	    count_edges_per_node = (uint64_t *) calloc(nodes, I64_BYTES);
 
         read_graph(SCALE, EDGEFACTOR, startVertex, endVertex);
-        //generate_graph(SCALE, EDGEFACTOR, initiator, startVertex, endVertex);
         
         create_node_edge_lists(nodes, edges, startVertex, endVertex, node_edge_list, count_edges_per_node);
 	    //MAYBE CREATING BUFFERS WITH REALLOC, SO THERE ARE NOT LISTS, create_node_edge_lists, NECESSARY
@@ -52,7 +54,7 @@ int main(int argc, char *argv[]){
 	    uint64_t buffer_size = 0;
 	    buffer = lists_to_buffer(&buffer_size, node_edge_list, count_edges_per_node, 0, nodes-1);
 
-        //SCATTER HOW MANY EDGES EACH NODES HAS
+        //SCATTER HOW MANY EDGES EACH NODES FOR EACH PROC HAS
         int j;
         for (j = 0; j < procs; j++){
             buffer_send_counts[j] = getSumOfEdges(count_edges_per_node+j*(nodes / procs), nodes / procs);
@@ -86,7 +88,6 @@ int main(int argc, char *argv[]){
         level[(ROOT/BITS)] = level[(ROOT/BITS)] | (unsigned long) pow(2,(ROOT % BITS));
 
         //SCATTER LEVEL BUFFER
-        
         MPI_Scatter((void *)level,nodes / BITS / procs,MPI_UNSIGNED_LONG, (void *)level_recvbuf, nodes / BITS / procs, MPI_UNSIGNED_LONG, 0, MPI_COMM_WORLD);
         
         //BFS
@@ -95,32 +96,6 @@ int main(int argc, char *argv[]){
         time = mytime();
         bfs(level_recvbuf, buffer_recvbuf, buffer_recv_size, count_edges_per_node_recvbuf, (nodes / procs), procs);
 
-	    //OUTPUT
-        /*uint64_t j;
-        struct edge *p;
-        for (j = 0; j < (nodes / procs); j++){
-            printf("%llu:%llu Elements:", (unsigned long long) j, (unsigned long long) count_edges_per_node_recvbuf[j]);
-            p = node_edge_list[j];
-            if (p != NULL){
-                printf(" %llu", (unsigned long long) p->end);
-                while (p->next != NULL){
-                    p = p->next;
-                    printf(" %llu", (unsigned long long) p->end);
-                }
-            }
-            printf("\n");
-        }
-	    printf("\nBuffer: ");
-	    for (j = 0; j < buffer_recv_size; j++){
-		    printf("%llu,", (unsigned long long) buffer_recvbuf[j]);
-	    }
-	    printf("\n\n");
-        
-	    for (j = 0; j < (nodes / procs); j++){
-		    printf("%llu,", (unsigned long long) count_edges_per_node_recvbuf[j]);
-	    }
-	    printf("\n");
-        */
         time = mytime() - time;
         printf("Time for bfs searching: %f\n", time/1000000);
 
@@ -171,17 +146,15 @@ void bfs(unsigned long *level, uint64_t *buffer, uint64_t buffer_size, uint64_t 
     unsigned long *visited = (unsigned long *) calloc(nodes_owned / BITS, sizeof(unsigned long));
     char oneChildisVisited = 1;
     uint64_t i;
-    //int rounds = 0;
-    //uint64_t visited_count;
     unsigned long position;
     while (oneChildisVisited){
         oneChildisVisited = 0;
         for (i = 0; i < nodes_owned; i++){
             position = (unsigned long) pow(2,(i % BITS));
-            if (position & level[(i / BITS)] & ~visited[(i / BITS)]){
+            if (position & level[(i / BITS)] & ~visited[(i / BITS)]){ //checks if the current node in the iteration is in the current level and not visited
                 visited[(i / BITS)] = visited[(i / BITS)] | position;
                 uint64_t j = index_of_node[i];
-                if (i == nodes_owned -1){
+                if (i == nodes_owned -1){ //differentiate between the last node of the owned nodes and one node in the middle
                     for (; j < buffer_size; j++){
                         next_level[(buffer[j]/BITS)] = next_level[(buffer[j]/BITS)] | (unsigned long) pow(2,(buffer[j] % BITS));
                         oneChildisVisited = 1;
@@ -210,17 +183,7 @@ void bfs(unsigned long *level, uint64_t *buffer, uint64_t buffer_size, uint64_t 
        
             memset(next_level, 0, (pow(2,SCALE) / BITS));
         }
-        //rounds++;
     }
-
-    //printf("round: %i\n", rounds);
-    /*visited_count = 0;
-    for (i = 0; i < pow(2,SCALE); i++){
-        if (((unsigned char) pow(2,(i % BITS))) & visited[(i / BITS)]){
-            visited_count++;
-        }
-    }
-    printf("visited: %llu\n", (unsigned long long) visited_count);*/
     free(level_alltoall);
     free(visited);
     free(next_level);
