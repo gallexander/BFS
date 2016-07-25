@@ -4,3 +4,4 @@
 	-liste von vektoren wird in buffer umgewandelt, der graph darstellt
 wie kann man das nun parallelisieren?
 	jeder proc erhält gewisse anzahl an edges von edge list, ist jedoch 			unsortiert! jeder proc macht sich seinen eigenen buffer oder liste?, der zu jeden vorkommenden Knoten in Edge List Eintrag macht
+3: undirected egdes statt directed, doppelt so viele Einträge? WTF

@@ -15,4 +15,6 @@ parallelisiert: 10
 11.07.2016: 1 Stunde Schreiben der Arbeit / Grundalgo in Pseudo
 12.07.2016: 3 Stunden Schreiben der Arbeit / Testen
 22.07.2016: 1 Stunde Edge List to Graph in Parallel Beginn
+25.07.2016: 2.5 Stunden überlegen einer Strategie für parallele Abarbeitung der Edge List to Graph
+2.5 Stunden Sortieren der Edge List, wird noch sequentiell durchgeführt, dann auf Prozessoren aufgeteilt
 

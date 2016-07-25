@@ -1,11 +1,5 @@
 #include "project.h"
 
-double mytime(void){
-    struct timeval now;
-    gettimeofday(&now,NULL);
-    return (double) ((long long)now.tv_usec+(long long)now.tv_sec*1000000);
-}
-
 int main(){
     uint64_t nodes = pow(2,SCALE);
     uint64_t edges = nodes*EDGEFACTOR;
