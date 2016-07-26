@@ -17,4 +17,4 @@ parallelisiert: 10
 22.07.2016: 1 Stunde Edge List to Graph in Parallel Beginn
 25.07.2016: 2.5 Stunden überlegen einer Strategie für parallele Abarbeitung der Edge List to Graph
 2.5 Stunden Sortieren der Edge List, wird noch sequentiell durchgeführt, dann auf Prozessoren aufgeteilt
-
+1.5 Stunden Implementieren, dass sortierte Egde List auf Procs aufgeteilt wird

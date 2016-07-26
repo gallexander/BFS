@@ -15,11 +15,12 @@ int main(int argc, char *argv[]){
 
     MPI_Init (&argc, &argv);
     MPI_Comm_rank (MPI_COMM_WORLD, &my_rank);
-    MPI_Comm_size (MPI_COMM_WORLD, &procs);
+    MPI_Comm_size (MPI_COMM_WORLD, &procs); //SHOULD BE POWER OF TWO
 
     uint64_t *buffer = NULL;
     int *buffer_send_counts = NULL; 
     int *buffer_displs = NULL;
+    int *edgelist_send_counts = NULL;
     uint64_t buffer_recv_size = 0;
     unsigned long *level = NULL;    
     uint64_t *count_edges_per_node = NULL;
@@ -30,17 +31,43 @@ int main(int argc, char *argv[]){
         double time = mytime();
         uint64_t *startVertex = (uint64_t *) calloc(edges, I64_BYTES);
         uint64_t *endVertex = (uint64_t *) calloc(edges, I64_BYTES);
+        edgelist_send_counts = (int *) calloc(procs, sizeof(int));
         buffer_send_counts = (int *) calloc(procs, sizeof(int));
         buffer_displs = (int *) calloc(procs, sizeof(int));
 
         level = (unsigned long *) calloc(nodes / BITS, sizeof(unsigned long)); //LEVEL BUFFER FOR MASTER
         
-        float initiator[] = {0.25,0.25,0.25,0.25};
-        
         struct edge **node_edge_list = (struct edge **) calloc(nodes, 8);
 	    count_edges_per_node = (uint64_t *) calloc(nodes, I64_BYTES);
 
         read_graph(SCALE, EDGEFACTOR, startVertex, endVertex);
+        
+        //SORTING THE EDGE LIST
+        sort(startVertex, endVertex, 0, edges-1);
+        
+        //FINDING OUT THE BOUNDS OF THE EDGE LIST FOR EACH PROC
+        int j;
+        uint64_t last_node_number = 0;
+        uint64_t core_count = 0;
+        for (j = 0; j < procs; j++){
+            last_node_number = nodes / procs * (j+1) - 1;
+            core_count = edges / procs * (j+1) - 1;
+            if (j < procs -1){
+                while (startVertex[core_count] <= last_node_number) {
+                    core_count++;
+                }
+                while (startVertex[core_count] > last_node_number){
+                    core_count--;
+                }
+                if (j){
+                    edgelist_send_counts[j] = core_count - edgelist_send_counts[j-1]
+                }else{
+                    edgelist_send_counts[j] = core_count + 1;
+                }
+            }else{
+                edgelist_send_counts[j] = edges - edgelist_send_counts[j-1] - 1;
+            }
+        }
         
         create_node_edge_lists(nodes, edges, startVertex, endVertex, node_edge_list, count_edges_per_node);
 	    //MAYBE CREATING BUFFERS WITH REALLOC, SO THERE ARE NOT LISTS, create_node_edge_lists, NECESSARY
@@ -49,7 +76,6 @@ int main(int argc, char *argv[]){
 	    buffer = lists_to_buffer(&buffer_size, node_edge_list, count_edges_per_node, 0, nodes-1);
 
         //SCATTER HOW MANY EDGES EACH NODES FOR EACH PROC HAS
-        int j;
         for (j = 0; j < procs; j++){
             buffer_send_counts[j] = getSumOfEdges(count_edges_per_node+j*(nodes / procs), nodes / procs);
             if (j){
@@ -93,6 +119,7 @@ int main(int argc, char *argv[]){
         time = mytime() - time;
         printf("Time for bfs searching: %f\n", time/1000000);
 
+        free(edgelist_send_counts);
         free(buffer_send_counts);
         free(buffer_displs);
         free(startVertex);
@@ -268,6 +295,34 @@ uint64_t getSumOfEdges(uint64_t *count_edges_per_node, uint64_t nodes){
         sum += count_edges_per_node[i];
     }
     return sum;
+}
+
+void sort(uint64_t *startVertex, uint64_t *endVertex, uint64_t l, uint64_t r){
+    uint64_t j;
+    
+    if(l < r){
+        j = partition(startVertex, endVertex, l, r);
+        sort(startVertex, endVertex, l, j-1);
+        sort(startVertex, endVertex, j+1, r);
+    }
+    
+}
+
+uint64_t partition(uint64_t *startVertex, uint64_t *endVertex, uint64_t l, uint64_t r){
+    uint64_t pivot, i, j, t;
+    pivot = startVertex[l];
+    i = l; j = r+1;
+    
+    while(1){
+        do ++i; while( startVertex[i] <= pivot && i <= r );
+        do --j; while( startVertex[j] > pivot );
+        if( i >= j ) break;
+        t = startVertex[i]; startVertex[i] = startVertex[j]; startVertex[j] = t;
+        t = endVertex[i]; endVertex[i] = endVertex[j]; endVertex[j] = t;
+    }
+    t = startVertex[l]; startVertex[l] = startVertex[j]; startVertex[j] = t;
+    t = endVertex[l]; endVertex[l] = endVertex[j]; endVertex[j] = t;
+    return j;
 }
 
 void freelists(uint64_t nodes, struct edge **node_edge_list){
