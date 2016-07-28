@@ -6,8 +6,8 @@
 #include <string.h>
 #include <sys/time.h>
 
-#define SCALE 4     // 2^30 MALLOC MAX = SCALE 26 + EDGEFACTOR 16
-#define EDGEFACTOR 1
+#define SCALE 5     // 2^30 MALLOC MAX = SCALE 26 + EDGEFACTOR 16
+#define EDGEFACTOR 2
 
 #define I64_BYTES 8
 #define BLOCKS 4
@@ -35,8 +35,8 @@ uint64_t getSumOfEdges(uint64_t *count_edges_per_node, uint64_t nodes);
 void write_graph(int scale, int edgefactor, uint64_t *startVertex, uint64_t *endVertex);
 void read_graph(int scale, int edgefactor, uint64_t *startVertex, uint64_t *endVertex);
 
-void sort(uint64_t *startVertex, uint64_t *endVertex, uint64_t l, uint64_t r);
-uint64_t partition(uint64_t *startVertex, uint64_t *endVertex, uint64_t l, uint64_t r);
+void sort(uint64_t *startVertex, uint64_t *endVertex, int64_t l, int64_t r);
+int64_t partition(uint64_t *startVertex, uint64_t *endVertex, int64_t l, int64_t r);
 
 //WORKING WITH LISTS
 void create_node_edge_lists(uint64_t nodes, uint64_t edges, uint64_t *startVertex, uint64_t *endVertex, struct edge **node_edge_list, uint64_t *count_edges_per_node);

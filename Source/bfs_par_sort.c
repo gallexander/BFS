@@ -21,17 +21,22 @@ int main(int argc, char *argv[]){
     int *buffer_send_counts = NULL; 
     int *buffer_displs = NULL;
     int *edgelist_send_counts = NULL;
+    int *edgelist_send_displs = NULL;
     uint64_t buffer_recv_size = 0;
     unsigned long *level = NULL;    
     uint64_t *count_edges_per_node = NULL;
     uint64_t *buffer_recvbuf = NULL;
+    uint64_t *startVertex_recvbuf = NULL;
+    uint64_t *endVertex_recvbuf = NULL;
     unsigned long *level_recvbuf = (unsigned long *) calloc(nodes / BITS / procs, sizeof(unsigned long));
     uint64_t *count_edges_per_node_recvbuf = (uint64_t *) calloc(nodes / procs, I64_BYTES);
+    uint64_t edgelist_counts_recvbuf = 0;
     if (my_rank == 0){
         double time = mytime();
         uint64_t *startVertex = (uint64_t *) calloc(edges, I64_BYTES);
         uint64_t *endVertex = (uint64_t *) calloc(edges, I64_BYTES);
         edgelist_send_counts = (int *) calloc(procs, sizeof(int));
+        edgelist_send_displs = (int *) calloc(procs, sizeof(int));
         buffer_send_counts = (int *) calloc(procs, sizeof(int));
         buffer_displs = (int *) calloc(procs, sizeof(int));
 
@@ -43,7 +48,7 @@ int main(int argc, char *argv[]){
         read_graph(SCALE, EDGEFACTOR, startVertex, endVertex);
         
         //SORTING THE EDGE LIST
-        sort(startVertex, endVertex, 0, edges-1);
+        /*sort(startVertex, endVertex, 0, edges-1);
         
         //FINDING OUT THE BOUNDS OF THE EDGE LIST FOR EACH PROC
         int j;
@@ -51,7 +56,7 @@ int main(int argc, char *argv[]){
         uint64_t core_count = 0;
         for (j = 0; j < procs; j++){
             last_node_number = nodes / procs * (j+1) - 1;
-            core_count = edges / procs * (j+1) - 1;
+            core_count = (edges / procs * (j+1)) - 1;
             if (j < procs -1){
                 while (startVertex[core_count] <= last_node_number) {
                     core_count++;
@@ -60,14 +65,22 @@ int main(int argc, char *argv[]){
                     core_count--;
                 }
                 if (j){
-                    edgelist_send_counts[j] = core_count - edgelist_send_counts[j-1]
+                    edgelist_send_counts[j] = core_count - edgelist_send_displs[j] + 1;
                 }else{
                     edgelist_send_counts[j] = core_count + 1;
                 }
+                edgelist_send_displs[j+1] = core_count + 1;
             }else{
-                edgelist_send_counts[j] = edges - edgelist_send_counts[j-1] - 1;
+                edgelist_send_displs[0] = 0;
+                edgelist_send_counts[j] = edges - edgelist_send_displs[j];
             }
         }
+        
+        MPI_Scatter((void *) edgelist_send_counts, 1, MPI_UINT64_T, &edgelist_counts_recvbuf, 1, MPI_UINT64_T, 0, MPI_COMM_WORLD);
+        
+        printf("PROC %i: NUMBER OF EDGES = %llu\n", my_rank, (unsigned long long) edgelist_counts_recvbuf);
+        startVertex_recvbuf = (uint64_t *) calloc(edgelist_counts_recvbuf, I64_BYTES);
+        endVertex_recvbuf = (uint64_t *) calloc(edgelist_counts_recvbuf, I64_BYTES);*/
         
         create_node_edge_lists(nodes, edges, startVertex, endVertex, node_edge_list, count_edges_per_node);
 	    //MAYBE CREATING BUFFERS WITH REALLOC, SO THERE ARE NOT LISTS, create_node_edge_lists, NECESSARY
@@ -76,6 +89,7 @@ int main(int argc, char *argv[]){
 	    buffer = lists_to_buffer(&buffer_size, node_edge_list, count_edges_per_node, 0, nodes-1);
 
         //SCATTER HOW MANY EDGES EACH NODES FOR EACH PROC HAS
+        int j;
         for (j = 0; j < procs; j++){
             buffer_send_counts[j] = getSumOfEdges(count_edges_per_node+j*(nodes / procs), nodes / procs);
             if (j){
@@ -120,6 +134,7 @@ int main(int argc, char *argv[]){
         printf("Time for bfs searching: %f\n", time/1000000);
 
         free(edgelist_send_counts);
+        free(edgelist_send_displs);
         free(buffer_send_counts);
         free(buffer_displs);
         free(startVertex);
@@ -129,6 +144,12 @@ int main(int argc, char *argv[]){
 	    free(count_edges_per_node);
         freelists(nodes, node_edge_list);
     }else{
+        /*MPI_Scatter((void *) edgelist_send_counts, 1, MPI_UINT64_T, &edgelist_counts_recvbuf, 1, MPI_UINT64_T, 0, MPI_COMM_WORLD);
+        
+        printf("PROC %i: NUMBER OF EDGES = %llu\n", my_rank, (unsigned long long) edgelist_counts_recvbuf);
+        startVertex_recvbuf = (uint64_t *) calloc(edgelist_counts_recvbuf, I64_BYTES);
+        endVertex_recvbuf = (uint64_t *) calloc(edgelist_counts_recvbuf, I64_BYTES);*/
+        
         // RECEIVE COUNT OF EDGES PER NODE
         MPI_Scatter((void *)count_edges_per_node,nodes / procs * I64_BYTES, MPI_BYTE, (void *)count_edges_per_node_recvbuf, nodes / procs * I64_BYTES, MPI_BYTE, 0, MPI_COMM_WORLD);
 
@@ -156,6 +177,8 @@ int main(int argc, char *argv[]){
     free(level_recvbuf);
     free(count_edges_per_node_recvbuf);
     free(buffer_recvbuf);
+    free(startVertex_recvbuf);
+    free(endVertex_recvbuf);
    
     MPI_Finalize ();
     return 0;
@@ -297,8 +320,8 @@ uint64_t getSumOfEdges(uint64_t *count_edges_per_node, uint64_t nodes){
     return sum;
 }
 
-void sort(uint64_t *startVertex, uint64_t *endVertex, uint64_t l, uint64_t r){
-    uint64_t j;
+void sort(uint64_t *startVertex, uint64_t *endVertex, int64_t l, int64_t r){
+    int64_t j;
     
     if(l < r){
         j = partition(startVertex, endVertex, l, r);
@@ -308,8 +331,8 @@ void sort(uint64_t *startVertex, uint64_t *endVertex, uint64_t l, uint64_t r){
     
 }
 
-uint64_t partition(uint64_t *startVertex, uint64_t *endVertex, uint64_t l, uint64_t r){
-    uint64_t pivot, i, j, t;
+int64_t partition(uint64_t *startVertex, uint64_t *endVertex, int64_t l, int64_t r){
+    int64_t pivot, i, j, t;
     pivot = startVertex[l];
     i = l; j = r+1;
     

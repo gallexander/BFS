@@ -4,6 +4,7 @@ int main(){
     int procs = 4;
     uint64_t *startVertex = (uint64_t *) calloc(pow(2,SCALE)*EDGEFACTOR, I64_BYTES);
     uint64_t *endVertex = (uint64_t *) calloc(pow(2,SCALE)*EDGEFACTOR, I64_BYTES);
+    int *edgelist_send_displs = (int *) calloc(procs, sizeof(int));
     int *edgelist_send_counts = (int *) calloc(procs, sizeof(int));
     uint64_t nodes = pow(2,SCALE);
     uint64_t edges = nodes*EDGEFACTOR;
@@ -11,16 +12,15 @@ int main(){
     
     double time = mytime();
     
-    sort(startVertex, endVertex, 0, pow(2,SCALE)*EDGEFACTOR-1);
+    sort(startVertex, endVertex, 0, edges-1);
     
     //FINDING OUT THE BOUNDS OF THE EDGE LIST FOR EACH PROC
     int j;
-    /*uint64_t last_node_number = 0;
+    uint64_t last_node_number = 0;
     uint64_t core_count = 0;
     for (j = 0; j < procs; j++){
         last_node_number = nodes / procs * (j+1) - 1;
         core_count = (edges / procs * (j+1)) - 1;
-        //edgelist_send_counts[j] = core_count;
         if (j < procs -1){
             while (startVertex[core_count] <= last_node_number) {
                 core_count++;
@@ -29,17 +29,16 @@ int main(){
                 core_count--;
             }
             if (j){
-                edgelist_send_counts[j] = core_count - edgelist_send_counts[j-1];
+                edgelist_send_counts[j] = core_count - edgelist_send_displs[j] + 1;
             }else{
                 edgelist_send_counts[j] = core_count + 1;
             }
+            edgelist_send_displs[j+1] = core_count + 1;
         }else{
-            edgelist_send_counts[j] = edges - edgelist_send_counts[j-1] - 1;
+            edgelist_send_displs[0] = 0;
+            edgelist_send_counts[j] = edges - edgelist_send_displs[j];
         }
     }
-    for(j = 0; j < procs; j++){
-        printf("PROC %i: %llu\n", j, (unsigned long long) edgelist_send_counts[j]);
-    }*/
     
     time = mytime() - time;
     printf("Time for sorting the edge list: %f\n", time/1000000);
@@ -47,12 +46,13 @@ int main(){
     write_graph(SCALE, EDGEFACTOR, startVertex, endVertex);
     free(startVertex);
     free(endVertex);
+    free(edgelist_send_displs);
     free(edgelist_send_counts);
     return 0;
 }
 
-void sort(uint64_t *startVertex, uint64_t *endVertex, uint64_t l, uint64_t r){
-    uint64_t j;
+void sort(uint64_t *startVertex, uint64_t *endVertex, int64_t l, int64_t r){
+    int64_t j;
     
     if(l < r){
         j = partition(startVertex, endVertex, l, r);
@@ -62,8 +62,8 @@ void sort(uint64_t *startVertex, uint64_t *endVertex, uint64_t l, uint64_t r){
     
 }
 
-uint64_t partition(uint64_t *startVertex, uint64_t *endVertex, uint64_t l, uint64_t r){
-    uint64_t pivot, i, j, t;
+int64_t partition(uint64_t *startVertex, uint64_t *endVertex, int64_t l, int64_t r){
+    int64_t pivot, i, j, t;
     pivot = startVertex[l];
     i = l; j = r+1;
     
