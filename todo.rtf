@@ -7,5 +7,8 @@
 \f0\fs24 \cf0 1. Generieren der Kanten Liste parallelisieren: Ansatz w\'e4re das jeder Prozessor einen gewissen Teil der Kantenliste liest und dann auf alle Prozessoren, je nach dem wie die Knotenverteilung ist, verteilt, sodass jeder Prozessor mehrere Buffer empf\'e4ngt.\
 2. reduce_scatter statt all_to_all\
 3. Edge List to Graph parallel durchf\'fchren\
+	-edge list (startVertex und endVertex) sortieren\
+	-1. M\'f6glichkeit: auf Procs aufteilen und dort, weil eh schon sortiert, in Buffer schreiben -> keine 	Listen mehr notwendig zum Zwischenspeichern\
+	-2. M\'f6glichkeit: in Buffer schreiben und Buffer auf Procs aufteilen\
 4. Parent array erstellen\
 5: load balancing}
