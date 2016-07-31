@@ -63,13 +63,14 @@ void sort(uint64_t *startVertex, uint64_t *endVertex, int64_t l, int64_t r){
 }
 
 int64_t partition(uint64_t *startVertex, uint64_t *endVertex, int64_t l, int64_t r){
-    int64_t pivot, i, j, t;
-    pivot = startVertex[l];
+    int64_t pivot_start, pivot_end, i, j, t;
+    pivot_start = startVertex[l];
+    pivot_end = endVertex[l];
     i = l; j = r+1;
     
     while(1){
-        do ++i; while( startVertex[i] <= pivot && i <= r );
-        do --j; while( startVertex[j] > pivot );
+        do ++i; while( (startVertex[i] < pivot_start || (startVertex[i] == pivot_start && endVertex[i] <= pivot_end)) && i <= r );
+        do --j; while( (startVertex[j] > pivot_start || (startVertex[j] == pivot_start && endVertex[j] > pivot_end)) );
         if( i >= j ) break;
         t = startVertex[i]; startVertex[i] = startVertex[j]; startVertex[j] = t;
         t = endVertex[i]; endVertex[i] = endVertex[j]; endVertex[j] = t;

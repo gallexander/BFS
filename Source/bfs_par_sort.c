@@ -18,6 +18,7 @@ int main(int argc, char *argv[]){
     MPI_Comm_size (MPI_COMM_WORLD, &procs); //SHOULD BE POWER OF TWO
 
     uint64_t *buffer = NULL;
+    /* MUST BE INT BECAUSE OF MPI RESTRICTION */
     int *buffer_send_counts = NULL; 
     int *buffer_displs = NULL;
     int *edgelist_send_counts = NULL;
@@ -30,7 +31,7 @@ int main(int argc, char *argv[]){
     uint64_t *endVertex_recvbuf = NULL;
     unsigned long *level_recvbuf = (unsigned long *) calloc(nodes / BITS / procs, sizeof(unsigned long));
     uint64_t *count_edges_per_node_recvbuf = (uint64_t *) calloc(nodes / procs, I64_BYTES);
-    uint64_t edgelist_counts_recvbuf = 0;
+    int edgelist_counts_recvbuf = 0;
     if (my_rank == 0){
         double time = mytime();
         uint64_t *startVertex = (uint64_t *) calloc(edges, I64_BYTES);
@@ -48,12 +49,12 @@ int main(int argc, char *argv[]){
         read_graph(SCALE, EDGEFACTOR, startVertex, endVertex);
         
         //SORTING THE EDGE LIST
-        /*sort(startVertex, endVertex, 0, edges-1);
+        sort(startVertex, endVertex, 0, edges-1);
         
         //FINDING OUT THE BOUNDS OF THE EDGE LIST FOR EACH PROC
         int j;
-        uint64_t last_node_number = 0;
-        uint64_t core_count = 0;
+        int last_node_number = 0;
+        int core_count = 0;
         for (j = 0; j < procs; j++){
             last_node_number = nodes / procs * (j+1) - 1;
             core_count = (edges / procs * (j+1)) - 1;
@@ -76,10 +77,9 @@ int main(int argc, char *argv[]){
             }
         }
         
-        MPI_Scatter((void *) edgelist_send_counts, 1, MPI_UINT64_T, &edgelist_counts_recvbuf, 1, MPI_UINT64_T, 0, MPI_COMM_WORLD);
+        MPI_Scatter((void *) edgelist_send_counts, 1, MPI_INT, &edgelist_counts_recvbuf, 1, MPI_INT, 0, MPI_COMM_WORLD);
         
-        printf("PROC %i: NUMBER OF EDGES = %llu\n", my_rank, (unsigned long long) edgelist_counts_recvbuf);
-        startVertex_recvbuf = (uint64_t *) calloc(edgelist_counts_recvbuf, I64_BYTES);
+        /*startVertex_recvbuf = (uint64_t *) calloc(edgelist_counts_recvbuf, I64_BYTES);
         endVertex_recvbuf = (uint64_t *) calloc(edgelist_counts_recvbuf, I64_BYTES);*/
         
         create_node_edge_lists(nodes, edges, startVertex, endVertex, node_edge_list, count_edges_per_node);
@@ -89,7 +89,6 @@ int main(int argc, char *argv[]){
 	    buffer = lists_to_buffer(&buffer_size, node_edge_list, count_edges_per_node, 0, nodes-1);
 
         //SCATTER HOW MANY EDGES EACH NODES FOR EACH PROC HAS
-        int j;
         for (j = 0; j < procs; j++){
             buffer_send_counts[j] = getSumOfEdges(count_edges_per_node+j*(nodes / procs), nodes / procs);
             if (j){
@@ -144,10 +143,10 @@ int main(int argc, char *argv[]){
 	    free(count_edges_per_node);
         freelists(nodes, node_edge_list);
     }else{
-        /*MPI_Scatter((void *) edgelist_send_counts, 1, MPI_UINT64_T, &edgelist_counts_recvbuf, 1, MPI_UINT64_T, 0, MPI_COMM_WORLD);
+        MPI_Scatter((void *) edgelist_send_counts, 1, MPI_INT, &edgelist_counts_recvbuf, 1, MPI_INT, 0, MPI_COMM_WORLD);
         
-        printf("PROC %i: NUMBER OF EDGES = %llu\n", my_rank, (unsigned long long) edgelist_counts_recvbuf);
-        startVertex_recvbuf = (uint64_t *) calloc(edgelist_counts_recvbuf, I64_BYTES);
+        printf("PROC %i: NUMBER OF EDGES = %i\n", my_rank, edgelist_counts_recvbuf);
+        /*startVertex_recvbuf = (uint64_t *) calloc(edgelist_counts_recvbuf, I64_BYTES);
         endVertex_recvbuf = (uint64_t *) calloc(edgelist_counts_recvbuf, I64_BYTES);*/
         
         // RECEIVE COUNT OF EDGES PER NODE
@@ -332,13 +331,14 @@ void sort(uint64_t *startVertex, uint64_t *endVertex, int64_t l, int64_t r){
 }
 
 int64_t partition(uint64_t *startVertex, uint64_t *endVertex, int64_t l, int64_t r){
-    int64_t pivot, i, j, t;
-    pivot = startVertex[l];
+    int64_t pivot_start, pivot_end, i, j, t;
+    pivot_start = startVertex[l];
+    pivot_end = endVertex[l];
     i = l; j = r+1;
     
     while(1){
-        do ++i; while( startVertex[i] <= pivot && i <= r );
-        do --j; while( startVertex[j] > pivot );
+        do ++i; while( (startVertex[i] < pivot_start || (startVertex[i] == pivot_start && endVertex[i] <= pivot_end)) && i <= r );
+        do --j; while( (startVertex[j] > pivot_start || (startVertex[j] == pivot_start && endVertex[j] > pivot_end)) );
         if( i >= j ) break;
         t = startVertex[i]; startVertex[i] = startVertex[j]; startVertex[j] = t;
         t = endVertex[i]; endVertex[i] = endVertex[j]; endVertex[j] = t;
