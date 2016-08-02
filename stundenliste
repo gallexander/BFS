@@ -20,3 +20,4 @@ parallelisiert: 10
 1.5 Stunden Implementieren, dass sortierte Egde List auf Procs aufgeteilt wird
 3 Stunden Implementieren weiter
 2 Stunden Weiterimplementieren, Edge List wird nun als zweites Kriterium nach EndVertex sortiert
+02.08.2016: Edge List befindet sich nun verteilt auf jedem Prozessor, wird nun zu Buffer transformiert, noch nicht fertig
