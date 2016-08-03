@@ -6,18 +6,20 @@ weiter behandlung als buffer und bfs: 6
 parallelisiert: 10
 
 50-60 Stunden geschätzt bis jetzt, Aufstellung folgt
++10-20 Stunden Zeit
 
-2 stunden: beschäftigung mit long bzw. reduce_scatter, beginn schriftliche arbeit
-2.5 stunden: bitmap auf long umgestellt, schreiben der arbeit
-08.07.2016: 2 Stunden für Umstellung auf Lesen/Schreiben des Graphes in File
-09.07.2016: 2 Stunden Erfassen der Arbeit / Grundalgo
-10.07.2016: 1 Stunde Schreiben der Arbeit
-11.07.2016: 1 Stunde Schreiben der Arbeit / Grundalgo in Pseudo
-12.07.2016: 3 Stunden Schreiben der Arbeit / Testen
-22.07.2016: 1 Stunde Edge List to Graph in Parallel Beginn
-25.07.2016: 2.5 Stunden überlegen einer Strategie für parallele Abarbeitung der Edge List to Graph
-2.5 Stunden Sortieren der Edge List, wird noch sequentiell durchgeführt, dann auf Prozessoren aufgeteilt
-1.5 Stunden Implementieren, dass sortierte Egde List auf Procs aufgeteilt wird
-3 Stunden Implementieren weiter
-2 Stunden Weiterimplementieren, Edge List wird nun als zweites Kriterium nach EndVertex sortiert
-02.08.2016: Edge List befindet sich nun verteilt auf jedem Prozessor, wird nun zu Buffer transformiert, noch nicht fertig
+62 stunden: beschäftigung mit long bzw. reduce_scatter, beginn schriftliche arbeit
+64.5 stunden: bitmap auf long umgestellt, schreiben der arbeit
+08.07.2016: 66.5 Stunden für Umstellung auf Lesen/Schreiben des Graphes in File
+09.07.2016: 68.5 Stunden Erfassen der Arbeit / Grundalgo
+10.07.2016: 69.5 Stunde Schreiben der Arbeit
+11.07.2016: 70.5 Stunde Schreiben der Arbeit / Grundalgo in Pseudo
+12.07.2016: 73.5 Stunden Schreiben der Arbeit / Testen
+22.07.2016: 74.5 Stunde Edge List to Graph in Parallel Beginn
+25.07.2016: 76.5 Stunden überlegen einer Strategie für parallele Abarbeitung der Edge List to Graph
+79 Stunden Sortieren der Edge List, wird noch sequentiell durchgeführt, dann auf Prozessoren aufgeteilt
+80.5 Stunden Implementieren, dass sortierte Egde List auf Procs aufgeteilt wird
+83 Stunden Implementieren weiter
+85 Stunden Weiterimplementieren, Edge List wird nun als zweites Kriterium nach EndVertex sortiert
+02.08.2016: 87 Stunden Edge List befindet sich nun verteilt auf jedem Prozessor, wird nun zu Buffer transformiert, noch nicht fertig
+03.08.2016: 89 Stunden Erweiterung fast fertig, noch Fehler enthalten

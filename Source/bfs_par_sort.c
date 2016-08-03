@@ -88,6 +88,8 @@ int main(int argc, char *argv[]){
         
         MPI_Scatterv((void *) endVertex, edgelist_send_counts, edgelist_send_displs, MPI_UINT64_T, (void *) endVertex_recvbuf, edgelist_counts_recvbuf, MPI_UINT64_T, 0, MPI_COMM_WORLD);
         
+        uint64_t *index_of_node = create_buffer_from_edgelist(startVertex_recvbuf, endVertex_recvbuf, nodes / procs, edgelist_counts_recvbuf, my_rank);
+        
         create_node_edge_lists(nodes, edges, startVertex, endVertex, node_edge_list, count_edges_per_node);
 	    //MAYBE CREATING BUFFERS WITH REALLOC, SO THERE ARE NOT LISTS, create_node_edge_lists, NECESSARY
 
@@ -129,6 +131,14 @@ int main(int argc, char *argv[]){
         //SCATTER LEVEL BUFFER
         MPI_Scatter((void *)level,nodes / BITS / procs,MPI_UNSIGNED_LONG, (void *)level_recvbuf, nodes / BITS / procs, MPI_UNSIGNED_LONG, 0, MPI_COMM_WORLD);
         
+        for (i = 0; i < index_of_node[(nodes/procs)]; i++){
+            printf("%llu = %llu\n", (unsigned long long) buffer_recvbuf[i], (unsigned long long) startVertex_recvbuf[i]);
+        }
+        
+        for (i = 0; i < nodes / procs; i++){
+            printf("%llu = %llu\n", (unsigned long long) count_edges_per_node_recvbuf[i], (unsigned long long) index_of_node[i]);
+        }
+        
         //BFS
         time = mytime() - time;
         printf("Time for reading, generating edge buffer and scattering: %f\n", time/1000000);
@@ -157,6 +167,8 @@ int main(int argc, char *argv[]){
         MPI_Scatterv((void *) startVertex, edgelist_send_counts, edgelist_send_displs, MPI_UINT64_T, (void *) startVertex_recvbuf, edgelist_counts_recvbuf, MPI_UINT64_T, 0, MPI_COMM_WORLD);
         
         MPI_Scatterv((void *) endVertex, edgelist_send_counts, edgelist_send_displs, MPI_UINT64_T, (void *) endVertex_recvbuf, edgelist_counts_recvbuf, MPI_UINT64_T, 0, MPI_COMM_WORLD);
+        
+        //create_buffer_from_edgelist(startVertex_recvbuf, endVertex_recvbuf, nodes / procs, edgelist_counts_recvbuf, my_rank);
         
         // RECEIVE COUNT OF EDGES PER NODE
         MPI_Scatter((void *)count_edges_per_node,nodes / procs * I64_BYTES, MPI_BYTE, (void *)count_edges_per_node_recvbuf, nodes / procs * I64_BYTES, MPI_BYTE, 0, MPI_COMM_WORLD);
@@ -243,22 +255,26 @@ void bfs(unsigned long *level, uint64_t *buffer, uint64_t buffer_size, uint64_t 
 
 uint64_t *create_buffer_from_edgelist(uint64_t *startVertex, uint64_t *endVertex, uint64_t nodes, uint64_t edges, uint64_t proc_number){
     uint64_t i,j,k, duplicates;
-    uint64_t *index_of_node = (uint64_t *) calloc(pow(2,SCALE), I64_BYTES);
+    uint64_t *index_of_node = (uint64_t *) calloc(nodes+1, I64_BYTES);
     j = 0;
     k = 0;
     duplicates = 0;
     index_of_node[k++] = j;
+    printf("%llu\n", (unsigned long long) (nodes*proc_number));
     for (i = nodes*proc_number; i < nodes*(proc_number+1); i++){
         while (startVertex[j] == i){
-            if (endVertex[j] == startVertex[j-duplicates-1] && j > index_of_node[k-1]){
+            if (j > index_of_node[k-1] && endVertex[j] == startVertex[j-duplicates-1]){
                 duplicates++;
             }else{
                 startVertex[j-duplicates] = endVertex[j];
+                printf("startVertex on %llu is: %llu,%llu, %llu\n", (unsigned long long) (j), (unsigned long long) startVertex[j-duplicates], (unsigned long long) endVertex[j], (unsigned long long) duplicates);
             }
             j++;
         }
         index_of_node[k++] = j-duplicates;
     }
+    //REALLOC startVertex
+    return index_of_node;
 }
 
 void create_node_edge_lists(uint64_t nodes, uint64_t edges, uint64_t *startVertex, uint64_t *endVertex, struct edge **node_edge_list, uint64_t *count_edges_per_node){
