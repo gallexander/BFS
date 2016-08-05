@@ -1,0 +1,118 @@
+SCALE 23
+EDGEFACTOR 4
+
+[e1026090@jupiter ~]$ gcc -Wall -o kron kronecker_generator.c -lm
+[e1026090@jupiter ~]$ ./kron
+Time for generating and writing the graph to a file: 144.960831
+
+[e1026090@jupiter ~]$ mpirun -host jupiter1 -np 2 ./par
+Time for reading, generating edge buffer and scattering: 39.543321
+Time for bfs searching: 15.090652
+[e1026090@jupiter ~]$ mpirun -host jupiter1 -np 2 ./par_sort 
+Time for reading, generating edge buffer and scattering: 31.629967
+Time for bfs searching: 15.027722
+[e1026090@jupiter ~]$ mpirun -host jupiter1 -np 4 ./par
+Time for reading, generating edge buffer and scattering: 36.826155
+Time for bfs searching: 7.550526
+[e1026090@jupiter ~]$ mpirun -host jupiter1 -np 4 ./par_sort
+Time for reading, generating edge buffer and scattering: 31.243862
+Time for bfs searching: 7.542084
+[e1026090@jupiter ~]$ mpirun -host jupiter1 -np 8 ./par
+Time for reading, generating edge buffer and scattering: 36.715101
+Time for bfs searching: 3.878200
+[e1026090@jupiter ~]$ mpirun -host jupiter1 -np 8 ./par_sort
+Time for reading, generating edge buffer and scattering: 31.106235
+Time for bfs searching: 3.873191
+[e1026090@jupiter ~]$ mpirun -host jupiter1 -np 16 ./par
+Time for reading, generating edge buffer and scattering: 36.513390
+Time for bfs searching: 2.040776
+[e1026090@jupiter ~]$ mpirun -host jupiter1 -np 16 ./par_sort
+Time for reading, generating edge buffer and scattering: 30.943413
+Time for bfs searching: 2.028694
+[e1026090@jupiter ~]$ mpirun -host jupiter1 -np 16 -host jupiter2 -np 16 ./par
+Time for reading, generating edge buffer and scattering: 39.131154
+Time for bfs searching: 1.426573
+[e1026090@jupiter ~]$ mpirun -host jupiter1 -np 16 -host jupiter2 -np 16 ./par_sort
+Time for reading, generating edge buffer and scattering: 31.649978
+Time for bfs searching: 1.345727
+[e1026090@jupiter ~]$ mpirun -host jupiter1 -np 16 -host jupiter2 -np 16 -host jupiter3 -np 16 -host jupiter4 -np 16 ./par_sort
+Time for reading, generating edge buffer and scattering: 31.867331
+Time for bfs searching: 1.414761
+[e1026090@jupiter ~]$ mpirun -host jupiter1 -np 16 -host jupiter2 -np 16 -host jupiter3 -np 16 -host jupiter4 -np 16 ./par
+Time for reading, generating edge buffer and scattering: 37.058477
+Time for bfs searching: 1.303772
+
+SCALE 25
+EDGEFACTOR 4
+
+[e1026090@jupiter ~]$ gcc -Wall -o kron kronecker_generator.c -lm
+[e1026090@jupiter ~]$ ./kron
+Time for generating and writing the graph to a file: 635.472792
+[e1026090@jupiter ~]$ mpicc -Wall -o par_sort bfs_par_sort.c
+bfs_par_sort.c: In Funktion »main«:
+bfs_par_sort.c:14: Warnung: Variable »status« wird nicht verwendet
+bfs_par_sort.c:12: Warnung: Variable »root« wird nicht verwendet
+bfs_par_sort.c:9: Warnung: Variable »tag« wird nicht verwendet
+[e1026090@jupiter ~]$ mpicc -Wall -o par bfs_par.c
+bfs_par.c: In Funktion »main«:
+bfs_par.c:38: Warnung: Variable »initiator« wird nicht verwendet
+bfs_par.c:14: Warnung: Variable »status« wird nicht verwendet
+bfs_par.c:12: Warnung: Variable »root« wird nicht verwendet
+bfs_par.c:9: Warnung: Variable »tag« wird nicht verwendet
+[e1026090@jupiter ~]$ mpirun -host jupiter1 -np 2 ./par
+Time for reading, generating edge buffer and scattering: 212.402375
+Time for bfs searching: 64.906149
+[e1026090@jupiter ~]$ mpirun -host jupiter1 -np 2 ./par_sort
+Time for reading, generating edge buffer and scattering: 134.472717
+Time for bfs searching: 64.854168
+[e1026090@jupiter ~]$ mpirun -host jupiter1 -np 4 ./par
+Time for reading, generating edge buffer and scattering: 204.021560
+Time for bfs searching: 32.786930
+[e1026090@jupiter ~]$ mpirun -host jupiter1 -np 4 ./par_sort
+Time for reading, generating edge buffer and scattering: 132.783168
+Time for bfs searching: 33.106872
+[e1026090@jupiter ~]$ mpirun -host jupiter1 -np 8 ./par
+Time for reading, generating edge buffer and scattering: 182.855116
+Time for bfs searching: 17.325316
+[e1026090@jupiter ~]$ mpirun -host jupiter1 -np 8 ./par_sort
+Time for reading, generating edge buffer and scattering: 130.588853
+Time for bfs searching: 17.152872
+[e1026090@jupiter ~]$ mpirun -host jupiter1 -np 16 ./par
+Time for reading, generating edge buffer and scattering: 162.197577
+Time for bfs searching: 8.979457
+[e1026090@jupiter ~]$ mpirun -host jupiter1 -np 16 ./par_sort
+Time for reading, generating edge buffer and scattering: 129.946109
+Time for bfs searching: 9.143225
+[e1026090@jupiter ~]$ mpirun -host jupiter1 -np 16 -host jupiter2 -np 16 ./par
+Time for reading, generating edge buffer and scattering: 164.769737
+Time for bfs searching: 5.327869
+[e1026090@jupiter ~]$ mpirun -host jupiter1 -np 16 -host jupiter2 -np 16 ./par_sort
+Time for reading, generating edge buffer and scattering: 133.110015
+Time for bfs searching: 5.565530
+[e1026090@jupiter ~]$ mpirun -host jupiter1 -np 16 -host jupiter2 -np 16 -host jupiter3 -np 16 -host jupiter4 -np 16 ./par
+Time for reading, generating edge buffer and scattering: 164.813500
+Time for bfs searching: 3.775767
+[e1026090@jupiter ~]$ mpirun -host jupiter1 -np 16 -host jupiter2 -np 16 -host jupiter3 -np 16 -host jupiter4 -np 16 ./par_sort
+Time for reading, generating edge buffer and scattering: 136.789752
+Time for bfs searching: 3.615322
+
+SCALE 26
+EDGEFACTOR 4
+
+[e1026090@jupiter ~]$ gcc -Wall -o kron kronecker_generator.c -lm
+[e1026090@jupiter ~]$ ./kron
+Time for generating and writing the graph to a file: 1305.794286
+
+
+
+
+
+
+
+
+
+
+
+
+
+
