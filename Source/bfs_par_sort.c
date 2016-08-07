@@ -29,7 +29,6 @@ int main(int argc, char *argv[]){
     unsigned long *level_recvbuf = (unsigned long *) calloc(nodes / BITS / procs, sizeof(unsigned long));
     int edgelist_counts_recvbuf = 0;
     if (my_rank == 0){
-        double time = mytime();
         startVertex = (uint64_t *) calloc(edges, I64_BYTES);
         endVertex = (uint64_t *) calloc(edges, I64_BYTES);
         edgelist_send_counts = (int *) calloc(procs, sizeof(int));
@@ -39,6 +38,7 @@ int main(int argc, char *argv[]){
 
         read_graph(SCALE, EDGEFACTOR, startVertex, endVertex);
         
+        double time = mytime();
         //SORTING THE EDGE LIST
         sort(startVertex, endVertex, 0, edges-1);
         
@@ -204,38 +204,6 @@ uint64_t *create_buffer_from_edgelist(uint64_t *startVertex, uint64_t *endVertex
     return index_of_node;
 }
 
-void create_node_edge_lists(uint64_t nodes, uint64_t edges, uint64_t *startVertex, uint64_t *endVertex, struct edge **node_edge_list, uint64_t *count_edges_per_node){
-    uint64_t i;
-    char notAlreadyExists = 1;
-    struct edge *p;
-    for (i = 0; i < edges; i++){
-        if (startVertex[i] != endVertex[i]){
-            if (node_edge_list[startVertex[i]] == NULL){
-                node_edge_list[startVertex[i]] = (struct edge *) calloc(1, sizeof(struct edge));
-                node_edge_list[startVertex[i]]->end = endVertex[i];
-				count_edges_per_node[startVertex[i]] = 1;
-            }else{
-                notAlreadyExists = 1;
-                p = node_edge_list[startVertex[i]];
-                if (p->end == endVertex[i]){
-                    notAlreadyExists = 0;
-                }
-                while (p->next != NULL && notAlreadyExists){
-                    p = p->next;
-                    if (p->end == endVertex[i]){
-                        notAlreadyExists = 0;
-                    }
-                }
-                if (notAlreadyExists){
-                    p->next = (struct edge *) calloc(1, sizeof(struct edge));
-                    (p->next)->end = endVertex[i];
-					count_edges_per_node[startVertex[i]] +=1;
-                }
-            }
-        }
-    }
-}
-
 void read_graph(int scale, int edgefactor, uint64_t *startVertex, uint64_t *endVertex){
     uint64_t i;
     FILE *fp;
@@ -244,50 +212,6 @@ void read_graph(int scale, int edgefactor, uint64_t *startVertex, uint64_t *endV
         fscanf(fp, "%llu %llu\n", (unsigned long long *)(startVertex+i), (unsigned long long *)(endVertex+i));
     }
     fclose(fp);
-}
-
-uint64_t calculate_size(uint64_t *count_edges_per_node, uint64_t first, uint64_t last){
-	uint64_t size;
-
-	uint64_t i;
-	for (i = first; i <= last; i++){
-		size += count_edges_per_node[i];
-	}
-	return size;
-}
-
-uint64_t *lists_to_buffer(uint64_t *size, struct edge **node_edge_list, uint64_t *count_edges_per_node, uint64_t first, uint64_t last){
-	struct edge *p = NULL;
-	uint64_t *buffer = NULL;
-	
-	uint64_t i,j;
-	for (i = first; i <= last; i++){
-		(*size) += count_edges_per_node[i];
-	}
-	if ((*size)){
-		buffer = (uint64_t *) calloc((*size), I64_BYTES);
-		j = 0;
-		for (i = first; i <= last; i++){
-			if (node_edge_list[i] != NULL){
-				p = node_edge_list[i];
-				buffer[j++] = p->end;				
-				while (p->next != NULL){
-					p = p->next;
-					buffer[j++] = p->end;
-				}	
-			}
-		}
-	}
-	return buffer;
-}
-
-uint64_t getSumOfEdges(uint64_t *count_edges_per_node, uint64_t nodes){
-    uint64_t sum = 0;
-    uint64_t i;
-    for (i = 0; i < nodes; i++){
-        sum += count_edges_per_node[i];
-    }
-    return sum;
 }
 
 void sort(uint64_t *startVertex, uint64_t *endVertex, int64_t l, int64_t r){
@@ -317,19 +241,4 @@ int64_t partition(uint64_t *startVertex, uint64_t *endVertex, int64_t l, int64_t
     t = startVertex[l]; startVertex[l] = startVertex[j]; startVertex[j] = t;
     t = endVertex[l]; endVertex[l] = endVertex[j]; endVertex[j] = t;
     return j;
-}
-
-void freelists(uint64_t nodes, struct edge **node_edge_list){
-    uint64_t i;
-    for (i = 0; i < nodes; i++){
-        freelist(node_edge_list[i]);
-    }
-    free(node_edge_list);
-}
-
-void freelist(struct edge *pp){
-    if (pp != NULL){
-        freelist(pp->next);
-        free(pp);
-    }
 }

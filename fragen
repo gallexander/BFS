@@ -6,3 +6,4 @@ was ist NECmpi
 reicht nicht eig eine visited bitmap um verifizieren zu können ob gültiger breitensuche baum?
 wenn bitmap vom typ 
 kann ich nicht eigentlich nur 2^32 * 2^6 bitmap elemente versenden
+search keys sind root?

@@ -103,7 +103,29 @@ EDGEFACTOR 4
 [e1026090@jupiter ~]$ ./kron
 Time for generating and writing the graph to a file: 1305.794286
 
-
+[e1026090@jupiter ~]$ mpirun -host jupiter1 -np 2 ./par
+Time for reading, generating edge buffer and scattering: 436.766294
+Time for bfs searching: 140.240352
+[e1026090@jupiter ~]$ mpicc -Wall -o par_sort bfs_par_sort.c
+bfs_par_sort.c: In Funktion »main«:
+bfs_par_sort.c:14: Warnung: Variable »status« wird nicht verwendet
+bfs_par_sort.c:12: Warnung: Variable »root« wird nicht verwendet
+bfs_par_sort.c:9: Warnung: Variable »tag« wird nicht verwendet
+[e1026090@jupiter ~]$ mpirun -host jupiter1 -np 2 ./par_sort
+Time for reading, generating edge buffer and scattering: 277.919509
+Time for bfs searching: 139.308930
+[e1026090@jupiter ~]$ mpirun -host jupiter1 -np 4 ./par
+Time for reading, generating edge buffer and scattering: 354.171018
+Time for bfs searching: 70.494672
+[e1026090@jupiter ~]$ mpirun -host jupiter1 -np 4 ./par_sort
+Time for reading, generating edge buffer and scattering: 272.592826
+Time for bfs searching: 70.363589
+[e1026090@jupiter ~]$ mpirun -host jupiter1 -np 8 ./par
+Time for reading, generating edge buffer and scattering: 437.350591
+Time for bfs searching: 37.322201
+[e1026090@jupiter ~]$ mpirun -host jupiter1 -np 8 ./par_sort
+Time for reading, generating edge buffer and scattering: 271.640883
+Time for bfs searching: 36.513304
 
 
 

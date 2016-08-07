@@ -27,7 +27,6 @@ int main(int argc, char *argv[]){
     unsigned long *level_recvbuf = (unsigned long *) calloc(nodes / BITS / procs, sizeof(unsigned long));
     uint64_t *count_edges_per_node_recvbuf = (uint64_t *) calloc(nodes / procs, I64_BYTES);
     if (my_rank == 0){
-        double time = mytime();
         uint64_t *startVertex = (uint64_t *) calloc(edges, I64_BYTES);
         uint64_t *endVertex = (uint64_t *) calloc(edges, I64_BYTES);
         buffer_send_counts = (int *) calloc(procs, sizeof(int));
@@ -41,6 +40,8 @@ int main(int argc, char *argv[]){
 	    count_edges_per_node = (uint64_t *) calloc(nodes, I64_BYTES);
 
         read_graph(SCALE, EDGEFACTOR, startVertex, endVertex);
+
+        double time = mytime();
         
         create_node_edge_lists(nodes, edges, startVertex, endVertex, node_edge_list, count_edges_per_node);
 	    //MAYBE CREATING BUFFERS WITH REALLOC, SO THERE ARE NOT LISTS, create_node_edge_lists, NECESSARY

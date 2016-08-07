@@ -24,3 +24,4 @@ parallelisiert: 10
 02.08.2016: 87 Stunden Edge List befindet sich nun verteilt auf jedem Prozessor, wird nun zu Buffer transformiert, noch nicht fertig
 03.08.2016: 89 Stunden Erweiterung fast fertig, noch Fehler enthalten
 05.08.2016: 94 Stunden Erweiterung so weit fertig, Sortieren sollte noch parallel durchgeführt werden
+07.08.2016: 96 Stunden Zeit gemessen, Gedanken über Parent Array
