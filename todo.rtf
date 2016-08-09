@@ -4,14 +4,21 @@
 \paperw11900\paperh16840\margl1440\margr1440\vieww10800\viewh8400\viewkind0
 \pard\tx566\tx1133\tx1700\tx2267\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\pardirnatural\partightenfactor0
 
-\f0\fs24 \cf0 1. Generieren der Kanten Liste parallelisieren: Ansatz w\'e4re das jeder Prozessor einen gewissen Teil der Kantenliste liest und dann auf alle Prozessoren, je nach dem wie die Knotenverteilung ist, verteilt, sodass jeder Prozessor mehrere Buffer empf\'e4ngt.\
+\f0\fs24 \cf0 1. Parent array erstellen: Habe mich f\'fcr M\'f6glichkeit 3 entschieden\
+	-1. M\'f6glichkeit: zus\'e4tzlich zur visited bitmap jedes procs, wird zu jedem node gespeichert, in 	welchem level er besucht wurde, am ende geht man verkehrt vom letzten bis zum ersten level 	(oder vom ersten bis zum letzten level) und schreibt die parents in einen buffer \'fcber alle nodes, 	nach abarbeiten eines level wird dieser buffer synchronisiert, n\'e4chstes level wird gemacht\
+	-2. M\'f6glichkeit: visited bitmap \'fcber alle nodes bei jedem proc, problem man muss gesamte 	visited bitmap synchronisieren, zus\'e4tzlich muss man zu jedem node abspeichern, wer der 	vaterknoten ist, dazu muss man alle nodes mit 8 byte bei allen procs abspeichern, am schluss 	werden alle buffer von allen procs auf einen reduced, dass ist dann das parent array!\
+	-3. M\'f6glichkeit: aber keine Ahnung wie, zu jedem Node wird nur der Vaterknoten abgespeichert, 	keine redundanten Daten, beste L\'f6sung, l\'e4sst sich aber nicht gut mit meiner implementierung 	vereinbaren, vlt statt level information zu schicken mit bitmap, m\'fcsste man buffer \'fcber alle 	nodes schicken, in jedem feld des buffers steht der vater der nodes des neuen levels, damit 	h\'e4tte man 2^5 mehr datenaufkommen\
+	Vorgehensweise: statt bitmap level buffer normalen level buffer verwenden und statt visited 	bitmap die parents abspeichern\
+	res\'fcmee: 1. M\'f6glichkeit ist eigentlich das gleiche wie 3. M\'f6glichkeit nur dass erst am Ende die 	Levels nochmal durchgearbeitet werden bzw. zus\'e4tzlich zur bitmap der 1. M\'f6glichkeit buffer wie 	in der 3. M\'f6glichkeit gespeichert werden\
 2. reduce_scatter statt all_to_all\
-3. Edge List to Graph parallel durchf\'fchren\
+3. Sortieren parallel durchf\'fchren\
+4. undirected statt directed edges\
+5. random nodes\
+6. validation\
+7. Generieren der Kanten Liste parallelisieren\
+8. mehr als 2^32 elemente zum versenden \'97> MPI ist da etwas altmodisch\
+9. Edge List to Graph parallel durchf\'fchren\
 	-edge list (startVertex und endVertex, zweites Kriterium ist endVertex) sortieren\
 	-1. M\'f6glichkeit: auf Procs aufteilen und dort, weil eh schon sortiert, in Buffer schreiben -> keine 	Listen mehr notwendig zum Zwischenspeichern\
 	-2. M\'f6glichkeit: in Buffer schreiben und Buffer auf Procs aufteilen\
-4. Parent array erstellen\
-5. load balancing\
-6. mehr als 2^32 elemente zum versenden \'97> MPI ist da etwas altmodisch\
-7. Sortieren parallel durchf\'fchren\
-8. undirected statt directed edges}
+10. load balancing}

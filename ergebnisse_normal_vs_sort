@@ -126,6 +126,18 @@ Time for bfs searching: 37.322201
 [e1026090@jupiter ~]$ mpirun -host jupiter1 -np 8 ./par_sort
 Time for reading, generating edge buffer and scattering: 271.640883
 Time for bfs searching: 36.513304
+[e1026090@jupiter ~]$ mpirun -host jupiter1 -np 16 ./par
+Time for reading, generating edge buffer and scattering: 379.847963
+Time for bfs searching: 20.248885
+[e1026090@jupiter ~]$ mpirun -host jupiter1 -np 16 ./par_sort
+Time for reading, generating edge buffer and scattering: 267.205906
+Time for bfs searching: 29.190486
+[e1026090@jupiter ~]$ mpirun -host jupiter1 -np 16 -host jupiter2 -np 16 ./par
+Time for reading, generating edge buffer and scattering: 579.026746
+Time for bfs searching: 22.010486
+[e1026090@jupiter ~]$ mpirun -host jupiter1 -np 16 -host jupiter2 -np 16 ./par_sort
+Time for reading, generating edge buffer and scattering: 348.594813
+Time for bfs searching: 18.176612
 
 
 

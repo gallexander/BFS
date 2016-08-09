@@ -4,6 +4,6 @@ wie viel arbeitsspeicher kann ich maximal nutzen in bezug auf 2^?    ?
 jupiterliste erstellen?
 was ist NECmpi
 reicht nicht eig eine visited bitmap um verifizieren zu können ob gültiger breitensuche baum?
-wenn bitmap vom typ 
+wenn bitmap vom typ uint64_t
 kann ich nicht eigentlich nur 2^32 * 2^6 bitmap elemente versenden
 search keys sind root?
