@@ -26,3 +26,4 @@ parallelisiert: 10
 05.08.2016: 94 Stunden Erweiterung so weit fertig, Sortieren sollte noch parallel durchgeführt werden
 07.08.2016: 96 Stunden Zeit gemessen, Gedanken über Parent Array
 09.08.2016: 98 Stunden Wieder Zeit gemessen, Gedanken über Parent Array, für Möglichkeit 3 entschieden
+11.08.2016: 100 Stunden MPI_IN_PLACE, SLURM, Bitte noch auf Richtigkeit überprüfen

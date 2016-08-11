@@ -22,7 +22,7 @@ int main(int argc, char *argv[]){
     /* MUST BE INT BECAUSE OF MPI RESTRICTION */
     int *edgelist_send_counts = NULL;
     int *edgelist_send_displs = NULL;
-    unsigned long *level = NULL;
+    uint64_t *level = NULL;
     uint64_t *startVertex_recvbuf = NULL;
     uint64_t *endVertex_recvbuf = NULL;
     uint64_t *index_of_node = NULL;
@@ -34,7 +34,7 @@ int main(int argc, char *argv[]){
         edgelist_send_counts = (int *) calloc(procs, sizeof(int));
         edgelist_send_displs = (int *) calloc(procs, sizeof(int));
 
-        level = (unsigned long *) calloc(nodes / BITS, sizeof(unsigned long)); //LEVEL BUFFER FOR MASTER
+        level = (uint64_t *) calloc(nodes, sizeof(uint64_t)); //LEVEL BUFFER FOR MASTER
 
         read_graph(SCALE, EDGEFACTOR, startVertex, endVertex);
         
@@ -81,6 +81,7 @@ int main(int argc, char *argv[]){
 	
         //SET ROOT LEVEL
         level[(ROOT/BITS)] = level[(ROOT/BITS)] | (unsigned long) pow(2,(ROOT % BITS));
+        level[ROOT] = ROOT;
 
         //SCATTER LEVEL BUFFER
         MPI_Scatter((void *)level,nodes / BITS / procs,MPI_UNSIGNED_LONG, (void *)level_recvbuf, nodes / BITS / procs, MPI_UNSIGNED_LONG, 0, MPI_COMM_WORLD);
@@ -135,7 +136,7 @@ int main(int argc, char *argv[]){
 
 void bfs(unsigned long *level, uint64_t *buffer, uint64_t buffer_size, uint64_t *index_of_node, uint64_t nodes_owned, int procs){
     unsigned long *next_level = (unsigned long *) calloc(pow(2,SCALE) / BITS, sizeof(unsigned long));
-    //unsigned long *level_alltoall = (unsigned long *) calloc(pow(2,SCALE) / BITS, sizeof(unsigned long));
+    unsigned long *level_alltoall = (unsigned long *) calloc(pow(2,SCALE) / BITS, sizeof(unsigned long));
     unsigned long *visited = (unsigned long *) calloc(nodes_owned / BITS, sizeof(unsigned long));
     char oneChildisVisited = 1;
     uint64_t i;
@@ -162,23 +163,22 @@ void bfs(unsigned long *level, uint64_t *buffer, uint64_t buffer_size, uint64_t 
         }
 
         // SEND MESSAGE THAT THERE ARE CHILDS TO EVALUATE, CAN BE ONE BYTE FROM ALL procs
-        //char isVisited_reduced = 0;
-        MPI_Allreduce(MPI_IN_PLACE, (void *) &oneChildisVisited, 1, MPI_CHAR, MPI_BOR, MPI_COMM_WORLD);
-        //MPI_Allreduce((void *) &oneChildisVisited, (void *) &isVisited_reduced, 1, MPI_CHAR, MPI_BOR, MPI_COMM_WORLD);
-        //oneChildisVisited = isVisited_reduced;
+        char isVisited_reduced = 0;
+        MPI_Allreduce((void *) &oneChildisVisited, (void *) &isVisited_reduced, 1, MPI_CHAR, MPI_BOR, MPI_COMM_WORLD);
+        oneChildisVisited = isVisited_reduced;
         // AFTER SEND LEVEL BUFFER, ALLTOALL
         if (oneChildisVisited){
-            MPI_Alltoall(MPI_IN_PLACE, pow(2,SCALE) / BITS / procs, MPI_UNSIGNED_LONG, (void *) next_level, pow(2,SCALE) / BITS / procs, MPI_UNSIGNED_LONG, MPI_COMM_WORLD);
+            MPI_Alltoall((void *) next_level, pow(2,SCALE) / BITS / procs, MPI_UNSIGNED_LONG, (void *) level_alltoall, pow(2,SCALE) / BITS / procs, MPI_UNSIGNED_LONG, MPI_COMM_WORLD);
 
             memset(level, 0, nodes_owned / BITS);
             for (i = 0; i < (pow(2,SCALE) / BITS); i++){
-                level[(i % (nodes_owned / BITS))] = level[(i % (nodes_owned / BITS))] | next_level[i];
+                level[(i % (nodes_owned / BITS))] = level[(i % (nodes_owned / BITS))] | level_alltoall[i];
             }
        
             memset(next_level, 0, (pow(2,SCALE) / BITS));
         }
     }
-    //free(level_alltoall);
+    free(level_alltoall);
     free(visited);
     free(next_level);
 }
