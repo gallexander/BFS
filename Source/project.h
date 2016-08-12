@@ -6,7 +6,7 @@
 #include <string.h>
 #include <sys/time.h>
 
-#define SCALE 18     // 2^30 MALLOC MAX = SCALE 26 + EDGEFACTOR 16
+#define SCALE 7     // 2^30 MALLOC MAX = SCALE 26 + EDGEFACTOR 16
 #define EDGEFACTOR 4
 
 #define I64_BYTES 8

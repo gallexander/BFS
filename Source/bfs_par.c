@@ -140,9 +140,15 @@ void bfs(unsigned long *level, uint64_t *buffer, uint64_t buffer_size, uint64_t 
     unsigned long *level_alltoall = (unsigned long *) calloc(pow(2,SCALE) / BITS, sizeof(unsigned long));
     unsigned long *visited = (unsigned long *) calloc(nodes_owned / BITS, sizeof(unsigned long));
     char oneChildisVisited = 1;
+    int level_count= 0;
     uint64_t i;
     unsigned long position;
     while (oneChildisVisited){
+        printf("level %i: ", level_count);
+        for (i = 0; i < nodes_owned / BITS; i++){
+            printf("%lu ", level[i]);
+        }
+        printf("\n");
         oneChildisVisited = 0;
         for (i = 0; i < nodes_owned; i++){
             position = (unsigned long) pow(2,(i % BITS));
@@ -162,6 +168,11 @@ void bfs(unsigned long *level, uint64_t *buffer, uint64_t buffer_size, uint64_t 
                 }
             }
         }
+        printf("next level: ");
+        for (i = 0; i < pow(2, SCALE) / BITS; i++){
+            printf("%lu ", next_level[i]);
+        }
+        printf("\n");
 
         // SEND MESSAGE THAT THERE ARE CHILDS TO EVALUATE, CAN BE ONE BYTE FROM ALL procs
         char isVisited_reduced = 0;
@@ -175,8 +186,10 @@ void bfs(unsigned long *level, uint64_t *buffer, uint64_t buffer_size, uint64_t 
             for (i = 0; i < (pow(2,SCALE) / BITS); i++){
                 level[(i % (nodes_owned / BITS))] = level[(i % (nodes_owned / BITS))] | level_alltoall[i];
             }
-       
-            memset(next_level, 0, (pow(2,SCALE) / BITS));
+            for (i = 0; i < pow(2, SCALE) / BITS; i++){
+                next_level[i] = 0;
+            }
+            //memset(next_level, 0, (pow(2,SCALE) / BITS));
         }
     }
     free(level_alltoall);
