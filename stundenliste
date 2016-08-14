@@ -29,3 +29,4 @@ parallelisiert: 10
 11.08.2016: 100 Stunden MPI_IN_PLACE, SLURM, Bitte noch auf Richtigkeit überprüfen
 11.08.2016: 102 Stunden reduce_scatter, es stimmt was noch nicht
 12.08.2016: 103 Stunden, Fehler ausgebessert, memset hat nicht richtig gefunzt für next_level, weiter Tests um sicher zu gehen
+14.08.2016: 106 Stunden, Umstellung auf parent array

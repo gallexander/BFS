@@ -180,16 +180,14 @@ void bfs(unsigned long *level, uint64_t *buffer, uint64_t buffer_size, uint64_t 
         oneChildisVisited = isVisited_reduced;
         // AFTER SEND LEVEL BUFFER, ALLTOALL
         if (oneChildisVisited){
+            memset(level_alltoall, 0, (pow(2,SCALE) / BITS) * sizeof(unsigned long));
             MPI_Alltoall((void *) next_level, pow(2,SCALE) / BITS / procs, MPI_UNSIGNED_LONG, (void *) level_alltoall, pow(2,SCALE) / BITS / procs, MPI_UNSIGNED_LONG, MPI_COMM_WORLD);
 
-            memset(level, 0, nodes_owned / BITS);
+            memset(level, 0, (nodes_owned / BITS) * sizeof(unsigned long));
             for (i = 0; i < (pow(2,SCALE) / BITS); i++){
                 level[(i % (nodes_owned / BITS))] = level[(i % (nodes_owned / BITS))] | level_alltoall[i];
             }
-            for (i = 0; i < pow(2, SCALE) / BITS; i++){
-                next_level[i] = 0;
-            }
-            //memset(next_level, 0, (pow(2,SCALE) / BITS));
+            memset(next_level, 0, (pow(2,SCALE) / BITS) * sizeof(unsigned long));
         }
     }
     free(level_alltoall);
