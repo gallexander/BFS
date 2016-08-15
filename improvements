@@ -1,3 +1,5 @@
 1: unsigned char bitmap in unsigned long bitmap verwandelt, visited ebenfalls in unsigned long
 2: edge list to graph in parallel: Sortierung sollte noch parallelisiert werden
+3: reduce_scatter
+
 

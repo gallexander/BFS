@@ -10,7 +10,6 @@
 	-3. M\'f6glichkeit: aber keine Ahnung wie, zu jedem Node wird nur der Vaterknoten abgespeichert, 	keine redundanten Daten, beste L\'f6sung, l\'e4sst sich aber nicht gut mit meiner implementierung 	vereinbaren, vlt statt level information zu schicken mit bitmap, m\'fcsste man buffer \'fcber alle 	nodes schicken, in jedem feld des buffers steht der vater der nodes des neuen levels, damit 	h\'e4tte man 2^5 mehr datenaufkommen\
 	Vorgehensweise: statt bitmap level buffer normalen level buffer verwenden und statt visited 	bitmap die parents abspeichern\
 	res\'fcmee: 1. M\'f6glichkeit ist eigentlich das gleiche wie 3. M\'f6glichkeit nur dass erst am Ende die 	Levels nochmal durchgearbeitet werden bzw. zus\'e4tzlich zur bitmap der 1. M\'f6glichkeit buffer wie 	in der 3. M\'f6glichkeit gespeichert werden\
-2. reduce_scatter statt all_to_all\
 3. Sortieren parallel durchf\'fchren\
 4. undirected statt directed edges\
 5. random nodes\
