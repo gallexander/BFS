@@ -1,9 +1,12 @@
-WARUM INT* bzw. INT bei mpi operationen?
-array[x] für x = 2^50 möglich?
 wie viel arbeitsspeicher kann ich maximal nutzen in bezug auf 2^?    ?
 jupiterliste erstellen?
-was ist NECmpi
-reicht nicht eig eine visited bitmap um verifizieren zu können ob gültiger breitensuche baum?
 wenn bitmap vom typ uint64_t
 kann ich nicht eigentlich nur 2^32 * 2^6 bitmap elemente versenden
 search keys sind root?
+wie müsste das aussehen wenn ich mehr als 2^32 bzw. je nach proc anzahl elemente verschicke?
+Frage wegen letzter Möglichkeit Parent Array zu erstellen
+wie kommt man in die graph500 liste
+auch mit eigener implementierung?
+von wem wird diese überprüft?
+wieso funktionieren 16 tasks nicht, ist was mit jupiter, danach haben 8 tasks auch nicht funktioniert?
+validation für jeden search key?

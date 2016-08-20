@@ -30,3 +30,4 @@ parallelisiert: 10
 11.08.2016: 102 Stunden reduce_scatter, es stimmt was noch nicht
 12.08.2016: 103 Stunden, Fehler ausgebessert, memset hat nicht richtig gefunzt für next_level, weiter Tests um sicher zu gehen
 14.08.2016: 106 Stunden, Umstellung auf parent array
+15.08.2016: 109 Stunden, Parent array fertig mit uint64_t lösung (3. Möglichkeit), deutlich zu ineffektiv, wegen reduce_scatter, dass bei so großer datenmenge + MPI_MAX Op zu lange braucht
