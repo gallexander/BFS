@@ -62,6 +62,7 @@ So the second and also chosen approach is to divide all the existing nodes and c
 \label{sec:implementations}
 
 \subsection{Core of the parallel BFS solution}
+\label{sec:core}
 Here we will present our solution of the core of our parallel BFS algorithm for better understanding in a more detailed pseudo code.\\
 Input: Every proc has adjacency buffer of owned nodes and a visited bitmap of all nodes\\
 Output: parent array
@@ -74,10 +75,10 @@ void bfs(){
         		if (nodes_owned[i] is visited for the first time) {
 				for (j = 0; j < size(neighbours); j++){
 					if (neighbours[j] is not visited) {
-            				oneChildisVisited = 1;
+            					oneChildisVisited = 1;
 						set_visited_bitmap(neighbours[j]); // sets the visited bitmap on position of neighbour[j] to 1
 						save_parent(nodes_owned[i],neighbours[j]); // save that nodes_owned[i] is parent of neighbours[j]
-            			}
+            				}
 				}
 			}	
         }
@@ -91,6 +92,21 @@ Firstly we need a flag \lstinline{oneChildisVisited}. This flag keeps the inform
 So if there is a new node in the current level, the procs have to iterate the owned nodes and check if there is one of them in the current level and unvisited. If there is a new one in the current level, the proc iterates the neighbours of that node. For each neighbour there is a check if it is set to 1 in the reduced visited bitmap and not visited in a level before. Is that the case the node is set to 1 in the visited bitmap and the owned node is saved as the parent of the neighbour node. After that the procs must reduce the \lstinline{oneChildisVisited} and \lstinline{visited_bitmap} information with the bitwise OR operation. \\
 
 \subsection{Implementation details of the BFS}
+
+In this section we will show some commands from the pseudo code in \ref{sec:core} and how to implement it in the programming language C with MPI. \\
+Let us start with the first condition in the for-loop. 
+\begin{lstlisting}
+nodes_owned[i] is visited for the first time
+\end{lstlisting}
+This condition can be translated into
+\begin{lstlisting}
+position & level[((nodes_owned*my_rank+i) / BITS)] & ~visited[(i / BITS)]
+\end{lstlisting}
+where \lstinline{position = (unsigned long) pow(2,(i % BITS));}\\
+We work with bitmaps of type \lstinline{uint64_t}, so it is possible to save true or false (0 or 1) information of 64 nodes in one variable or field. To get the position of a node in a bitmap, we have to calculate two to the power of n where n is the number of the specific node modulo the count of possible bits, which is 64 in our case. For instance if our processor has 256 nodes for his own and we want to get the position of node number 90, our n is 26 and we calculate two to the power of 26. With that calculation we get the value, where the 26th bit is set to one.\\
+The next step is to prove if the specific node is also set to one in the level array. The level array is a bitmap of all nodes of the graph and shows us which nodes were visited till yet in all levels of the BFS. With \lstinline{nodes_owned*my_rank+i} we get the absolute position of the specific node, where \lstinline{i} is just the relative position. So if the absolute position is divided by the count of possible bits we get correct field of the level array where the specific node is located. Let us show that with the example of node number 90 and with two processors where each processor has 256 nodes. There must be an level array with 512/64=8 fields and our node with number 90 must be at field number ((256*0+90) / 64) = 1 where the fields begin with number 0 and the rank of the first processor is 0.
+
+
 
 \subsection{History of our BFS algorithm}
 
