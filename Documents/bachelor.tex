@@ -36,7 +36,7 @@
 \begin{document}
 \maketitle
 \begin{abstract}
-To have a continuous progress of the performance of processors, it was necessary to concentrate on the development of multicore processors. With that development another problem was raising up. The programs or rather the algorithmic way of thinking have to be changed to get a speed up with multicore processors. It was the job of the developers to split up the work from one core to many cores and to coordinate the communication between these cores. In this report the focus is on algorithms for searching trees or graph data structures and how to parallelize them. To make it specific, we keep our mind on the breadth-first search, because it is easier to parallelize than the depth-first search. First there is a presentation of a sequential algorithm to solve that problem. After that a parallel realization of this sequential algorithm in pseudo code follows. In this chapter we get an overview of the comparison between the sequential and parallel solution. After that there will be a more concrete solution of the parallel algorithm with some implementation details. Additionally we show a history of changes or improvements of the parallel solution and how it influences the speed of the algorithm.
+To have a continuous progress of the performance of processors, it was necessary to concentrate on the development of multicore processors. With that development another problem was raising up. The programs or rather the algorithmic way of thinking have to be changed to get a speed up with multicore processors. It was the job of the developers to split up the work from one core to many cores and to coordinate the communication between these cores. In this report the focus is on algorithms for searching trees or graph data structures and how to parallelize them. To make it specific, we keep our mind on the breadth-first search, because it is easier to parallelize than the depth-first search. First there is a presentation of a sequential algorithm to solve that problem. After that a parallel realization of this sequential algorithm in pseudo code follows. We get an overview of the comparison between the sequential and parallel solution. After that there is a more concrete solution of the parallel algorithm with some implementation details. Additionally we show a history of changes or improvements of the parallel solution and how it influences the speed of the algorithm.
 To get a feeling how good the solution is, there is an integration of our solution into a benchmark for supercomputers, the graph500 project. Graph500 establishes a large-scale benchmark for data-intensive supercomputer applications. There exists already a official solution of the benchmark, so we compare the performance of Jupiter, that is the name of the distributed system of the Vienna University of Technology, one time with the own implemented benchmark, but observing the rules of the graph500 project, and another time with the official solution of the graph500 project. With this results it is possible to compare Jupiter with some other supercomputers, listed in the graph500 ranking.
 \end{abstract}
 
@@ -89,7 +89,7 @@ void bfs(){
 }
 \end{lstlisting}
 Firstly we need a flag \lstinline{oneChildisVisited}. This flag keeps the information, if there is any new node visited. If not, all procs come to an end.\\
-So if there is a new node in the current level, the procs have to iterate the owned nodes and check if there is one of them in the current level and unvisited. If there is a new one in the current level, the proc iterates the neighbours of that node. For each neighbour there is a check if it is set to 1 in the reduced visited bitmap and not visited in a level before. Is that the case the node is set to 1 in the visited bitmap and the owned node is saved as the parent of the neighbour node. After that the procs must reduce the \lstinline{oneChildisVisited} and \lstinline{visited_bitmap} information with the bitwise OR operation. \\
+So if there is a new node in the current level, the procs have to iterate the owned nodes and check if there is one of them in the current level and unvisited. If there is a new one in the current level, the proc iterates the neighbours of that node. For each neighbour there is a check if it is set to 1 in the reduced visited bitmap and not visited in a level before. Is that the case the node is set to 1 in the visited bitmap and the owned node is saved as the parent of the neighbour node. After that the procs must reduce the \lstinline{oneChildisVisited} and \lstinline{visited_bitmap} information with the bitwise OR operation.
 
 \subsection{Implementation details of the BFS}
 
@@ -102,11 +102,36 @@ This condition can be translated into
 \begin{lstlisting}
 position & level[((nodes_owned*my_rank+i) / BITS)] & ~visited[(i / BITS)]
 \end{lstlisting}
-where \lstinline{position = (unsigned long) pow(2,(i % BITS));}\\
-We work with bitmaps of type \lstinline{uint64_t}, so it is possible to save true or false (0 or 1) information of 64 nodes in one variable or field. To get the position of a node in a bitmap, we have to calculate two to the power of n where n is the number of the specific node modulo the count of possible bits, which is 64 in our case. For instance if our processor has 256 nodes for his own and we want to get the position of node number 90, our n is 26 and we calculate two to the power of 26. With that calculation we get the value, where the 26th bit is set to one.\\
-The next step is to prove if the specific node is also set to one in the level array. The level array is a bitmap of all nodes of the graph and shows us which nodes were visited till yet in all levels of the BFS. With \lstinline{nodes_owned*my_rank+i} we get the absolute position of the specific node, where \lstinline{i} is just the relative position. So if the absolute position is divided by the count of possible bits we get correct field of the level array where the specific node is located. Let us show that with the example of node number 90 and with two processors where each processor has 256 nodes. There must be an level array with 512/64=8 fields and our node with number 90 must be at field number ((256*0+90) / 64) = 1 where the fields begin with number 0 and the rank of the first processor is 0.
-
-
+where 
+\begin{lstlisting}
+position = (unsigned long) pow(2, (i % BITS));
+\end{lstlisting}
+We work with bitmaps of type \lstinline{uint64_t}, so it is possible to save true or false (0 or 1) information of 64 nodes in one variable or field. To get the position of a node in a bitmap, we have to calculate two to the power of \(n\) where \(n\) is the number of the specific node modulo the count of possible bits, which is 64 in our case. For instance if our processor has 256 nodes for his own and we want to get the position of node number 90, our \(n\) is 26 and we calculate two to the power of 26. With that calculation we get the value, where the 26th bit is set to one.\\
+The next step is to prove that the specific node is also set to one in the level array. The level array is a bitmap of all nodes of the graph and shows us which nodes were visited in the levels before of the BFS. With \lstinline{nodes_owned*my_rank+i} we get the absolute position of the specific node, where \lstinline{i} is just the relative position. So if the absolute position is divided by the count of possible bits we get the correct field of the level array where the specific node is located. Let us show that with the example of node number 90 and with two processors where each processor has 256 nodes. There must be an level array with \(512/64 = 8\) fields and our node with number 90 must be at field number \((256*0+90) / 64 = 1\) where the fields begin with number 0 and the rank of the first processor is 0.\\
+The visited array or bitmap gives us the information if a node is already visited or not. So if the bit of a specific node is set to one in the level array and the associated bit in the visited array is zero, we know through the bitwise AND operation \lstinline{&} that the node is visited for the first time. Otherwise if the bit in the visited array is one already, we know that the node was visited in a level or round before.\\
+Assuming that the node was not visited before, we iterate over all neighbours of that node. With the condition \lstinline{neighbours[j] is not visited} translated to
+\begin{lstlisting}
+position & ~level[(buffer[j]/BITS)]
+\end{lstlisting}
+where
+\begin{lstlisting}
+position = (unsigned long) pow(2, (buffer[j] % BITS));
+\end{lstlisting}
+and \lstinline{buffer[j]} is one of the neighbours of the actual node, we check that this neighbour is visited in that level for the first time because of the synchronized level array, unless another node in the same level also visits the that node, because he is also one of his neighbours. Here comes a race condition up, but for us it is enough that at the end the BFS tree represented through the parent array is correct.\\
+If the condition evaluates to true we save the actual node as parent of the neighbour with
+\begin{lstlisting}
+parent_array[buffer[j]] = nodes_owned*my_rank+i+1;
+\end{lstlisting}
+where \lstinline{parent_array} is an array of type \lstinline{uint64_t} and is as big as the count of nodes of the whole graph. If we save a parent in the parent array, we always calculate \(+1\) to the number of the node to prevent, because the parent array is initialized with zero, that the node with number zero is the parent of all nodes which are not set during the BFS.\\
+When all processors finished the actual level, the \lstinline{oneChildisVisited} flag is synchronized with the command \lstinline{allreduce(oneChildisVisited)}, which can be translated to
+\begin{lstlisting}
+MPI_Allreduce(MPI_IN_PLACE, (void *) &oneChildisVisited, 1, MPI_CHAR, MPI_BOR, MPI_COMM_WORLD);
+\end{lstlisting}
+If this flag is true, the processors know that there must be a next level or round. So they also synchronize the level array with
+\begin{lstlisting}
+MPI_Allreduce(MPI_IN_PLACE, (void *)level, (pow(2,SCALE) / BITS), MPI_UNSIGNED_LONG, MPI_BOR, MPI_COMM_WORLD);
+\end{lstlisting}
+which was \lstinline{allreduce(visited_bitmap, BITWISE_OR)} in pseudo code. After the reduce operation the next level starts.
 
 \subsection{History of our BFS algorithm}
 
