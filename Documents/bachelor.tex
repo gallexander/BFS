@@ -54,7 +54,7 @@ To get a feeling how good the solution is, there is an integration of our soluti
 \subsection{Sequential BFS}
 \label{sec:sequential-bfs}
 
-\begin{listing}[H]
+\begin{listing}[h]
 \begin{ccode}
 /*
 input: egde list as buffer
@@ -75,17 +75,17 @@ BFS(edge_list, root){
 	return parents;
 }
 \end{ccode}
-\caption{Sequential BFS}
+\caption{Sequential algorithm of the BFS.}
 \label{lst:seq}
 \end{listing}
 
-The sequential BFS (breadth-first search) algorithm in Listing \ref{lst:seq} is not difficult to understand. If we have a given tree or alternatively a graph data structure we start with a specific node. That is our root node. We can split the graph or tree into levels, each level is handled in one single iteration of the BFS. So we can say, we start with level 0 at the root node.
+The sequential BFS (breadth-first search) algorithm in Listing~\ref{lst:seq} is not difficult to understand. If we have a given tree or alternatively a graph data structure we start with a specific node. That is our root node. We can split the graph or tree into levels, each level is handled in one single iteration of the BFS. So we can say, we start with level 0 at the root node.
 Then there starts the first round of the BFS. We take all nodes (root node for the first level) of the current level (that is level 0) and visit all neighbours of the nodes of the current level. All neighbours that have been visited are now the nodes of the next level (in this case that is level 1). The next step is to take all nodes of level 1 and visit all neighbours of these nodes. The BFS algorithm ends if the current level has no neighbours anymore or a specific search key is found. Output of the algorithm is a parent array, which contains parent information of each node. For better understanding the figure below shows a few iterations of the BFS algorithm.
 
 \subsection{Parallel BFS}
 \label{sec:parallel-bfs}
 
-\begin{listing}[H]
+\begin{listing}[h]
 \begin{ccode}
 /*
 input: for each processor - edge list as buffer of owned nodes, level information of owned nodes as array
@@ -105,12 +105,12 @@ BFS_PAR(edge_list, level){
 	return parents;
 }
 \end{ccode}
-\caption{Parallel BFS}
+\caption{Parallel algorithm of the BFS.}
 \label{lst:parallel}
 \end{listing}
 
 To make an algorithm parallel, the main problem is to split the work of the sequential algorithm into smaller pieces and assign that pieces of work to the existing processors of the system which are in use.  The first approach of splitting the BFS is to split the nodes of each level to the processors. Every processor of the system just visit the neighbours of the owned nodes. The problem with this approach is that the communication costs are pretty high, because it's necessary to split the work every round (level) of the BFS algorithm.\\
-So the second and also chosen approach, illustrated in Listing \ref{lst:parallel}, is to divide all the existing nodes and corresponding edges of the graph to the processors. With that approach the highest amount of communication is before the algorithm begins. After that the cores have to communicate in such a way, that they know which nodes are in the next level. That can happen in different ways, symbolized with \cinline/level = synchronize(next_level);/ but it is important that we have a parent array at the end of the algorithm. 
+So the second and also chosen approach, illustrated in Listing~\ref{lst:parallel}, is to divide all the existing nodes and corresponding edges of the graph to the processors. With that approach the highest amount of communication is before the algorithm begins. After that the cores have to communicate in such a way, that they know which nodes are in the next level. That can happen in different ways, symbolized with \cinline/level = synchronize(next_level);/ but it is important that we have a parent array at the end of the algorithm. 
 
 \section{Implementation of the BFS and some improvements}
 \label{sec:implementations}
@@ -118,7 +118,7 @@ So the second and also chosen approach, illustrated in Listing \ref{lst:parallel
 \subsection{Core of the parallel BFS solution}
 \label{sec:core}
 Here we will present our solution of the core of our parallel BFS algorithm in a more detailed pseudo code.\\
-\begin{listing}[H]
+\begin{listing}[h]
 \begin{ccode}
 /*
 input: every proc has adjacency buffer of owned nodes
@@ -146,15 +146,15 @@ void BFS(buffer){
 	return parent_array;
 }
 \end{ccode}
-\caption{More detailed parallel BFS}
+\caption{Parallel BFS in more detail.}
 \label{lst:detailedparallel}
 \end{listing}
-As Listing \ref{lst:detailedparallel} shows, we need at first a flag \cinline/oneChildisVisited/. This flag keeps the information, if there is any new node visited. If not, all procs come to an end.\\
+As Listing~\ref{lst:detailedparallel} shows, we need at first a flag \cinline/oneChildisVisited/. This flag keeps the information, if there is any new node visited. If not, all procs come to an end.\\
 So if there is a new node in the current level, the procs have to iterate over the owned nodes and check if there is one of them in the current level and unvisited. If there is a new one in the current level, the proc iterates the neighbours of that node. For each neighbour there is a checking if it is set to 1 in the reduced visited bitmap and not visited in a level before. Is that the case the node is set to 1 in the visited bitmap and the owned node is saved as the parent of the neighbour node. After that the procs must reduce the \cinline/oneChildisVisited/ and \cinline/visited_bitmap/ information with the bitwise OR operation.
 
 \subsection{Implementation details of the BFS}
 
-In this section we will show some commands from the pseudo code in \ref{sec:core} and how to implement it in the programming language C with MPI. \\
+In this section we will show some commands from the pseudo code in \ref{sec:core} and how to implement it in the programming language C with MPI. A good description of MPI is given by Rauber and R{\"u}nger \cite{rauber}. \\
 Let us start with the first condition in the for-loop. 
 \begin{ccode}
 nodes_owned[i] is visited for the first time
@@ -218,107 +218,24 @@ If you want to study the algorithm and the history of that algorithm in a more d
 \section{Testing the algorithm on Jupiter}
 \label{sec:testing}
 
-For better understanding how changes in the algorithm influence the speed of the algorithm we compare the results of the different versions on Jupiter.\\
-Let us start with the first version at section \ref{sec:firstversion}:
-SCALE 22\\
-EDGEFACTOR 4\\
-\\
-mpirun -host jupiter1 -np 1 ./par\\
-Time for generating and scattering: 71.516787\\
-Time for bfs searching: 14.322063\\
-\\
-mpirun -host jupiter1 -np 2 ./par\\
-Time for generating and scattering: 71.074316\\
-Time for bfs searching: 7.191137\\
-\\
-mpirun -host jupiter1 -np 4 ./par\\
-Time for generating and scattering: 71.667024\\
-Time for bfs searching: 3.624339\\
-\\
-mpirun -host jupiter1 -np 8 ./par\\
-Time for generating and scattering: 71.868302\\
-Time for bfs searching: 1.847186\\
-\\
-mpirun -host jupiter1 -np 16 ./par\\
-Time for generating and scattering: 71.795941\\
-Time for bfs searching: 0.970461\\
-\\
-mpirun -host jupiter1 -np 16 -host jupiter2 -np 16 ./par\\
-Time for generating and scattering: 78.301455\\
-Time for bfs searching: 0.718315\\
-\\
-mpirun -host jupiter1 -np 16 -host jupiter2 -np 16 -host jupiter3 -np 16 -host jupiter4 -np 16 ./par\\
-Time for generating and scattering: 78.680866\\
-Time for bfs searching: 0.817814\\
-\\
-SCALE 23\\
-EDGEFACTOR 4\\
-\\
-mpirun -host jupiter1 -np 1 ./par\\
-Time for generating and scattering: 151.001563\\
-Time for bfs searching: 32.189217\\
-\\
-mpirun -host jupiter1 -np 2 ./par\\
-Time for generating and scattering: 150.288253\\
-Time for bfs searching: 14.429639\\
-\\
-mpirun -host jupiter1 -np 4 ./par\\
-Time for generating and scattering: 149.650995\\
-Time for bfs searching: 7.580528\\
-\\
-mpirun -host jupiter1 -np 8 ./par\\
-Time for generating and scattering: 150.740900\\
-Time for bfs searching: 3.720919\\
-\\
-mpirun -host jupiter1 -np 16 ./par\\
-Time for generating and scattering: 150.239736\\
-Time for bfs searching: 1.960265\\
-\\
-mpirun -host jupiter1 -np 16 -host jupiter2 -np 16 ./par\\
-Time for generating and scattering: 164.370905\\
-Time for bfs searching: 1.317743\\
-\\
-mpirun -host jupiter1 -np 16 -host jupiter2 -np 16 -host jupiter3 -np 16 -host jupiter4 -np 16 ./par\\
-Time for generating and scattering: 163.695266\\
-Time for bfs searching: 1.315105\\
-\\
-SCALE 25\\
-EDGEFACTOR 4\\
-\\
-mpirun -host jupiter1 -np 1 ./par\\
-Time for generating and scattering: 209.442903\\
-Time for bfs searching: 124.501475\\
-\\
-mpirun -host jupiter1 -np 2 ./par\\
-Time for generating and scattering: 206.821771\\
-Time for bfs searching: 62.673911\\
-\\
-mpirun -host jupiter1 -np 4 ./par\\
-Time for generating and scattering: 204.477917\\
-Time for bfs searching: 32.574306\\
-\\
-mpirun -host jupiter1 -np 8 ./par\\
-Time for generating and scattering: 163.052962\\
-Time for bfs searching: 16.547304\\
-\\
-mpirun -host jupiter1 -np 16 ./par\\
-Time for generating and scattering: 206.160913\\
-Time for bfs searching: 9.362862\\
-\\
-mpirun -host jupiter1 -np 16 -host jupiter2 -np 16 ./par\\
-Time for generating and scattering: 164.124661\\
-Time for bfs searching: 5.341782\\
-\\
-mpirun -host jupiter1 -np 16 -host jupiter2 -np 16 -host jupiter3 -np 16 -host jupiter4 -np 16 ./par\\
-Time for generating and scattering: 165.615725\\
-Time for bfs searching: 3.986594\\
+For better understanding how changes in the algorithm influence the speed of the algorithm we compare the results of the different versions on Jupiter. In the following figures we work with a graph of scale 25 and an edgefactor of 4. That means that we have \(2^{25}\) nodes and \(2^{27}\) edges. The edges were generated by a kronecker graph generator, researched by Leskovec, Chakrabarti, Kleinberg, Faloutsos and Ghahramani  \cite{kronecker}.
 
-%\begin{figure}[htbp]
-%	\centering
-%	\includegraphics[width=15cm]{benchmark}%
-%	\caption{Ergebnisse auf Jupiter}%
-%	\label{fig:benchmark}
-%\end{figure}
+\subsection{Testing the first version}
+
+Let us start with the first version from section \ref{sec:firstversion}.
+
+\begin{figure}[!ht]
+   \centering
+   \includegraphics[width=0.75\textwidth]{next_level}
+   \caption{Results of the next level bitmap approach.}
+   \label{fig:nextbitmap}
+\end{figure}
+
+Figure~\ref{fig:nextbitmap} shows the results of the first version of our algorithm. There is a quite good speedup with a higher number of cores, but the problem, like mentioned in Section~\ref{sec:firstversion}, is that we do not have a parent array at the end of this algorithm and it is hard to extend this approach to get one.
+
+\subsection{Testing the second version}
+
+\subsection{Testing the third version}
 
 \section{The graph500 project and my own realisation}
 \label{sec:graph500}
@@ -357,9 +274,6 @@ bfs(level_recvbuf, buffer_recvbuf, buffer_recv_size, count_edges_per_node_recvbu
 \end{lstlisting}
 Here is the beginning of the basic algorithm of our parallel BFS algorithm. All steps so far were a preparation. The edge list was transformed into a better computeable form and the root node had to scatter some important data to the other procs of the system.
 
-\section{Comparing with the official solution of graph500}
-\label{sec:Comparing}
-
 \section{Ranking of Jupiter}
 \label{sec:ranking}
 
@@ -373,7 +287,7 @@ Here is the beginning of the basic algorithm of our parallel BFS algorithm. All 
 
 \nocite{*}
 \bibliographystyle{abbrv}
-\bibliography{references}
+\bibliography{bachelor}
 
 \appendix
 \section{Source Code}
