@@ -25,7 +25,7 @@ int main(int argc, char *argv[]){
     uint64_t *startVertex_recvbuf = NULL;
     uint64_t *endVertex_recvbuf = NULL;
     uint64_t *index_of_node = NULL;
-    unsigned long *level = (unsigned long *) calloc(nodes / BITS, sizeof(unsigned long));
+    uint64_t *level = (uint64_t *) calloc(nodes / BITS, sizeof(uint64_t));
     int edgelist_counts_recvbuf = 0;
     if (my_rank == 0){
         startVertex = (uint64_t *) calloc(edges, I64_BYTES);
@@ -77,10 +77,10 @@ int main(int argc, char *argv[]){
         index_of_node = create_buffer_from_edgelist(startVertex_recvbuf, endVertex_recvbuf, nodes / procs, edgelist_counts_recvbuf, my_rank);
 	
         //SET ROOT LEVEL
-        level[(ROOT/BITS)] = level[(ROOT/BITS)] | (unsigned long) pow(2,(ROOT % BITS));
+        level[(ROOT/BITS)] = level[(ROOT/BITS)] | (uint64_t) pow(2,(ROOT % BITS));
 
         //SCATTER LEVEL BUFFER
-        MPI_Bcast((void *)level, nodes / BITS, MPI_UNSIGNED_LONG, 0, MPI_COMM_WORLD);
+        MPI_Bcast((void *)level, nodes / BITS, MPI_UINT64_T, 0, MPI_COMM_WORLD);
         
         /*for (i = 0; i < index_of_node[(nodes/procs)]; i++){
             printf("%llu = %llu\n", (unsigned long long) buffer_recvbuf[i], (unsigned long long) startVertex_recvbuf[i]);
@@ -116,7 +116,7 @@ int main(int argc, char *argv[]){
         index_of_node = create_buffer_from_edgelist(startVertex_recvbuf, endVertex_recvbuf, nodes / procs, edgelist_counts_recvbuf, my_rank);
         
         // GET THE FIRST LEVEL
-        MPI_Bcast((void *)level, nodes / BITS, MPI_UNSIGNED_LONG, 0, MPI_COMM_WORLD);
+        MPI_Bcast((void *)level, nodes / BITS, MPI_UINT64_T, 0, MPI_COMM_WORLD);
         
         bfs(level, startVertex_recvbuf, index_of_node[nodes/procs], index_of_node, my_rank, procs);
     }
@@ -129,35 +129,35 @@ int main(int argc, char *argv[]){
     return 0;
 }
 
-void bfs(unsigned long *level, uint64_t *buffer, uint64_t buffer_size, uint64_t *index_of_node, int my_rank, int procs){
+void bfs(uint64_t *level, uint64_t *buffer, uint64_t buffer_size, uint64_t *index_of_node, int my_rank, int procs){
     uint64_t nodes_owned = pow(2,SCALE) / procs;
-    unsigned long *parent_array = (unsigned long *) calloc(pow(2,SCALE), sizeof(unsigned long));
-    unsigned long *visited = (unsigned long *) calloc(nodes_owned / BITS, sizeof(unsigned long));
+    uint32_t *parent_array = (uint32_t *) calloc(pow(2,SCALE), sizeof(uint32_t));
+    uint64_t *visited = (uint64_t *) calloc(nodes_owned / BITS, sizeof(uint64_t));
     char oneChildisVisited = 1;
     //int level_count = 0;
     uint64_t i;
-    unsigned long position;
+    uint64_t position;
     while (oneChildisVisited){
         oneChildisVisited = 0;
         for (i = 0; i < nodes_owned; i++){
-            position = (unsigned long) pow(2,(i % BITS));
+            position = (uint64_t) pow(2,(i % BITS));
             if (position & level[((nodes_owned*my_rank+i) / BITS)] & ~visited[(i / BITS)]){ //checks if the current node in the iteration is in the current level and not visited
                 visited[(i / BITS)] = visited[(i / BITS)] | position;
                 uint64_t j = index_of_node[i];
                 if (i == nodes_owned -1){ //differentiate between the last node of the owned nodes and one node in the middle
                     for (; j < buffer_size; j++){
-                        position = (unsigned long) pow(2, (buffer[j] % BITS));
+                        position = (uint64_t) pow(2, (buffer[j] % BITS));
                         if (position & ~level[(buffer[j]/BITS)]){
-                            parent_array[buffer[j]] = nodes_owned*my_rank+i+1;
+                            parent_array[buffer[j]] = (uint32_t) nodes_owned*my_rank+i+1;
                             level[(buffer[j]/BITS)] = level[(buffer[j]/BITS)] | position;
                             oneChildisVisited = 1;
                         }
                     }
                 }else{
                     for (; j < buffer_size && j < index_of_node[i+1]; j++){
-                        position = (unsigned long) pow(2, (buffer[j] % BITS));
+                        position = (uint64_t) pow(2, (buffer[j] % BITS));
                         if (position & ~level[(buffer[j]/BITS)]){
-                            parent_array[buffer[j]] = nodes_owned*my_rank+i+1;
+                            parent_array[buffer[j]] = (uint32_t) nodes_owned*my_rank+i+1;
                             level[(buffer[j]/BITS)] = level[(buffer[j]/BITS)] | position;
                             oneChildisVisited = 1;
                         }
@@ -170,8 +170,13 @@ void bfs(unsigned long *level, uint64_t *buffer, uint64_t buffer_size, uint64_t 
         MPI_Allreduce(MPI_IN_PLACE, (void *) &oneChildisVisited, 1, MPI_CHAR, MPI_BOR, MPI_COMM_WORLD);
         // AFTER SEND LEVEL BUFFER, ALLTOALL
         if (oneChildisVisited){
-            MPI_Allreduce(MPI_IN_PLACE, (void *)level, (pow(2,SCALE) / BITS), MPI_UNSIGNED_LONG, MPI_BOR, MPI_COMM_WORLD);
+            MPI_Allreduce(MPI_IN_PLACE, (void *)level, (pow(2,SCALE) / BITS), MPI_UINT64_T, MPI_BOR, MPI_COMM_WORLD);
         }
+    }
+    if (my_rank){
+        MPI_Reduce((void *) parent_array, NULL, pow(2, SCALE), MPI_UINT32_T, MPI_MAX, 0, MPI_COMM_WORLD);
+    }else{
+        MPI_Reduce(MPI_IN_PLACE, (void *) parent_array, pow(2, SCALE), MPI_UINT32_T, MPI_MAX, 0, MPI_COMM_WORLD);
     }
     free(visited);
     free(parent_array);

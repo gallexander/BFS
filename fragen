@@ -10,3 +10,5 @@ auch mit eigener implementierung?
 von wem wird diese überprüft?
 wieso funktionieren 16 tasks nicht, ist was mit jupiter, danach haben 8 tasks auch nicht funktioniert?
 validation für jeden search key?
+
+the total number of vertices, 2SCALE. An implementation may use any set of N distinct integers to number the vertices, but at least 48 bits?? must be allocated per vertex number. Other parameters may be assumed to fit within the natural word of the machine. N is derived from the problem's scaling parameter.

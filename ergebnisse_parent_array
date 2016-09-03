@@ -150,24 +150,36 @@ Time for bfs searching: 6.520512
 SCALE 25
 EDGEFACTOR 4
 
-[e1026090@jupiter ~]$ srun -p q_student -N 1 --ntasks-per-node=1 ./kron
-Time for generating and writing the graph to a file: 650.721241
-[e1026090@jupiter ~]$ mpicc -Wall -o par bfs_par_parentarray.c
-bfs_par_parentarray.c: In Funktion »main«:
-bfs_par_parentarray.c:14: Warnung: Variable »status« wird nicht verwendet
-bfs_par_parentarray.c:12: Warnung: Variable »root« wird nicht verwendet
-bfs_par_parentarray.c:9: Warnung: Variable »tag« wird nicht verwendet
 [e1026090@jupiter ~]$ srun -p q_student -N 1 --ntasks-per-node=1 ./par
-Time for reading, generating edge buffer and scattering: 66.698796
-Time for reduce_scattering: 3.750424
-Time for bfs searching: 21.359907
-[e1026090@jupiter ~]$ srun -p q_student -N 1 --ntasks-per-node=2 ./par
-Time for reading, generating edge buffer and scattering: 65.632256
-Time for reduce_scattering: 14.737299
-Time for bfs searching: 24.554153
-Time for reduce_scattering: 13.778948
+Time for reading, generating edge buffer and scattering: 64.508952
+Time for reduce_scattering: 3.411383
+Time for bfs searching: 21.993884
 [e1026090@jupiter ~]$ srun -p q_student -N 2 --ntasks-per-node=1 ./par
-Time for reduce_scattering: 9.992158
-Time for reading, generating edge buffer and scattering: 65.406495
-Time for reduce_scattering: 10.915628
-Time for bfs searching: 20.562215
+Time for reading, generating edge buffer and scattering: 62.254390
+Time for reduce_scattering: 9.611792
+Time for bfs searching: 18.799901
+Time for reduce_scattering: 9.092843
+[e1026090@jupiter ~]$ srun -p q_student -N 4 --ntasks-per-node=1 ./par
+Time for reduce_scattering: 10.764659
+Time for reading, generating edge buffer and scattering: 61.316705
+Time for bfs searching: 16.608111
+[e1026090@jupiter ~]$ srun -p q_student -N 8 --ntasks-per-node=1 ./par
+Time for reduce_scattering: 10.814605
+Time for reading, generating edge buffer and scattering: 60.746424
+Time for reduce_scattering: 11.048896
+Time for bfs searching: 14.607378
+[e1026090@jupiter ~]$ srun -p q_student -N 16 --ntasks-per-node=1 ./par
+Time for reduce_scattering: 10.814154
+Time for reading, generating edge buffer and scattering: 60.534493
+Time for bfs searching: 13.530607
+[e1026090@jupiter ~]$ srun -p q_student -N 32 --ntasks-per-node=1 ./par
+Time for reduce_scattering: 10.023695
+Time for reading, generating edge buffer and scattering: 60.653193
+Time for reduce_scattering: 10.587711
+Time for bfs searching: 12.552302
+[e1026090@jupiter ~]$ srun -p q_student -N 32 --ntasks-per-node=2 ./par
+Time for reduce_scattering: 12.024165
+Time for reading, generating edge buffer and scattering: 61.534302
+Time for reduce_scattering: 13.860953
+Time for bfs searching: 15.802295
+
