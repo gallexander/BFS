@@ -75,6 +75,8 @@ Time for bfs searching: 1.443485
 SCALE 25
 EDGEFACTOR 4
 
+no reducing at the end
+
 [e1026090@jupiter ~]$ srun -p q_student -N 1 --ntasks-per-node=1 ./par
 Time for reading, generating edge buffer and scattering: 64.580309
 Time for bfs searching: 75.826661
@@ -109,6 +111,8 @@ Time for bfs searching: 1.818865
 Time for reading, generating edge buffer and scattering: 67.055897
 Time for bfs searching: 1.610848
 
+reducing parent array at the end
+
 [e1026090@jupiter ~]$ srun -p q_student -N 1 --ntasks-per-node=1 ./par
 Time for reading, generating edge buffer and scattering: 63.817088
 Time for bfs searching: 75.601550
@@ -133,6 +137,7 @@ Time for bfs searching: 16.226289
 [e1026090@jupiter ~]$ srun -p q_student -N 16 --ntasks-per-node=1 ./par
 ^[Time for reading, generating edge buffer and scattering: 60.049014
 Time for bfs searching: 9.111741
+
 [e1026090@jupiter ~]$ srun -p q_student -N 1 --ntasks-per-node=1 ./par
 6^[[D^[[CTime for reading, generating edge buffer and scattering: 63.789152
 Time for bfs searching: 75.311180
@@ -169,7 +174,7 @@ Time for bfs searching: 2.829006
 
 SCALE 25
 EDGEFACTOR 4
-With reducing parent array to root node
+With reducing parent array 32 bits to root node
 
 [e1026090@jupiter ~]$ mpicc -Wall -o par bfs_par_allvisited.c
 bfs_par_allvisited.c: In Funktion »main«:

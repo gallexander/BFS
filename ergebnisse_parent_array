@@ -1,4 +1,4 @@
-SCALE 23
+	SCALE 23
 EDGEFACTOR 4
 
 [e1026090@jupiter ~]$ srun -p q_student -N 1 --ntasks-per-node=1 ./par

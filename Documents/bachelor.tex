@@ -80,7 +80,7 @@ BFS(edge_list, root){
 \end{listing}
 
 The sequential BFS (breadth-first search) algorithm in Listing~\ref{lst:seq} is not difficult to understand. If we have a given tree or alternatively a graph data structure we start with a specific node. That is our root node. We can split the graph or tree into levels, each level is handled in one single iteration of the BFS. So we can say, we start with level 0 at the root node.
-Then there starts the first round of the BFS. We take all nodes (root node for the first level) of the current level (that is level 0) and visit all neighbours of the nodes of the current level. All neighbours that have been visited are now the nodes of the next level (in this case that is level 1). The next step is to take all nodes of level 1 and visit all neighbours of these nodes. The BFS algorithm ends if the current level has no neighbours anymore or a specific search key is found. Output of the algorithm is a parent array, which contains parent information of each node. For better understanding the figure below shows a few iterations of the BFS algorithm.
+Then there starts the first round of the BFS. We take all nodes (root node for the first level) of the current level (that is level 0) and visit all neighbours of the nodes of the current level. All neighbours that have been visited are now the nodes of the next level (in this case that is level 1). The next step is to take all nodes of level 1 and visit all neighbours of these nodes. The BFS algorithm ends if the current level has no neighbours anymore or a specific search key is found. Output of the algorithm is a parent array, which contains parent information of each node.
 
 \subsection{Parallel BFS}
 \label{sec:parallel-bfs}
@@ -109,7 +109,7 @@ BFS_PAR(edge_list, level){
 \label{lst:parallel}
 \end{listing}
 
-To make an algorithm parallel, the main problem is to split the work of the sequential algorithm into smaller pieces and assign that pieces of work to the existing processors of the system which are in use.  The first approach of splitting the BFS is to split the nodes of each level to the processors. Every processor of the system just visit the neighbours of the owned nodes. The problem with this approach is that the communication costs are pretty high, because it's necessary to split the work every round (level) of the BFS algorithm.\\
+To make an algorithm parallel, the main problem is to split the work of the sequential algorithm into smaller pieces and assign that pieces of work to the existing processors of the system which are in use.  The first approach of splitting the BFS is to split the nodes of each level to the processors. Every processor of the system just visits the neighbours of the owned nodes. The problem with this approach is that the communication costs are pretty high, because it's necessary to split the work every round (level) of the BFS algorithm.\\
 So the second and also chosen approach, illustrated in Listing~\ref{lst:parallel}, is to divide all the existing nodes and corresponding edges of the graph to the processors. With that approach the highest amount of communication is before the algorithm begins. After that the cores have to communicate in such a way, that they know which nodes are in the next level. That can happen in different ways, symbolized with \cinline/level = synchronize(next_level);/ but it is important that we have a parent array at the end of the algorithm. 
 
 \section{Implementation of the BFS and some improvements}
@@ -149,8 +149,8 @@ void BFS(buffer){
 \caption{Parallel BFS in more detail.}
 \label{lst:detailedparallel}
 \end{listing}
-As Listing~\ref{lst:detailedparallel} shows, we need at first a flag \cinline/oneChildisVisited/. This flag keeps the information, if there is any new node visited. If not, all procs come to an end.\\
-So if there is a new node in the current level, the procs have to iterate over the owned nodes and check if there is one of them in the current level and unvisited. If there is a new one in the current level, the proc iterates the neighbours of that node. For each neighbour there is a checking if it is set to 1 in the reduced visited bitmap and not visited in a level before. Is that the case the node is set to 1 in the visited bitmap and the owned node is saved as the parent of the neighbour node. After that the procs must reduce the \cinline/oneChildisVisited/ and \cinline/visited_bitmap/ information with the bitwise OR operation.
+As Listing~\ref{lst:detailedparallel} shows, we need at first a flag \cinline/oneChildisVisited/. This flag keeps the information, if there is any new node visited. If not, all processors come to an end.\\
+So if there is a new node in the current level, the processors have to iterate over the owned nodes and check if there is one of them in the current level and unvisited. If there is a new one in the current level, the processor iterates the neighbours of that node. For each neighbour there is a checking if it is set to 1 in the reduced visited bitmap and not visited in a level before. Is that the case the node is set to 1 in the visited bitmap and the owned node is saved as the parent of the neighbour node. After that the processors must reduce the \cinline/oneChildisVisited/ and \cinline/visited_bitmap/ information with the bitwise OR operation.
 
 \subsection{Implementation details of the BFS}
 
@@ -178,12 +178,12 @@ where
 \begin{ccode}
 position = (uint64_t) pow(2, (buffer[j] % BITS));
 \end{ccode}
-and \cinline/buffer[j]/ is one of the neighbours of the actual node, we check that this neighbour is visited in that level for the first time because of the synchronized level array, unless another node in the same level also visits that node, because he is also one of his neighbours. Here comes a race condition up, but for us it is enough that at the end the BFS tree represented through the parent array is correct.\\
+and \cinline/buffer[j]/ is one of the neighbours of the actual node, we check that this neighbour is visited in that level for the first time because of the synchronized level array, unless another node in the same level also visits that node. Here comes a race condition up, but for us it is enough that at the end the BFS tree represented through the parent array is correct.\\
 If the condition evaluates to true we save the actual node as parent of the neighbour with
 \begin{ccode}
 parent_array[buffer[j]] = nodes_owned*my_rank+i+1;
 \end{ccode}
-where \cinline/parent_array/ is an array of type \cinline/uint64_t/ and is as big as the count of nodes of the whole graph. If we save a parent in the parent array, we always calculate \(+1\) to the number of the node to prevent, because the parent array is initialized with zero, that the node with number zero is the parent of all nodes which are not set during the BFS.\\
+where \cinline/parent_array/ is an array of type \cinline/uint64_t/ and has a size of the count of nodes of the whole graph. If we save a parent in the parent array, we always calculate \(+1\) to the number of the node to prevent, because the parent array is initialized with zero, that the node with number zero is the parent of all nodes which are not set during the BFS.\\
 When all processors finished the actual level, the \cinline/oneChildisVisited/ flag is synchronized with the command \cinline/allreduce(oneChildisVisited)/, which can be translated to
 \begin{ccode}
 MPI_Allreduce(MPI_IN_PLACE, (void *) &oneChildisVisited, 1, MPI_CHAR, MPI_BOR, MPI_COMM_WORLD);
@@ -201,24 +201,24 @@ The solution of the algorithm in section \ref{sec:implementations} was not our f
 \subsubsection{First version - next level bitmap}
 \label{sec:firstversion}
 
-The first version of the algorithm is characterized by a next level bitmap, because every processor stores the information about new visited nodes in a next level bitmap which has a size of \(n\) bits where \(n\) is the count of nodes of the whole graph. So at every round the processors iterate over the owned nodes and check if the actual node in the iteration is in the current level and not visited. If that is the case the algorithm sets all bits of the neighbours of the current node in the next level bitmap to one. At the end of each round there must be a reduce scatter operation between the processors to ensure that every processor gets the level information of the next round.\\
-The only problem with that approach is that it is difficult to create a parent array if you just synchronize a next level bitmap between the processors and it is not known who is the parent of the visited nodes. The disadvantage of that procedure is that the reduce scatter operation with a next level array of type \cinline/uint64_t/ takes time and the algorithm becomes inefficient with a higher count of processors.
+The first version of the algorithm is characterized by a next level bitmap, because every processor stores the information about new visited nodes in a next level bitmap which has a size of \(n\) bits where \(n\) is the count of nodes of the whole graph. In every round the processors iterate over the owned nodes and check if the actual node in the iteration is in the current level and not visited. If that is the case the algorithm sets all bits of the neighbours of the current node in the next level bitmap to one. At the end of each round there must be a reduce scatter operation between the processors to ensure that every processor gets the level information of the next round.\\
+The only problem with that approach is that it is difficult to create a parent array if you just synchronize a next level bitmap and no other information between the processors.
 
 \subsubsection{Second version - \cinline/uint64_t/ next level array}
 \label{sec:secondversion}
 
-In the second version of the algorithm we did not use a next level bitmap, instead we used a next level array of type \cinline/uint64_t/. At the position where we normally set the bit to one in the next level bitmap, we store the parent of the specific visited node. After the reduce scatter operation of the next level array, where every entry stores the parent of the node, every processor knows the parent of these nodes, which are already visited and which the processor owns. Unfortunately this approach is very inefficient because reducing the next level arrays in each round is really time-consuming and becomes more sophisticated with the increasing number of processors.
+In the second version of the algorithm we did not use a next level bitmap, instead we used a next level array of type \cinline/uint64_t/. At the position where we normally set the bit to one in the next level bitmap, we store the parent of the specific visited node. After the reduce scatter operation of the next level array with the MAX operation, every processor knows the parent of these nodes, which are already visited and which the processor owns. Unfortunately this approach is very inefficient because reducing the next level arrays in each round is really time-consuming and becomes more sophisticated with the increasing number of processors.
 
 \subsubsection{Third and current version - visited bitmap}
 \label{sec:thirdversion}
 
 The basic idea of this approach is that that we do not have a next level bitmap or array, we always keep a bitmap of all visited nodes in all levels synchronized. All processors know which node is already visited and which not and the parent of each node can be correctly stored at each processor. Before the algorithm ends the parent arrays of each processor get combined to one parent array with an allreduce operation. Section \ref{sec:implementations} gives detailed information about this approach.\\
-If you want to study the algorithm and the history of that algorithm in a more detailed way, you can check the appendix of this paper. There is the source code at \ref{sec:sourcecode}  of every version in fully length.
+If you want to study the algorithm and the history of that algorithm in a more detailed way, you can check the appendix of this paper. There is the source code at \ref{sec:sourcecode} of every version in fully length.
 
 \section{Testing the algorithm on Jupiter}
 \label{sec:testing}
 
-For better understanding how changes in the algorithm influence the speed of the algorithm we compare the results of the different versions on Jupiter. In the following figures we work with a graph of scale 25 and an edgefactor of 4. That means that we have \(2^{25}\) nodes and \(2^{27}\) edges. The edges were generated by a kronecker graph generator, researched by Leskovec, Chakrabarti, Kleinberg, Faloutsos and Ghahramani  \cite{kronecker}.
+For better understanding how manipulations in the algorithm influence the speed of the algorithm we compare the results of the different versions on Jupiter. In the following figures we work with a graph of scale 25 and an edgefactor of 4. That means that we have \(2^{25}\) nodes and \(2^{27}\) edges. The edges were generated by a kronecker graph generator, researched by Leskovec, Chakrabarti, Kleinberg, Faloutsos and Ghahramani~\cite{kronecker}, and there are 64 bits allocated per node.
 
 \subsection{Testing the first version}
 
@@ -235,10 +235,39 @@ Figure~\ref{fig:nextbitmap} shows the results of the first version of our algori
 
 \subsection{Testing the second version}
 
+\begin{figure}[!ht]
+   \centering
+   \includegraphics[width=0.75\textwidth]{parent_array}
+   \caption{Results of the next level array approach.}
+   \label{fig:parentarray}
+\end{figure}
+
+Figure~\ref{fig:parentarray} illustrates the results of the second version. As we can see this solution has a very bad speedup with the raising number of cores. Reason for that bad speedup is the reduce scatter operation. It takes too much time to reduce the entries of the next level array with the MAX operation. In Figure~\ref{fig:reducescatter} it is shown how much time the reduce scatter operation consumes for the different count of cores.
+
+\begin{figure}[H]
+   \centering
+   \includegraphics[width=0.75\textwidth]{reducescatter}
+   \caption{Time for reducing the next level arrays of every processor.}
+   \label{fig:reducescatter}
+\end{figure}
+
 \subsection{Testing the third version}
+
+The third version is a compromise between the first and the second version. On the one hand we want to synchronize as little as possible like in the first version. On the other hand, to get a parent array at the end of the algorithm, we have to synchronize more information than in the first version, but as we see in Figure~\ref{fig:parentarray} reducing the whole next level array of all nodes with the MAX operation is too time-consuming. So we decide to reduce a bitmap of all nodes of the graph with the allreduce operation. Figure~\ref{fig:allvisited} shows the results of this purpose.
+
+\begin{figure}[H]
+   \centering
+   \includegraphics[width=0.75\textwidth]{allvisited}
+   \caption{Results of the third and current version.}
+   \label{fig:allvisited}
+\end{figure}
+
+CALCULATION OF SPEEDUP FOLLOWS!!!
 
 \section{The graph500 project and my own realisation}
 \label{sec:graph500}
+
+FROM HERE IN PROGRESS....
 
 In this section will be an implementation of the parallel BFS in MPI. The programming language is C, MPI is used to ensure the parallel solution. For more information about MPI read Rauber 2013 (reference not working :( , in progress)\\
 Because it would be too costly to type in the node data for a scale of \(2^{32}\) or higher, the first part of the program is to generate nodes. For the data generation we used a Kronecker generator. Later in this paper there will be a section of this Kronecker generator, which creates natural graphs. In an own program the kronecker generator generates an edge list, containing start vertices and end vertices. These edge list will be written into a file, so the graph don't have to be generated each time for new. For generation the following void function will be used:
@@ -288,11 +317,11 @@ Here is the beginning of the basic algorithm of our parallel BFS algorithm. All 
 \nocite{*}
 \bibliographystyle{abbrv}
 \bibliography{bachelor}
-
+\clearpage
 \appendix
 \section{Source Code}
 \label{sec:sourcecode}
-\cfile{../Source/bfs_par.c}
+\lstinputlisting[caption={BFS solution},label=bfs]{../Source/bfs_par_allvisited.c}
 \clearpage
 \lstinputlisting[caption={Kronecker Generator},label=kronecker_generator]{../Source/kronecker_generator.c}
 \clearpage

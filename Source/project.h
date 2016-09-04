@@ -6,7 +6,7 @@
 #include <string.h>
 #include <sys/time.h>
 
-#define SCALE 24    // 2^30 MALLOC MAX = SCALE 26 + EDGEFACTOR 16
+#define SCALE 25    // 2^30 MALLOC MAX = SCALE 26 + EDGEFACTOR 16
 #define EDGEFACTOR 4
 
 #define I64_BYTES 8
@@ -28,7 +28,7 @@ double mytime(void){
 }
 
 //void bfs(unsigned long *level, uint64_t *buffer, uint64_t buffer_size, uint64_t *index_of_node, uint64_t nodes_owned, int procs);
-void bfs(unsigned long *level, uint64_t *buffer, uint64_t buffer_size, uint64_t *index_of_node, int my_rank, int procs);
+void bfs(uint64_t *level, uint64_t *buffer, uint64_t buffer_size, uint64_t *index_of_node, int my_rank, int procs);
 void generate_graph(int scale, int edgefactor, float *initiator, uint64_t *startVertex, uint64_t *endVertex);
 uint64_t *create_buffer_from_edgelist(uint64_t *startVertex, uint64_t *endVertex, uint64_t nodes, uint64_t edges, uint64_t proc_number);
 uint64_t calculate_size(uint64_t *count_edges_per_node, uint64_t first, uint64_t last);
