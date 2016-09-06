@@ -212,6 +212,43 @@ Time for bfs searching: 3.482488
 Time for reading, generating edge buffer and scattering: 63.339381
 Time for bfs searching: 2.620602
 
+SCALE 26
+EGDEFACTOR 4
+
+[e1026090@jupiter ~]$ srun -p q_student -N 1 --ntasks-per-node=1 ./par
+Time for reading, generating edge buffer and scattering: 135.684585
+Time for bfs searching: 154.149043
+[e1026090@jupiter ~]$ srun -p q_student -N 2 --ntasks-per-node=1 ./par
+Time for reading, generating edge buffer and scattering: 131.827198
+Time for bfs searching: 104.615437
+[e1026090@jupiter ~]$ srun -p q_student -N 1 --ntasks-per-node=2 ./par
+Time for reading, generating edge buffer and scattering: 132.558515
+Time for bfs searching: 102.995764
+[e1026090@jupiter ~]$ srun -p q_student -N 1 --ntasks-per-node=4 ./par
+Time for reading, generating edge buffer and scattering: 130.124092
+Time for bfs searching: 57.386097
+[e1026090@jupiter ~]$ srun -p q_student -N 1 --ntasks-per-node=8 ./par
+Time for reading, generating edge buffer and scattering: 129.127035
+Time for bfs searching: 78.871513
+[e1026090@jupiter ~]$ srun -p q_student -N 2 --ntasks-per-node=4 ./par
+Time for reading, generating edge buffer and scattering: 128.286870
+Time for bfs searching: 31.489332
+[e1026090@jupiter ~]$ srun -p q_student -N 8 --ntasks-per-node=2 ./par
+Time for reading, generating edge buffer and scattering: 128.311671
+Time for bfs searching: 17.831639
+[e1026090@jupiter ~]$ srun -p q_student -N 8 --ntasks-per-node=4 ./par
+Time for reading, generating edge buffer and scattering: 128.379957
+Time for bfs searching: 10.283285
+[e1026090@jupiter ~]$ srun -p q_student -N 8 --ntasks-per-node=8 ./par
+Time for reading, generating edge buffer and scattering: 128.945330
+Time for bfs searching: 6.671394
+[e1026090@jupiter ~]$ srun -p q_student -N 16 --ntasks-per-node=8 ./par
+Time for reading, generating edge buffer and scattering: 130.488362
+Time for bfs searching: 4.598344
+[e1026090@jupiter ~]$ srun -p q_student -N 32 --ntasks-per-node=4 ./par
+Time for reading, generating edge buffer and scattering: 130.827716
+Time for bfs searching: 4.738502
+
 
 
 

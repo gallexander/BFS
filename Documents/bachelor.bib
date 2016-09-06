@@ -1,13 +1,3 @@
-%% This BibTeX bibliography file was created using BibDesk.
-%% http://bibdesk.sourceforge.net/
-
-%% Created for Alexander Gallauner at 2016-09-02 17:49:18 +0200 
-
-
-%% Saved with string encoding Unicode (UTF-8) 
-
-
-
 @article{kronecker,
 	Author = {Leskovec, Jure and Chakrabarti, Deepayan and Kleinberg, Jon and Faloutsos, Christos and Ghahramani, Zoubin},
 	Date-Added = {2016-09-02 15:37:01 +0000},
@@ -16,14 +6,32 @@
 	Title = {Kronecker Graphs: An Approach to Modeling Networks},
 	Year = {2010}}
 
+@inproceedings{matrices,
+	address = {New York, NY, USA},
+	series = {{SC} '11},
+	title = {Parallel {Breadth}-first {Search} on {Distributed} {Memory} {Systems}},
+	isbn = {978-1-4503-0771-0},
+	url = {http://doi.acm.org/10.1145/2063384.2063471},
+	doi = {10.1145/2063384.2063471},
+	abstract = {Data-intensive, graph-based computations are pervasive in several scientific applications, and are known to to be quite challenging to implement on distributed memory systems. In this work, we explore the design space of parallel algorithms for Breadth-First Search (BFS), a key subroutine in several graph algorithms. We present two highly-tuned parallel approaches for BFS on large parallel systems: a level-synchronous strategy that relies on a simple vertex-based partitioning of the graph, and a two-dimensional sparse matrix partitioning-based approach that mitigates parallel communication overhead. For both approaches, we also present hybrid versions with intra-node multithreading. Our novel hybrid two-dimensional algorithm reduces communication times by up to a factor of 3.5, relative to a common vertex based approach. Our experimental study identifies execution regimes in which these approaches will be competitive, and we demonstrate extremely high performance on leading distributed-memory parallel systems. For instance, for a 40,000-core parallel execution on Hopper, an AMD Magny-Cours based system, we achieve a BFS performance rate of 17.8 billion edge visits per second on an undirected graph of 4.3 billion vertices and 68.7 billion edges with skewed degree distribution.},
+	urldate = {2016-09-06},
+	booktitle = {Proceedings of 2011 {International} {Conference} for {High} {Performance} {Computing}, {Networking}, {Storage} and {Analysis}},
+	publisher = {ACM},
+	author = {Buluç, Aydin and Madduri, Kamesh},
+	year = {2011},
+	pages = {65:1--65:12}
+}
+
 @book{rauber,
-	Address = {Berlin, Heidelberg},
-	Author = {Rauber, Thomas and R{\"u}nger, Gudula},
-	Isbn = {978-3-642-37800-3 978-3-642-37801-0},
-	Language = {en},
-	Publisher = {Springer Berlin Heidelberg},
-	Title = {Parallel {Programming}},
-	Url = {http://link.springer.com/10.1007/978-3-642-37801-0},
-	Urldate = {2016-07-10},
-	Year = {2013},
-	Bdsk-Url-1 = {http://link.springer.com/10.1007/978-3-642-37801-0}}
+	title = {Parallel {Programming}: for {Multicore} and {Cluster} {Systems}},
+	isbn = {978-3-642-37801-0},
+	shorttitle = {Parallel {Programming}},
+	abstract = {Innovations in hardware architecture, like hyper-threading or multicore processors, mean that parallel computing resources are available for inexpensive desktop computers. In only a few years, many standard software products will be based on concepts of parallel programming implemented on such hardware, and the range of applications will be much broader than that of scientific computing, up to now the main application area for parallel computing.Rauber and Rünger take up these recent developments in processor architecture by giving detailed descriptions of parallel programming techniques that are necessary for developing efficient programs for multicore processors as well as for parallel cluster systems and supercomputers. Their book is structured in three main parts, covering all areas of parallel computing: the architecture of parallel systems, parallel programming models and environments, and the implementation of efficient application algorithms. The emphasis lies on parallel programming techniques needed for different architectures. For this second edition, all chapters have been carefully revised. The chapter on architecture of parallel systems has been updated considerably, with a greater emphasis on the architecture of multicore systems and adding new material on the latest developments in computer architecture. Lastly, a completely new chapter on general-purpose GPUs and the corresponding programming techniques has been added.The main goal of the book is to present parallel programming techniques that can be used in many situations for a broad range of application areas and which enable the reader to develop correct and efficient parallel programs. Many examples and exercises are provided to show how to apply the techniques. The book can be used as both a textbook for students and a reference book for professionals. The material presented has been used for courses in parallel programming at different universities for many years.},
+	language = {en},
+	publisher = {Springer Science \& Business Media},
+	author = {Rauber, Thomas and Rünger, Gudula},
+	month = jun,
+	year = {2013},
+	note = {Google-Books-ID: UbpAAAAAQBAJ},
+	keywords = {Computers / Computer Science, Computers / Hardware / Mobile Devices, Computers / Information Technology, Computers / Networking / Hardware, Computers / Programming / General, Computers / Software Development \& Engineering / Systems Analysis \& Design, Computers / Systems Architecture / General, Mathematics / Applied, Technology \& Engineering / Telecommunications}
+}
