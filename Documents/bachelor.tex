@@ -7,6 +7,7 @@
 \usepackage{cleveref}
 \usepackage{filecontents}
 \usepackage{minted}
+\usepackage{url}
 
 \definecolor{lstcolor}{rgb}{0.95,0.95,0.95}
 
@@ -121,10 +122,10 @@ Here we will present our solution of the core of our parallel BFS algorithm in a
 \begin{listing}[h]
 \begin{ccode}
 /*
-input: every proc has adjacency buffer of owned nodes
+input: every proc has adjacency buffer of owned nodes, visited_bitmap where root is set to one
 output: parent array
 */
-void BFS(buffer){
+void* BFS(buffer, visited_bitmap){
 	char oneChildisVisited = 1;
 	while (oneChildisVisited){
 	oneChildisVisited = 0;
@@ -268,7 +269,30 @@ CALCULATION OF SPEEDUP FOLLOWS!!!
 \section{The graph500 project and my own realisation}
 \label{sec:graph500}
 
-FROM HERE IN PROGRESS....
+The graph500 \cite{graph500} is a benchmark of supercomputer systems and concentrates on data intensive loads. Instead of counting double precision floating-point, the benchmark stresses more the communication between the nodes of the system. There are two kernels in this benchmark which are important for the computation and are timed. The first kernel has to generate a graph from the given edge list. In the second kernel is a computation of the parent array of a given search key. This computation is done by a BFS search on the graph generated in the first kernel and is repeated 64 times each time with a new randomly sampled search key.\\
+\\
+\begin{listing}[H]
+\begin{ccode}
+/*
+input: scale and edgefactor
+output: performance information
+*/
+void graph500_benchmark(scale, edgefactor){
+	edge_list = generate_edges(scale, edgefactor);
+	graph = compute_graph(edge_list); // kernel 1 - timed
+	keys = generate_keys(scale, 64);
+	for each Key k in keys{
+		parent_array = BFS(graph, k);   // kernel 2 - timed
+		validate(parent_array);
+	}
+	print(performance_information);
+}
+\end{ccode}
+\caption{Graph500 benchmark in pseudo code.}
+\label{lst:graph500}
+\end{listing}
+
+Before the first kernel starts there is a generation of the edge list with a Kronecker generator, as illustrated in Listing~\ref{lst:graph500} through \cinline/edge_list = generate_edges(scale, edgefactor);/. The most important thing in this function is that there is a generation of undirected edge tuples which must not show any locality that can be exploited by the timed kernels. After that the computation of the graph, which is used in kernel 2, follows.
 
 In this section will be an implementation of the parallel BFS in MPI. The programming language is C, MPI is used to ensure the parallel solution. For more information about MPI read Rauber 2013 (reference not working :( , in progress)\\
 Because it would be too costly to type in the node data for a scale of \(2^{32}\) or higher, the first part of the program is to generate nodes. For the data generation we used a Kronecker generator. Later in this paper there will be a section of this Kronecker generator, which creates natural graphs. In an own program the kronecker generator generates an edge list, containing start vertices and end vertices. These edge list will be written into a file, so the graph don't have to be generated each time for new. For generation the following void function will be used:
