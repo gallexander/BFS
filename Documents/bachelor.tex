@@ -293,6 +293,12 @@ void graph500_benchmark(scale, edgefactor){
 \end{listing}
 
 Before the first kernel starts there is a generation of the edge list with a Kronecker generator, as illustrated in Listing~\ref{lst:graph500} through \cinline/edge_list = generate_edges(scale, edgefactor);/. The most important thing in this function is that there is a generation of undirected edge tuples which must not show any locality that can be exploited by the timed kernels. After that the computation of the graph, which is used in kernel 2, follows.
+\begin{ccode}
+graph = compute_graph(edge_list);
+\end{ccode}
+This step is timed, so it is important that it is done as fast as possible. But the fastest solution is not always the best one, because the computed graph from kernel 1 must be also useable for kernel 2 in an appropriate way.\\
+Our solution for kernel 1 is that we sort the edge list ascending by vertex identifier, first by the start vertex identifier second by the end vertex identifier.
+// figure from sorting and splitting 
 
 In this section will be an implementation of the parallel BFS in MPI. The programming language is C, MPI is used to ensure the parallel solution. For more information about MPI read Rauber 2013 (reference not working :( , in progress)\\
 Because it would be too costly to type in the node data for a scale of \(2^{32}\) or higher, the first part of the program is to generate nodes. For the data generation we used a Kronecker generator. Later in this paper there will be a section of this Kronecker generator, which creates natural graphs. In an own program the kronecker generator generates an edge list, containing start vertices and end vertices. These edge list will be written into a file, so the graph don't have to be generated each time for new. For generation the following void function will be used:
