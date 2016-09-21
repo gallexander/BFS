@@ -49,3 +49,4 @@ parallelisiert: 10
 06.09.2016: 145 Stunden, Ändern des Generators auf Parallel, weitere Tests mit scale 26, scale 27 war leider nicht möglich weil read_graph zu lange braucht
 18.09.2016: 148 Stunden, Schreiben des Kapitels graph500
 19.09.2016: 149 Stunden, Schreibens
+21.09.2016: 153 Stunden, Schreiben + Anfangen mit parallelen Quick-Merge Sort

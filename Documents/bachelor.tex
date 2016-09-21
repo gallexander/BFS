@@ -215,7 +215,7 @@ In the second version of the algorithm we did not use a next level bitmap, inste
 \label{sec:thirdversion}
 
 The basic idea of this approach is that that we do not have a next level bitmap or array, we always keep a bitmap of all visited nodes in all levels synchronized. All processors know which node is already visited and which not and the parent of each node can be correctly stored at each processor. Before the algorithm ends the parent arrays of each processor get combined to one parent array with an allreduce operation. Section \ref{sec:implementations} gives detailed information about this approach.\\
-If you want to study the algorithm and the history of that algorithm in a more detailed way, you can check the appendix of this paper. There is the source code at \ref{sec:sourcecode} of every version in fully length.
+If you want to study the algorithm and the history of that algorithm in a more detailed way, you can check the appendix of this paper. There is the source code of every version in the Appendix~\ref{sec:sourcecode}.
 
 \section{Testing the algorithm on Jupiter}
 \label{sec:testing}
@@ -298,41 +298,20 @@ graph = compute_graph(edge_list);
 \end{ccode}
 This step is timed, so it is important that it is done as fast as possible. But the fastest solution is not always the best one, because the computed graph from kernel 1 must be also useable for kernel 2 in an appropriate way.\\
 Our solution for kernel 1 is that we sort the edge list ascending by vertex identifier, first by the start vertex identifier second by the end vertex identifier.
-// figure from sorting and splitting 
-
-In this section will be an implementation of the parallel BFS in MPI. The programming language is C, MPI is used to ensure the parallel solution. For more information about MPI read Rauber 2013 (reference not working :( , in progress)\\
-Because it would be too costly to type in the node data for a scale of \(2^{32}\) or higher, the first part of the program is to generate nodes. For the data generation we used a Kronecker generator. Later in this paper there will be a section of this Kronecker generator, which creates natural graphs. In an own program the kronecker generator generates an edge list, containing start vertices and end vertices. These edge list will be written into a file, so the graph don't have to be generated each time for new. For generation the following void function will be used:
-
-\begin{lstlisting}
-generate_graph(SCALE, EDGEFACTOR, initiator, startVertex, endVertex);
-\end{lstlisting}
-
-In this line the Kronecker generator fills the \lstinline{startVertex[i]} and \lstinline{endVertex[i]} arrays with random numbers of nodes. Each pair of \lstinline{startVertex[i]} and \lstinline{endVertex[i]}, for \( 0 < i < N, N = count of nodes \) is representing an edge of the graph. The \lstinline{SCALE} parameter gives the generator the size of the graph and the \lstinline{EDGEFACTOR} the ratio of the count of the edges to the count of the nodes. The \lstinline{initiator} is a 2x2 map, filled with probabilities, which influences the functioning of the Kronecker generator. So after the generation our root proc reads the graph data from the file and brings the information in a more computeable form.
-
-\begin{lstlisting}
-create_node_edge_lists(nodes, edges, startVertex, endVertex, node_edge_list, count_edges_per_node);
-\end{lstlisting}
-Firstly the arrays of vertexes are converted to an array of nodes, where each entry of the array points to a list of nodes, which are neighbours of this specific entry.
-\begin{lstlisting}
-buffer = lists_to_buffer(&buffer_size, node_edge_list, count_edges_per_node, 0, nodes-1);
-\end{lstlisting}
-Secondly that array of nodes, where each entry points to a list, is transformed to a buffer, where the neighbours of the node 1 are at the beginning of the buffer, then the neighbours of the node 2 follow the neighbours of node 1, and so on.
-The next step is to calculate the amount of edges each proc of the system is receiving, so that the procs can allocate the necessary memory for their part of the buffer and scattering it from the root proc to all procs.  So far we just handled functions, which were only processed by the root proc, but from now the functions in the future get called by the root AND all other procs. \\
-After that calling the function
-\begin{lstlisting}
-MPI_Scatterv((void *) buffer, buffer_send_counts, buffer_displs, MPI_UINT64_T, (void *) buffer_recvbuf, buffer_recv_size, MPI_UINT64_T, 0, MPI_COMM_WORLD);
-\end{lstlisting}
-the \lstinline{buffer} is scattered to all procs, which have already allocated the necessary space. \lstinline{buffer_send_counts} gives the information, how many units each proc gets. \lstinline{buffer_displs} is a vector, whichs shows the starting index of the buffer for each proc, so the right part of the entire buffer is scattered for each proc. \lstinline{buffer_recvbuf} ensures that every proc has a buffer to store the received information.\\
-As we already above-mentioned at the explanation of our approach of the parallel BFS there has to be a thinking in levels and there has to be a communcation, which procs must work at the next round/level. For instance at the beginning the root node is in the first level (level 0). So just the proc, which is responsible for the root node, is working in the first round. The next step is that the neighbours of the root node have their turn. All procs, which own one node of the second level, have to work in the next level. With
-\begin{lstlisting}
-MPI_Scatter((void *)level,nodes / BITS / procs,MPI_UNSIGNED_LONG, (void *)level_recvbuf, nodes / BITS / procs, MPI_UNSIGNED_LONG, 0, MPI_COMM_WORLD);
-\end{lstlisting}
-the nodes of the first round get scattered. \lstinline{level} is a bitmap of type \lstinline{unsigned long} with the nodes of the current round set to 1. \lstinline{nodes / BITS / procs} says how many units of type \lstinline{unsigned long} every proc (including the root node) is receiving. \\
-At the next instruction the procs (also the root proc) comes to the most relevant function of the algorithm.
-\begin{lstlisting}
-bfs(level_recvbuf, buffer_recvbuf, buffer_recv_size, count_edges_per_node_recvbuf, (nodes / procs), procs);
-\end{lstlisting}
-Here is the beginning of the basic algorithm of our parallel BFS algorithm. All steps so far were a preparation. The edge list was transformed into a better computeable form and the root node had to scatter some important data to the other procs of the system.
+// FIGURE FROM SORTING AND SPLITTING 16 VALUES \\
+The sorting of the edge list is done in parallel with quicksort to get a good performance for the first kernel. We choose the sorting algorithm quicksort, because 	it is a efficient sorting algorithm, particularly and that is important, in average case.
+After that the edge list is split to the processors. Every processor gets the edges of the nodes he owns. For instance if we have 64 nodes and four processors then the first processor gets the edges with the start vertex from 0 to 15. The second processor gets the edges from 16 to 31, the third from 32 to 47, the last from 48 to 63. So the processors can get a different count of edges, dependent on the start vertex of the edges. We first send the processors the count of the specific edges. Then the processor allocates memory for that edges and receives them. \\
+With the splitted edge list the buffer, which will be used in kernel 2, is created in such a way that the buffer contains the end vertex entries of the received edges. Duplicate edges are eliminated. To know at which entry the edges of each node start, we need an additional array of the size of owned nodes. With that the first kernel is completed. // FIGURE \\
+For the second kernel there have to be a BFS search of 64 keys, which are randomly sampled. Firstly we generate the search keys with 
+\begin{ccode}
+keys = generate_keys(scale, 64);
+\end{ccode}
+Secondly we iterate over them and compute a parent array for earch search key \cinline/k/ with
+\begin{ccode}
+parent_array = BFS(graph, k);
+\end{ccode}
+For the BFS search we use our solution from Section~\ref{sec:core} or rather~\ref{sec:thirdversion}. To know if the computed parent array is correct, there is a validation after each BFS search. This validation is not timed and doesn't influences the performance output, so it is sequential in our solution.\\
+Further informations and code details of our solution of the graph500 benchmark can be found in Appendix~\ref{sec:sourcecode}.
 
 \section{Ranking of Jupiter}
 \label{sec:ranking}

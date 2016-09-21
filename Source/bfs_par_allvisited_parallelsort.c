@@ -35,9 +35,18 @@ int main(int argc, char *argv[]){
 
         read_graph(SCALE, EDGEFACTOR, startVertex, endVertex);
         
+        startVertex_recvbuf = (uint64_t *) calloc(edges / procs, I64_BYTES);
+        endVertex_recvbuf = (uint64_t *) calloc(edges / procs, I64_BYTES);
+        
         double time = mytime();
+        
+        MPI_Scatter((void *) startVertex, edges / procs, MPI_UINT64_T, startVertex_recvbuf, edges / procs, MPI_UINT64_T, 0, MPI_COMM_WORLD);
+        MPI_Scatter((void *) endVertex, edges / procs, MPI_UINT64_T, endVertex_recvbuf, edges / procs, MPI_UINT64_T, 0, MPI_COMM_WORLD);
+        
         //SORTING THE EDGE LIST
-        sort(startVertex, endVertex, 0, edges-1);
+        sort(startVertex, endVertex, 0, (edges / procs) -1);
+        
+        
         
         //FINDING OUT THE BOUNDS OF THE EDGE LIST FOR EACH PROC
         int j;
@@ -104,6 +113,15 @@ int main(int argc, char *argv[]){
         free(startVertex);
         free(endVertex);
     }else{
+        startVertex_recvbuf = (uint64_t *) calloc(edges / procs, I64_BYTES);
+        endVertex_recvbuf = (uint64_t *) calloc(edges / procs, I64_BYTES);
+        
+        MPI_Scatter(NULL, edges / procs, MPI_UINT64_T, startVertex_recvbuf, edges / procs, MPI_UINT64_T, 0, MPI_COMM_WORLD);
+        MPI_Scatter(NULL, edges / procs, MPI_UINT64_T, endVertex_recvbuf, edges / procs, MPI_UINT64_T, 0, MPI_COMM_WORLD);
+        
+        //SORTING THE EDGE LIST
+        sort(startVertex, endVertex, 0, (edges / procs) -1);
+        
         MPI_Scatter((void *) edgelist_send_counts, 1, MPI_INT, &edgelist_counts_recvbuf, 1, MPI_INT, 0, MPI_COMM_WORLD);
         
         startVertex_recvbuf = (uint64_t *) calloc(edgelist_counts_recvbuf, I64_BYTES);
