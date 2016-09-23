@@ -6,7 +6,7 @@
 #include <string.h>
 #include <sys/time.h>
 
-#define SCALE 7    // 2^30 MALLOC MAX = SCALE 26 + EDGEFACTOR 16
+#define SCALE 26    // 2^30 MALLOC MAX = SCALE 26 + EDGEFACTOR 16
 #define EDGEFACTOR 4
 
 #define I64_BYTES 8
@@ -37,6 +37,9 @@ uint64_t getSumOfEdges(uint64_t *count_edges_per_node, uint64_t nodes);
 void write_graph(int scale, int edgefactor, uint64_t *startVertex, uint64_t *endVertex);
 void read_graph(int scale, int edgefactor, uint64_t *startVertex, uint64_t *endVertex);
 
+// SORTING
+void tree_merge(uint64_t *endresult_start, uint64_t *endresult_end, uint64_t *startVertex, uint64_t *endVertex, uint64_t edges, int my_rank, int procs);
+void merge(uint64_t *result_start, uint64_t *result_end, uint64_t *v1_start, uint64_t *v1_end, uint64_t n1, uint64_t *v2_start, uint64_t *v2_end, uint64_t n2);
 void sort(uint64_t *startVertex, uint64_t *endVertex, int64_t l, int64_t r);
 int64_t partition(uint64_t *startVertex, uint64_t *endVertex, int64_t l, int64_t r);
 

@@ -42,16 +42,9 @@ int main(int argc, char *argv[]){
         MPI_Scatter((void *) startVertex, edges / procs, MPI_UINT64_T, startVertex_recvbuf, edges / procs, MPI_UINT64_T, 0, MPI_COMM_WORLD);
         MPI_Scatter((void *) endVertex, edges / procs, MPI_UINT64_T, endVertex_recvbuf, edges / procs, MPI_UINT64_T, 0, MPI_COMM_WORLD);
         
-        sort(startVertex_recvbuf, endVertex_recvbuf, 0, (edges / procs) -1);
-        tree_merge(startVertex, endVertex, my_rank, procs);
-        
-        int i;
-        for (i = 0; i < edges / procs; i++){
-            printf("%i: %llu %llu\n", my_rank, (unsigned long long) startVertex_recvbuf[i], (unsigned long long) endVertex_recvbuf[i]);
-        }
-        
         //SORTING THE EDGE LIST
-        sort(startVertex, endVertex, 0, edges -1);
+        sort(startVertex_recvbuf, endVertex_recvbuf, 0, (edges / procs) -1);
+        tree_merge(startVertex, endVertex, startVertex_recvbuf, endVertex_recvbuf, edges, my_rank, procs);
         
         //FINDING OUT THE BOUNDS OF THE EDGE LIST FOR EACH PROC
         int j;
@@ -106,7 +99,7 @@ int main(int argc, char *argv[]){
         
         //BFS
         time = mytime() - time;
-        printf("Time for reading, generating edge buffer and scattering: %f\n", time/1000000);
+        printf("Time for generating edge buffer, sorting and scattering: %f\n", time/1000000);
         time = mytime();
         bfs(level, startVertex_recvbuf, index_of_node[nodes/procs], index_of_node, my_rank, procs);
 
@@ -126,11 +119,7 @@ int main(int argc, char *argv[]){
         
         //SORTING THE EDGE LIST
         sort(startVertex_recvbuf, endVertex_recvbuf, 0, (edges / procs) -1);
-        
-        int i;
-        for (i = 0; i < edges / procs; i++){
-            printf("%i: %llu %llu\n", my_rank, (unsigned long long) startVertex_recvbuf[i], (unsigned long long) endVertex_recvbuf[i]);
-        }
+        tree_merge(NULL, NULL, startVertex_recvbuf, endVertex_recvbuf, edges, my_rank, procs);
         
         MPI_Scatter((void *) edgelist_send_counts, 1, MPI_INT, &edgelist_counts_recvbuf, 1, MPI_INT, 0, MPI_COMM_WORLD);
         
@@ -252,55 +241,80 @@ void sort(uint64_t *startVertex, uint64_t *endVertex, int64_t l, int64_t r){
     }
 }
 
-void tree_merge(uint64_t *startVertex, uint64_t *endVertex, uint64_t edges, int my_rank, int procs){
+void tree_merge(uint64_t *endresult_start, uint64_t *endresult_end, uint64_t *startVertex, uint64_t *endVertex, uint64_t edges, int my_rank, int procs){
     int step = 1;
+    MPI_Status status;
     uint64_t s = edges / procs;
-    uint64_t *recv_buf = NULL;
+    uint64_t *recv_buf_start = NULL;
+    uint64_t *recv_buf_end = NULL;
+    uint64_t *result_start = startVertex;
+    uint64_t *result_end = endVertex;
+    uint64_t *chunk_start = NULL;
+    uint64_t *chunk_end = NULL;
     while (step < procs){
         if (my_rank % (2 * step) == 0){
-            if (my_rank + step < p){
-                recv_buf = (uint64_t*) calloc(s, sizeof(uint64_t));
-                MPI_Recv((void *)recv_buf, s, MPI_UINT64_T, my_rank + step, 0, MPI_COMM_WORLD, &status);
-                //merge(
+            if (my_rank + step < procs){
+                recv_buf_start = (uint64_t *) calloc(s, sizeof(uint64_t));
+                recv_buf_end = (uint64_t *) calloc(s, sizeof(uint64_t));
+                MPI_Recv((void *)recv_buf_start, s, MPI_UINT64_T, my_rank + step, 0, MPI_COMM_WORLD, &status);
+                MPI_Recv((void *)recv_buf_end, s, MPI_UINT64_T, my_rank + step, 0, MPI_COMM_WORLD, &status);
+                chunk_start = result_start;
+                chunk_end = result_end;
+                result_start = (uint64_t *) calloc(2*s, sizeof(uint64_t));
+                result_end = (uint64_t *) calloc(2*s, sizeof(uint64_t));
+                merge(result_start, result_end, chunk_start, chunk_end, s, recv_buf_start, recv_buf_end, s);
             }
         }else{
             int near = my_rank - step;
-            MPI_Send((void*) startVertex, s, MPI_UINT64_T, near, 0, MPI_COMM_WORLD);
+            MPI_Send((void*) result_start, s, MPI_UINT64_T, near, 0, MPI_COMM_WORLD);
+            MPI_Send((void*) result_end, s, MPI_UINT64_T, near, 0, MPI_COMM_WORLD);
             break;
         }
-        step *= 2;
-        s *= 2;
+        step = step * 2;
+        s = s * 2;
     }
-    free(recv_buf);
+    if (my_rank == 0){
+        memcpy(endresult_start, result_start, edges*sizeof(uint64_t));
+        memcpy(endresult_end, result_end, edges*sizeof(uint64_t));
+    }
+    free(result_start);
+    free(result_end);
 }
 
-uint64_t* merge(uint64_t *v1, uint64_t n1, uint64_t *v2, uint64_t n2){
+void merge(uint64_t *result_start, uint64_t *result_end, uint64_t *v1_start, uint64_t *v1_end, uint64_t n1, uint64_t *v2_start, uint64_t *v2_end, uint64_t n2){
     uint64_t i = 0, j = 0, k = 0;
-    uint64_t* result = (uint64_t *) calloc(n1+n2, sizeof(uint64_t));
-    while (i < n1 &&  j < n2){
-        if (v1[i]<v2[j]){
-            result[k] = v1[i];
+    while (i < n1 && j < n2){
+        if (v1_start[i] < v2_start[j] || (v1_start[i] == v2_start[j] && v1_end[i] < v2_end[j])){
+            result_start[k] = v1_start[i];
+            result_end[k] = v1_end[i];
             i++;
             k++;
         }else{
-            result[k] = v2[j];
+            result_start[k] = v2_start[j];
+            result_end[k] = v2_end[j];
             j++;
             k++;
         }
     }
     if (i == n1){
         while(j < n2){
-            result[k] = v2[j];
+            result_start[k] = v2_start[j];
+            result_end[k] = v2_end[j];
             j++;
             k++;
         }
     }else{
         while (i < n1){
-            result[k] = v1[i];
+            result_start[k] = v1_start[i];
+            result_end[k] = v1_end[i];
             i++;
             k++;
         }
     }
+    free(v1_start);
+    free(v1_end);
+    free(v2_start);
+    free(v2_end);
 }
 
 int64_t partition(uint64_t *startVertex, uint64_t *endVertex, int64_t l, int64_t r){
