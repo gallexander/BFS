@@ -1,4 +1,4 @@
-\documentclass[11pt,a4paper]{article}
+\documentclass[12pt,a4paper]{article}
 \usepackage{termpaper}
 \usepackage[utf8]{inputenc}
 \usepackage{graphicx}
@@ -299,7 +299,7 @@ graph = compute_graph(edge_list);
 This step is timed, so it is important that it is done as fast as possible. But the fastest solution is not always the best one, because the computed graph from kernel 1 must be also useable for kernel 2 in an appropriate way.\\
 Our solution for kernel 1 is that we sort the edge list ascending by vertex identifier, first by the start vertex identifier second by the end vertex identifier.
 // FIGURE FROM SORTING AND SPLITTING 16 VALUES \\
-The sorting of the edge list is done in parallel with quicksort to get a good performance for the first kernel. We choose the sorting algorithm quicksort, because 	it is a efficient sorting algorithm, particularly and that is important, in average case.
+The sorting of the edge list is done in parallel with a quicksort merge implementation to get a good performance for the first kernel. We choose the sorting algorithm quicksort, because it is a efficient sorting algorithm, particularly and that is important, in average case. The procedure is to split the edge list between the processors and every processor does the quicksort on the received edge list. The next step is to merge the different sorted edge lists in a way, that the root processor has the whole sorted edge list at the end. Instead of calling the merge operation \(p\) times in sequential order, where \(p\) is the count of processors, we decided to implement a tree based merging of the edge lists, like Puneet Kataria presented in his work \cite{quickmerge}. FIGURE\\
 After that the edge list is split to the processors. Every processor gets the edges of the nodes he owns. For instance if we have 64 nodes and four processors then the first processor gets the edges with the start vertex from 0 to 15. The second processor gets the edges from 16 to 31, the third from 32 to 47, the last from 48 to 63. So the processors can get a different count of edges, dependent on the start vertex of the edges. We first send the processors the count of the specific edges. Then the processor allocates memory for that edges and receives them. \\
 With the splitted edge list the buffer, which will be used in kernel 2, is created in such a way that the buffer contains the end vertex entries of the received edges. Duplicate edges are eliminated. To know at which entry the edges of each node start, we need an additional array of the size of owned nodes. With that the first kernel is completed. // FIGURE \\
 For the second kernel there have to be a BFS search of 64 keys, which are randomly sampled. Firstly we generate the search keys with 
@@ -331,7 +331,7 @@ Further informations and code details of our solution of the graph500 benchmark 
 \appendix
 \section{Source Code}
 \label{sec:sourcecode}
-\lstinputlisting[caption={BFS solution},label=bfs]{../Source/bfs_par_allvisited.c}
+\lstinputlisting[caption={BFS solution},label=bfs]{../Source/bfs_par_allvisited_parallelsort.c}
 \clearpage
 \lstinputlisting[caption={Kronecker Generator},label=kronecker_generator]{../Source/kronecker_generator.c}
 \clearpage

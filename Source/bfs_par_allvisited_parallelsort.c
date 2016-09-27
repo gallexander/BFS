@@ -46,6 +46,8 @@ int main(int argc, char *argv[]){
         sort(startVertex_recvbuf, endVertex_recvbuf, 0, (edges / procs) -1);
         tree_merge(startVertex, endVertex, startVertex_recvbuf, endVertex_recvbuf, edges, my_rank, procs);
         
+        printf("biggest node: %llu\n", (unsigned long long) startVertex[edges-1]);
+        
         //FINDING OUT THE BOUNDS OF THE EDGE LIST FOR EACH PROC
         int j;
         int last_node_number = 0;

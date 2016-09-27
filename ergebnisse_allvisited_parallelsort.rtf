@@ -70,4 +70,17 @@ Time for generating edge buffer, sorting and scattering: 61.726870\
 Time for bfs searching: 3.808054\
 [e1026090@jupiter ~]$ srun -p q_student -N 32 --ntasks-per-node=8 ./par\
 Time for generating edge buffer, sorting and scattering: 73.598943\
-Time for bfs searching: 3.788469}
+Time for bfs searching: 3.788469\
+\
+[e1026090@jupiter ~]$ srun -p q_student -N 8 --ntasks-per-node=4 ./par\
+Time for generating edge buffer, sorting and scattering: 58.445746\
+Time for bfs searching: 10.152327\
+[e1026090@jupiter ~]$ srun -p q_student -N 4 --ntasks-per-node=4 ./par\
+Time for generating edge buffer, sorting and scattering: 37.631492\
+Time for bfs searching: 17.754557\
+[e1026090@jupiter ~]$ srun -p q_student -N 2 --ntasks-per-node=4 ./par\
+Time for generating edge buffer, sorting and scattering: 52.506168\
+Time for bfs searching: 33.614489\
+[e1026090@jupiter ~]$ srun -p q_student -N 8 --ntasks-per-node=4 ./par\
+Time for generating edge buffer, sorting and scattering: 35.075337\
+Time for bfs searching: 10.164829}
