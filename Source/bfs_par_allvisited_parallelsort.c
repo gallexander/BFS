@@ -9,46 +9,66 @@ int main(int argc, char *argv[]){
     int my_rank, procs, tag=0;
     uint64_t nodes = pow(2,SCALE);
     uint64_t edges = nodes*EDGEFACTOR;
-    uint64_t root = ROOT;
         
     MPI_Status status;
 
     MPI_Init (&argc, &argv);
     MPI_Comm_rank (MPI_COMM_WORLD, &my_rank);
-    MPI_Comm_size (MPI_COMM_WORLD, &procs); //SHOULD BE POWER OF TWO
+    MPI_Comm_size (MPI_COMM_WORLD, &procs);
 
     uint64_t *startVertex = NULL;
     uint64_t *endVertex = NULL;
-    /* MUST BE INT BECAUSE OF MPI RESTRICTION */
-    int *edgelist_send_counts = NULL;
-    int *edgelist_send_displs = NULL;
-    uint64_t *startVertex_recvbuf = NULL;
-    uint64_t *endVertex_recvbuf = NULL;
-    uint64_t *index_of_node = NULL;
-    uint64_t *level = (uint64_t *) calloc(nodes / BITS, sizeof(uint64_t));
-    int edgelist_counts_recvbuf = 0;
+    double time;
+    struct result1 result;
     if (my_rank == 0){
         startVertex = (uint64_t *) calloc(edges, I64_BYTES);
         endVertex = (uint64_t *) calloc(edges, I64_BYTES);
-        edgelist_send_counts = (int *) calloc(procs, sizeof(int));
-        edgelist_send_displs = (int *) calloc(procs, sizeof(int));
 
         read_graph(SCALE, EDGEFACTOR, startVertex, endVertex);
         
-        startVertex_recvbuf = (uint64_t *) calloc(edges / procs, I64_BYTES);
-        endVertex_recvbuf = (uint64_t *) calloc(edges / procs, I64_BYTES);
-        double time = mytime();
-        
-        MPI_Scatter((void *) startVertex, edges / procs, MPI_UINT64_T, startVertex_recvbuf, edges / procs, MPI_UINT64_T, 0, MPI_COMM_WORLD);
-        MPI_Scatter((void *) endVertex, edges / procs, MPI_UINT64_T, endVertex_recvbuf, edges / procs, MPI_UINT64_T, 0, MPI_COMM_WORLD);
-        
-        //SORTING THE EDGE LIST
-        sort(startVertex_recvbuf, endVertex_recvbuf, 0, (edges / procs) -1);
-        tree_merge(startVertex, endVertex, startVertex_recvbuf, endVertex_recvbuf, edges, my_rank, procs);
-        
-        printf("biggest node: %llu\n", (unsigned long long) startVertex[edges-1]);
-        
-        //FINDING OUT THE BOUNDS OF THE EDGE LIST FOR EACH PROC
+        time = mytime();
+    }
+    kernel_1(startVertex, endVertex, edges, procs, my_rank, &result);
+    if (my_rank == 0){
+        time = mytime() - time;
+        printf("Time for generating edge buffer, sorting and scattering: %f\n", time/1000000);
+        time = mytime();
+    }
+    kernel_2(result.buffer, result.index_of_node, my_rank, procs, result.scale);
+    if (my_rank == 0){
+        time = mytime() - time;
+        printf("Time for bfs searching: %f\n", time/1000000);
+    }
+    MPI_Finalize ();
+    return 0;
+}
+
+void kernel_1(uint64_t *startVertex, uint64_t *endVertex, uint64_t edges, int procs, int my_rank, struct result1 *result){
+    int scale = 0;
+    int *edgelist_send_counts = NULL;
+    int *edgelist_send_displs = NULL;
+    int edgelist_counts_recvbuf = 0;
+    uint64_t *startVertex_recvbuf = (uint64_t *) calloc(edges / procs, I64_BYTES);
+    uint64_t *endVertex_recvbuf = (uint64_t *) calloc(edges / procs, I64_BYTES);
+    
+    MPI_Scatter((void *) startVertex, edges / procs, MPI_UINT64_T, startVertex_recvbuf, edges / procs, MPI_UINT64_T, 0, MPI_COMM_WORLD);
+    MPI_Scatter((void *) endVertex, edges / procs, MPI_UINT64_T, endVertex_recvbuf, edges / procs, MPI_UINT64_T, 0, MPI_COMM_WORLD);
+    
+    //SORTING THE EDGE LIST
+    sort(startVertex_recvbuf, endVertex_recvbuf, 0, (edges / procs) -1);
+    tree_merge(startVertex, endVertex, startVertex_recvbuf, endVertex_recvbuf, edges, my_rank, procs);
+    
+    if (my_rank == 0){
+        scale = (int) (log2(startVertex[edges-1])+1);
+    }
+    
+    MPI_Bcast(&scale, 1, MPI_INT, 0, MPI_COMM_WORLD);
+    uint64_t nodes = pow(2,scale);
+    
+    //FINDING OUT THE BOUNDS OF THE EDGE LIST FOR EACH PROC
+    if (my_rank == 0){
+        edgelist_send_counts = (int *) calloc(procs, sizeof(int));
+        edgelist_send_displs = (int *) calloc(procs, sizeof(int));
         int j;
         int last_node_number = 0;
         int core_count = 0;
@@ -73,84 +93,45 @@ int main(int argc, char *argv[]){
                 edgelist_send_counts[j] = edges - edgelist_send_displs[j];
             }
         }
-        
-        MPI_Scatter((void *) edgelist_send_counts, 1, MPI_INT, &edgelist_counts_recvbuf, 1, MPI_INT, 0, MPI_COMM_WORLD);
-        
-        startVertex_recvbuf = (uint64_t *) calloc(edgelist_counts_recvbuf, I64_BYTES);
-        endVertex_recvbuf = (uint64_t *) calloc(edgelist_counts_recvbuf, I64_BYTES);
-        
-        MPI_Scatterv((void *) startVertex, edgelist_send_counts, edgelist_send_displs, MPI_UINT64_T, (void *) startVertex_recvbuf, edgelist_counts_recvbuf, MPI_UINT64_T, 0, MPI_COMM_WORLD);
-        
-        MPI_Scatterv((void *) endVertex, edgelist_send_counts, edgelist_send_displs, MPI_UINT64_T, (void *) endVertex_recvbuf, edgelist_counts_recvbuf, MPI_UINT64_T, 0, MPI_COMM_WORLD);
-        
-        index_of_node = create_buffer_from_edgelist(startVertex_recvbuf, endVertex_recvbuf, nodes / procs, edgelist_counts_recvbuf, my_rank);
-	
-        //SET ROOT LEVEL
-        level[(ROOT/BITS)] = level[(ROOT/BITS)] | (uint64_t) pow(2,(ROOT % BITS));
-
-        //SCATTER LEVEL BUFFER
-        MPI_Bcast((void *)level, nodes / BITS, MPI_UINT64_T, 0, MPI_COMM_WORLD);
-        
-        /*for (i = 0; i < index_of_node[(nodes/procs)]; i++){
-            printf("%llu = %llu\n", (unsigned long long) buffer_recvbuf[i], (unsigned long long) startVertex_recvbuf[i]);
-        }
-        
-        for (i = 0; i < nodes / procs; i++){
-            printf("%llu = %llu\n", (unsigned long long) count_edges_per_node_recvbuf[i], (unsigned long long) index_of_node[i]);
-        }*/
-        
-        //BFS
-        time = mytime() - time;
-        printf("Time for generating edge buffer, sorting and scattering: %f\n", time/1000000);
-        time = mytime();
-        bfs(level, startVertex_recvbuf, index_of_node[nodes/procs], index_of_node, my_rank, procs);
-
-        time = mytime() - time;
-        printf("Time for bfs searching: %f\n", time/1000000);
-
-        free(edgelist_send_counts);
-        free(edgelist_send_displs);
-        free(startVertex);
-        free(endVertex);
-    }else{
-        startVertex_recvbuf = (uint64_t *) calloc(edges / procs, I64_BYTES);
-        endVertex_recvbuf = (uint64_t *) calloc(edges / procs, I64_BYTES);
-        
-        MPI_Scatter(NULL, edges / procs, MPI_UINT64_T, startVertex_recvbuf, edges / procs, MPI_UINT64_T, 0, MPI_COMM_WORLD);
-        MPI_Scatter(NULL, edges / procs, MPI_UINT64_T, endVertex_recvbuf, edges / procs, MPI_UINT64_T, 0, MPI_COMM_WORLD);
-        
-        //SORTING THE EDGE LIST
-        sort(startVertex_recvbuf, endVertex_recvbuf, 0, (edges / procs) -1);
-        tree_merge(NULL, NULL, startVertex_recvbuf, endVertex_recvbuf, edges, my_rank, procs);
-        
-        MPI_Scatter((void *) edgelist_send_counts, 1, MPI_INT, &edgelist_counts_recvbuf, 1, MPI_INT, 0, MPI_COMM_WORLD);
-        
-        startVertex_recvbuf = (uint64_t *) calloc(edgelist_counts_recvbuf, I64_BYTES);
-        endVertex_recvbuf = (uint64_t *) calloc(edgelist_counts_recvbuf, I64_BYTES);
-        
-        MPI_Scatterv((void *) startVertex, edgelist_send_counts, edgelist_send_displs, MPI_UINT64_T, (void *) startVertex_recvbuf, edgelist_counts_recvbuf, MPI_UINT64_T, 0, MPI_COMM_WORLD);
-        
-        MPI_Scatterv((void *) endVertex, edgelist_send_counts, edgelist_send_displs, MPI_UINT64_T, (void *) endVertex_recvbuf, edgelist_counts_recvbuf, MPI_UINT64_T, 0, MPI_COMM_WORLD);
-        
-        index_of_node = create_buffer_from_edgelist(startVertex_recvbuf, endVertex_recvbuf, nodes / procs, edgelist_counts_recvbuf, my_rank);
-        
-        // GET THE FIRST LEVEL
-        MPI_Bcast((void *)level, nodes / BITS, MPI_UINT64_T, 0, MPI_COMM_WORLD);
-        
-        bfs(level, startVertex_recvbuf, index_of_node[nodes/procs], index_of_node, my_rank, procs);
     }
-    free(level);
-    free(startVertex_recvbuf);
+    
+    MPI_Scatter((void *) edgelist_send_counts, 1, MPI_INT, &edgelist_counts_recvbuf, 1, MPI_INT, 0, MPI_COMM_WORLD);
+    
+    startVertex_recvbuf = (uint64_t *) calloc(edgelist_counts_recvbuf, I64_BYTES);
+    endVertex_recvbuf = (uint64_t *) calloc(edgelist_counts_recvbuf, I64_BYTES);
+    
+    MPI_Scatterv((void *) startVertex, edgelist_send_counts, edgelist_send_displs, MPI_UINT64_T, (void *) startVertex_recvbuf, edgelist_counts_recvbuf, MPI_UINT64_T, 0, MPI_COMM_WORLD);
+    MPI_Scatterv((void *) endVertex, edgelist_send_counts, edgelist_send_displs, MPI_UINT64_T, (void *) endVertex_recvbuf, edgelist_counts_recvbuf, MPI_UINT64_T, 0, MPI_COMM_WORLD);
+    
+    result->index_of_node = create_buffer_from_edgelist(startVertex_recvbuf, endVertex_recvbuf, nodes / procs, edgelist_counts_recvbuf, my_rank);
+    
+    result->buffer = startVertex_recvbuf;
+    result->scale = scale;
+    
+    free(edgelist_send_counts);
+    free(edgelist_send_displs);
+    free(startVertex);
+    free(endVertex);
     free(endVertex_recvbuf);
-    free(index_of_node);
-   
-    MPI_Finalize ();
-    return 0;
 }
 
-void bfs(uint64_t *level, uint64_t *buffer, uint64_t buffer_size, uint64_t *index_of_node, int my_rank, int procs){
-    uint64_t nodes_owned = pow(2,SCALE) / procs;
-    uint32_t *parent_array = (uint32_t *) calloc(pow(2,SCALE), sizeof(uint32_t));
+void kernel_2(uint64_t *buffer, uint64_t *index_of_node, int my_rank, int procs, int scale){
+    uint64_t root = ROOT;
+    uint64_t nodes = pow(2, (scale));
+    uint64_t *level = (uint64_t *) calloc(nodes / BITS, sizeof(uint64_t));
+    if (my_rank == 0){
+        level[(root/BITS)] = level[(root/BITS)] | (uint64_t) pow(2,(root % BITS));
+    }
+    MPI_Bcast((void *)level, nodes / BITS, MPI_UINT64_T, 0, MPI_COMM_WORLD);
+    bfs(level, buffer, index_of_node[nodes/procs], index_of_node, my_rank, procs, scale);
+    free(level);
+    free(buffer);
+    free(index_of_node);
+}
+
+void bfs(uint64_t *level, uint64_t *buffer, uint64_t buffer_size, uint64_t *index_of_node, int my_rank, int procs, int scale){
+    uint64_t nodes_owned = pow(2,scale) / procs;
+    uint32_t *parent_array = (uint32_t *) calloc(pow(2,scale), sizeof(uint32_t));
     uint64_t *visited = (uint64_t *) calloc(nodes_owned / BITS, sizeof(uint64_t));
     char oneChildisVisited = 1;
     //int level_count = 0;
@@ -189,13 +170,13 @@ void bfs(uint64_t *level, uint64_t *buffer, uint64_t buffer_size, uint64_t *inde
         MPI_Allreduce(MPI_IN_PLACE, (void *) &oneChildisVisited, 1, MPI_CHAR, MPI_BOR, MPI_COMM_WORLD);
         // AFTER SEND LEVEL BUFFER, ALLTOALL
         if (oneChildisVisited){
-            MPI_Allreduce(MPI_IN_PLACE, (void *)level, (pow(2,SCALE) / BITS), MPI_UINT64_T, MPI_BOR, MPI_COMM_WORLD);
+            MPI_Allreduce(MPI_IN_PLACE, (void *)level, (pow(2,scale) / BITS), MPI_UINT64_T, MPI_BOR, MPI_COMM_WORLD);
         }
     }
     if (my_rank){
-        MPI_Reduce((void *) parent_array, NULL, pow(2, SCALE), MPI_UINT32_T, MPI_MAX, 0, MPI_COMM_WORLD);
+        MPI_Reduce((void *) parent_array, NULL, pow(2, scale), MPI_UINT32_T, MPI_MAX, 0, MPI_COMM_WORLD);
     }else{
-        MPI_Reduce(MPI_IN_PLACE, (void *) parent_array, pow(2, SCALE), MPI_UINT32_T, MPI_MAX, 0, MPI_COMM_WORLD);
+        MPI_Reduce(MPI_IN_PLACE, (void *) parent_array, pow(2, scale), MPI_UINT32_T, MPI_MAX, 0, MPI_COMM_WORLD);
     }
     free(visited);
     free(parent_array);
