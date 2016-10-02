@@ -3,17 +3,22 @@
 
 int main(int argc, char *argv[]){
     int my_rank, procs, tag=0;
-    float initiator[] = {0.25,0.25,0.25,0.25};
+    //float initiator[] = {0.25,0.25,0.25,0.25};
+    float initiator[] = {0.57,0.19,0.19,0.05};
     MPI_Status status;
     
     MPI_Init (&argc, &argv);
     MPI_Comm_rank (MPI_COMM_WORLD, &my_rank);
     MPI_Comm_size (MPI_COMM_WORLD, &procs);
     uint64_t nodes = pow(2,SCALE);
-    uint64_t edges = nodes*EDGEFACTOR;
+    uint64_t edges = nodes*EDGEFACTOR; // *2 because of undirected edges
     uint64_t *startVertex = NULL;
     uint64_t *endVertex = NULL;
+    uint64_t *index_buffer = (uint64_t *) calloc(nodes, sizeof(uint64_t));
     if (my_rank == 0){
+        //INDEX OF NODES ARE SHUFFLED, SO NO LOCALITY CAN BE EXPLOITED
+        shuffle(index_buffer, nodes);
+
         startVertex = (uint64_t *) calloc(edges, sizeof(uint64_t));
         endVertex = (uint64_t *) calloc(edges, sizeof(uint64_t));
     }
@@ -21,9 +26,9 @@ int main(int argc, char *argv[]){
         startVertex = (uint64_t *) calloc((edges / procs), sizeof(uint64_t));
         endVertex = (uint64_t *) calloc((edges / procs), sizeof(uint64_t));
     }
-    //float initiator[] = {0.57,0.19,0.19,0.05};
+    MPI_Bcast((void *) index_buffer, nodes, MPI_UINT64_T, 0, MPI_COMM_WORLD);
     double time = mytime();
-    generate_graph(SCALE, EDGEFACTOR, initiator, startVertex, endVertex, procs, my_rank);
+    generate_graph(SCALE, EDGEFACTOR, initiator, startVertex, endVertex, procs, my_rank, index_buffer);
     
     if (my_rank == 0){
         MPI_Gather((void*) startVertex, (edges / procs), MPI_UINT64_T, (void *) startVertex, (edges / procs), MPI_UINT64_T, 0, MPI_COMM_WORLD);
@@ -37,9 +42,29 @@ int main(int argc, char *argv[]){
     }
     free(startVertex);
     free(endVertex);
+    free(index_buffer);
     
     MPI_Finalize ();
     return 0;
+}
+
+void shuffle(uint64_t *index_buffer, uint64_t nodes){
+    srand(time(NULL));
+    uint64_t i;
+    for (i = 0; i < nodes; i++){
+        index_buffer[i] = i;
+    }
+    
+    uint64_t w;
+    uint64_t t;
+    for (i = nodes - 1; i > 0; --i) {
+        // generate random index
+        w = rand()%i;
+        // swap items
+        t = index_buffer[i];
+        index_buffer[i] = index_buffer[w];
+        index_buffer[w] = t;
+    }
 }
 
 void write_graph(int scale, int edgefactor, uint64_t *startVertex, uint64_t *endVertex){
@@ -62,8 +87,8 @@ void read_graph(int scale, int edgefactor, uint64_t *startVertex, uint64_t *endV
     fclose(fp);
 }
 
-void generate_graph(int scale, int edgefactor, float *initiator, uint64_t *startVertex, uint64_t *endVertex, int procs, int my_rank){
-    srand(time(NULL)*my_rank);
+void generate_graph(int scale, int edgefactor, float *initiator, uint64_t *startVertex, uint64_t *endVertex, int procs, int my_rank, uint64_t *index_buffer){
+    srand(time(NULL)*(my_rank+1));
     int i;
     int help_initiator[BLOCKS];
     int next;
@@ -76,7 +101,7 @@ void generate_graph(int scale, int edgefactor, float *initiator, uint64_t *start
         }
     }
     uint64_t h;
-    for (h = 0; h < (((pow(2,scale)*edgefactor)/procs)); h++){
+    for (h = 0; h < (((pow(2,scale)*edgefactor)/procs)); h=h+2){
         col = 0;
         row = 0;
         for (i = scale-1; i >= 0; i--){
@@ -98,7 +123,9 @@ void generate_graph(int scale, int edgefactor, float *initiator, uint64_t *start
                 row +=pow(2,i);
             }
         }
-        startVertex[h] = row;
-        endVertex[h] = col;
+        startVertex[h] = index_buffer[row];
+        startVertex[h+1] = index_buffer[col];
+        endVertex[h] = index_buffer[col];
+        endVertex[h+1] = index_buffer[row];
     }
 }

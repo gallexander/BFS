@@ -96,7 +96,7 @@ int main(int argc, char *argv[]){
         time = mytime() - time;
         printf("Time for reading, generating edge buffer and scattering: %f\n", time/1000000);
         time = mytime();
-        bfs(level_recvbuf, startVertex_recvbuf, index_of_node[nodes/procs], index_of_node, my_rank, procs);
+        bfs(level_recvbuf, startVertex_recvbuf, index_of_node[nodes/procs], index_of_node, my_rank, procs, scale);
 
         time = mytime() - time;
         printf("Time for bfs searching: %f\n", time/1000000);
@@ -121,7 +121,7 @@ int main(int argc, char *argv[]){
         // GET THE FIRST LEVEL
         MPI_Scatter(NULL, nodes / procs, MPI_UINT64_T, (void *)level_recvbuf, nodes / procs, MPI_UINT64_T, 0, MPI_COMM_WORLD);
         
-        bfs(level_recvbuf, startVertex_recvbuf, index_of_node[nodes/procs], index_of_node, my_rank, procs);
+        bfs(level_recvbuf, startVertex_recvbuf, index_of_node[nodes/procs], index_of_node, my_rank, procs, scale);
     }
     free(level_recvbuf);
     free(startVertex_recvbuf);
@@ -132,7 +132,7 @@ int main(int argc, char *argv[]){
     return 0;
 }
 
-void bfs(uint64_t *level, uint64_t *buffer, uint64_t buffer_size, uint64_t *index_of_node, int my_rank, int procs){
+void bfs(uint64_t *level, uint64_t *buffer, uint64_t buffer_size, uint64_t *index_of_node, int my_rank, int procs, int scale){
     uint64_t nodes_owned = pow(2,SCALE) / procs;
     uint64_t *parent_array = (unsigned long *) calloc(nodes_owned, sizeof(uint64_t));
     uint64_t *next_level = (unsigned long *) calloc(pow(2, SCALE), sizeof(uint64_t));

@@ -18,7 +18,7 @@
   xleftmargin=\parindent,
   language=C,
   showstringspaces=false,
-  basicstyle=\footnotesize\ttfamily,
+  basicstyle=\ttfamily\scriptsize,
   keywordstyle=\bfseries\color{green!40!black},
   commentstyle=\itshape\color{purple!40!black},
   identifierstyle=\color{blue},
@@ -244,14 +244,24 @@ Figure~\ref{fig:nextbitmap} shows the results of the first version of our algori
    \label{fig:parentarray}
 \end{figure}
 
-Figure~\ref{fig:parentarray} illustrates the results of the second version. As we can see this solution has a very bad speedup with the raising number of cores. Reason for that bad speedup is the reduce scatter operation. It takes too much time to reduce the entries of the next level array with the MAX operation. In Figure~\ref{fig:reducescatter} it is shown how much time the reduce scatter operation consumes for the different count of cores.
+Figure~\ref{fig:parentarray} illustrates the results of the second version. As we can see this solution has a very bad speedup with the raising number of cores. Reason for that bad speedup is the reduce scatter operation. It takes too much time to reduce the entries of the next level array with the MAX operation. In Table~\ref{tab:reducescatter} it is shown how much time the reduce scatter operation consumes for the different count of cores.
 
-\begin{figure}[H]
-   \centering
-   \includegraphics[width=0.75\textwidth]{reducescatter}
-   \caption{Time for reducing the next level arrays of every processor.}
-   \label{fig:reducescatter}
-\end{figure}
+\begin{table}[!ht]
+	\centering
+	\begin{tabular}{ | l | l |}
+  		\hline
+  		Number of Cores & Time for reducing \\ \hline
+  		1 & 3.41s \\ \hline
+		2 & 9.61s \\ \hline
+		4 & 10.76s \\ \hline
+		8 & 11.1s \\ \hline
+		16 & 12.0s \\ \hline
+		32 & 13.5s \\ \hline
+		64 & 14.2s \\ \hline
+	\end{tabular}
+	\caption{Time for reducing the parent arrays of each core.}
+  	\label{tab:reducescatter}
+\end{table}
 
 \subsection{Testing the third version}
 
@@ -362,8 +372,8 @@ parent_array = BFS(buffer, k);
 For the BFS search we use our solution from Section~\ref{sec:core} or rather~\ref{sec:thirdversion}. To know if the computed parent array is correct, there is a validation after each BFS search. This validation is not timed and doesn't influences the performance output, so it is sequential in our solution.\\
 Further informations and code details of our solution of the graph500 benchmark can be found in Appendix~\ref{sec:sourcecode}.
 
-\section{Ranking of Jupiter}
-\label{sec:ranking}
+\section{Graph500 performance of Jupiter}
+\label{sec:performance}
 
 \section{Why no parallel realisation of depth-first search?}
 \label{sec:depth-first search}
@@ -378,7 +388,10 @@ Further informations and code details of our solution of the graph500 benchmark 
 \bibliography{bachelor}
 \clearpage
 \appendix
-\section{Source Code}
+\section{BFS versions}
+\label{sec:versions}
+Bla bla
+\section{Source Code - graph500}
 \label{sec:sourcecode}
 \lstinputlisting[caption={BFS solution},label=bfs]{../Source/bfs_par_allvisited_parallelsort.c}
 \clearpage
