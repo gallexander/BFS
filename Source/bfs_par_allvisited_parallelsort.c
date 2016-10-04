@@ -131,7 +131,7 @@ void kernel_2(uint64_t *buffer, uint64_t *index_of_node, int my_rank, int procs,
 
 void bfs(uint64_t *level, uint64_t *buffer, uint64_t buffer_size, uint64_t *index_of_node, int my_rank, int procs, int scale){
     uint64_t nodes_owned = pow(2,scale) / procs;
-    uint32_t *parent_array = (uint32_t *) calloc(pow(2,scale), sizeof(uint32_t));
+    uint64_t *parent_array = (uint64_t *) calloc(pow(2,scale), sizeof(uint64_t));
     uint64_t *visited = (uint64_t *) calloc(nodes_owned / BITS, sizeof(uint64_t));
     char oneChildisVisited = 1;
     //int level_count = 0;
@@ -148,7 +148,7 @@ void bfs(uint64_t *level, uint64_t *buffer, uint64_t buffer_size, uint64_t *inde
                     for (; j < buffer_size; j++){
                         position = (uint64_t) pow(2, (buffer[j] % BITS));
                         if (position & ~level[(buffer[j]/BITS)]){
-                            parent_array[buffer[j]] = (uint32_t) nodes_owned*my_rank+i+1;
+                            parent_array[buffer[j]] = (uint64_t) nodes_owned*my_rank+i+1;
                             level[(buffer[j]/BITS)] = level[(buffer[j]/BITS)] | position;
                             oneChildisVisited = 1;
                         }
@@ -157,7 +157,7 @@ void bfs(uint64_t *level, uint64_t *buffer, uint64_t buffer_size, uint64_t *inde
                     for (; j < buffer_size && j < index_of_node[i+1]; j++){
                         position = (uint64_t) pow(2, (buffer[j] % BITS));
                         if (position & ~level[(buffer[j]/BITS)]){
-                            parent_array[buffer[j]] = (uint32_t) nodes_owned*my_rank+i+1;
+                            parent_array[buffer[j]] = (uint64_t) nodes_owned*my_rank+i+1;
                             level[(buffer[j]/BITS)] = level[(buffer[j]/BITS)] | position;
                             oneChildisVisited = 1;
                         }
@@ -174,9 +174,16 @@ void bfs(uint64_t *level, uint64_t *buffer, uint64_t buffer_size, uint64_t *inde
         }
     }
     if (my_rank){
-        MPI_Reduce((void *) parent_array, NULL, pow(2, scale), MPI_UINT32_T, MPI_MAX, 0, MPI_COMM_WORLD);
+        MPI_Reduce((void *) parent_array, NULL, pow(2, scale), MPI_UINT64_T, MPI_MAX, 0, MPI_COMM_WORLD);
     }else{
-        MPI_Reduce(MPI_IN_PLACE, (void *) parent_array, pow(2, scale), MPI_UINT32_T, MPI_MAX, 0, MPI_COMM_WORLD);
+        MPI_Reduce(MPI_IN_PLACE, (void *) parent_array, pow(2, scale), MPI_UINT64_T, MPI_MAX, 0, MPI_COMM_WORLD);
+        uint64_t count = 0;
+        for (i = 0; i < pow(2, scale);i++){
+            if (parent_array[i] == 0){
+                count++;
+            }
+        }
+        printf("count: %llu\n",(unsigned long long) count);
     }
     free(visited);
     free(parent_array);
