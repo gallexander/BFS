@@ -375,6 +375,12 @@ Further informations and code details of our solution of the graph500 benchmark 
 \section{Graph500 performance of Jupiter}
 \label{sec:performance}
 
+The performance of Jupiter is measured by Kernel 1, where the graph is generated from the input edge list, and Kernel 2, where 64 parent arrays are computed within a BFS search. Figure~\ref{fig:kernel1} shows the execution times in seconds of the first kernel from a scale of nodes from 24 to .... and an edgefactor of 16 with 1 core up to 512 cores.
+
+
+In contrast Kernel 2 is measured by the performance metric TEPS (traversed edges per second).  Let \(m\) be the number of input edge tuples within the component traversed by the search and \(t(n)\) be the execution time for Kernel 2. Then the normalized performance rate is: \(TEPS(n) = m / t(n)\)\\
+Figure~\ref{fig:kernel2} shows the TEPS with a scale of 24 and an edgefactor of 16 with different counts of computing cores.
+
 \section{Why no parallel realisation of depth-first search?}
 \label{sec:depth-first search}
 

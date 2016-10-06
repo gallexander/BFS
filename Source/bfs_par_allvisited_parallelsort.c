@@ -34,11 +34,13 @@ int main(int argc, char *argv[]){
         printf("Time for generating edge buffer, sorting and scattering: %f\n", time/1000000);
         time = mytime();
     }
-    kernel_2(result.buffer, result.index_of_node, my_rank, procs, result.scale);
+    kernel_2(result.buffer, result.index_of_node, my_rank, procs, result.scale, startVertex, endVertex);
     if (my_rank == 0){
         time = mytime() - time;
         printf("Time for bfs searching: %f\n", time/1000000);
     }
+    free(startVertex);
+    free(endVertex);
     MPI_Finalize ();
     return 0;
 }
@@ -110,28 +112,46 @@ void kernel_1(uint64_t *startVertex, uint64_t *endVertex, uint64_t edges, int pr
     
     free(edgelist_send_counts);
     free(edgelist_send_displs);
-    free(startVertex);
-    free(endVertex);
     free(endVertex_recvbuf);
 }
 
-void kernel_2(uint64_t *buffer, uint64_t *index_of_node, int my_rank, int procs, int scale){
-    uint64_t root = ROOT;
+void kernel_2(uint64_t *buffer, uint64_t *index_of_node, int my_rank, int procs, int scale, uint64_t *startVertex, uint64_t *endVertex){
+    srand(time(NULL));
+    uint64_t root;;
     uint64_t nodes = pow(2, (scale));
     uint64_t *level = (uint64_t *) calloc(nodes / BITS, sizeof(uint64_t));
-    if (my_rank == 0){
-        level[(root/BITS)] = level[(root/BITS)] | (uint64_t) pow(2,(root % BITS));
+    uint64_t *parent_array = (uint64_t *) calloc(pow(2,scale), sizeof(uint64_t));
+    uint64_t j;
+    for (j = 0; j < 1; j++){
+        //root = random() % (pow(2,scale));
+        root = ROOT;
+        if (my_rank == 0){
+            level[(root/BITS)] = level[(root/BITS)] | (uint64_t) pow(2,(root % BITS));
+        }
+        MPI_Bcast((void *)level, nodes / BITS, MPI_UINT64_T, 0, MPI_COMM_WORLD);
+        bfs(level, buffer, index_of_node[nodes/procs], index_of_node, my_rank, procs, scale, parent_array);
+        if (my_rank == 0){
+            uint64_t i;
+            uint64_t count = 0;
+            for (i = 0; i < pow(2,scale)*EDGEFACTOR; i++){
+                if (parent_array[startVertex[i]] != 0){
+                    count++;
+                }
+                if (startVertex[i] == endVertex[i]){
+                    i++;
+                }
+            }
+            printf("count: %llu\n", (unsigned long long) count);
+        }
     }
-    MPI_Bcast((void *)level, nodes / BITS, MPI_UINT64_T, 0, MPI_COMM_WORLD);
-    bfs(level, buffer, index_of_node[nodes/procs], index_of_node, my_rank, procs, scale);
+    free(parent_array);
     free(level);
     free(buffer);
     free(index_of_node);
 }
 
-void bfs(uint64_t *level, uint64_t *buffer, uint64_t buffer_size, uint64_t *index_of_node, int my_rank, int procs, int scale){
+void bfs(uint64_t *level, uint64_t *buffer, uint64_t buffer_size, uint64_t *index_of_node, int my_rank, int procs, int scale, uint64_t *parent_array){
     uint64_t nodes_owned = pow(2,scale) / procs;
-    uint64_t *parent_array = (uint64_t *) calloc(pow(2,scale), sizeof(uint64_t));
     uint64_t *visited = (uint64_t *) calloc(nodes_owned / BITS, sizeof(uint64_t));
     char oneChildisVisited = 1;
     //int level_count = 0;
@@ -177,16 +197,8 @@ void bfs(uint64_t *level, uint64_t *buffer, uint64_t buffer_size, uint64_t *inde
         MPI_Reduce((void *) parent_array, NULL, pow(2, scale), MPI_UINT64_T, MPI_MAX, 0, MPI_COMM_WORLD);
     }else{
         MPI_Reduce(MPI_IN_PLACE, (void *) parent_array, pow(2, scale), MPI_UINT64_T, MPI_MAX, 0, MPI_COMM_WORLD);
-        uint64_t count = 0;
-        for (i = 0; i < pow(2, scale);i++){
-            if (parent_array[i] == 0){
-                count++;
-            }
-        }
-        printf("count: %llu\n",(unsigned long long) count);
     }
     free(visited);
-    free(parent_array);
 }
 
 uint64_t *create_buffer_from_edgelist(uint64_t *startVertex, uint64_t *endVertex, uint64_t nodes, uint64_t edges, uint64_t proc_number){
