@@ -43,8 +43,8 @@
 \begin{document}
 \maketitle
 \begin{abstract}
-To have a continuous progress of the performance of processors, it was necessary to concentrate on the development of multicore processors. With that development another problem was raising up. The programs or rather the algorithmic way of thinking have to be changed to get a speed up with multicore processors. It was the job of the developers to split up the work from one core to many cores and to coordinate the communication between these cores. In this report the focus is on algorithms for searching trees or graph data structures and how to parallelize them. To make it specific, we keep our mind on the breadth-first search, because it is easier to parallelize than the depth-first search. First there is a presentation of a sequential algorithm to solve that problem. After that a parallel realization of this sequential algorithm in pseudo code follows. We get an overview of the comparison between the sequential and parallel solution. After that there is a more concrete solution of the parallel algorithm with some implementation details. Additionally we show a history of changes or improvements of the parallel solution and how it influences the speed of the algorithm.
-To get a feeling how good the solution is, there is an integration of our solution into a benchmark for supercomputers, the graph500 project. Graph500 establishes a large-scale benchmark for data-intensive supercomputer applications. There exists already a official solution of the benchmark, so we compare the performance of Jupiter, that is the name of the distributed system of the Vienna University of Technology, one time with the own implemented benchmark, but observing the rules of the graph500 project, and another time with the official solution of the graph500 project. With this results it is possible to compare Jupiter with some other supercomputers, listed in the graph500 ranking.
+To have a continuous progress of the performance of processors, it was necessary to concentrate on the development of multicore processors. That development offered another problem. The programs or rather the algorithmic way of thinking have to be changed to get runtime enhancements with multicore processors. It is the job of the developers to split up the work from one core to many cores and to coordinate the communication between these cores. In this Bachelor thesis the focus is on algorithms for searching in graph data structures, particular in trees, and how to parallelize these algorithms. To make it specific, we concentrate on the breadth-first search, because it is easier to parallelize than the depth-first search. First there is a presentation of a sequential algorithm to solve that problem. After that a parallel realization in pseudo code follows. We show the differences between the sequential and parallel solution and how the processors have to communicate in the parallel algorithm. After that there is a low(er)? level implementation of the parallel algorithm with some implementation details in the programming language C. Additionally, we show a history of changes or improvements of the parallel solution and how it influences the runtime of the algorithm.
+To get a feeling how good the solution is, we use our parallel algorithm in a benchmark for supercomputers called graph500. Graph500 establishes a large-scale benchmark for data-intensive supercomputer applications. There exists already a official solution of the benchmark, so we compare the performance of Jupiter, that is the name of the distributed system of the TU Wien, one time with the own implemented benchmark, but observing the rules of the graph500 project, and another time with the official solution of the graph500 project. With this results it is possible to compare the outcome of Jupiter with outcomes of some other supercomputers, listed in the graph500 ranking.
 \end{abstract}
 
 \clearpage
@@ -52,13 +52,15 @@ To get a feeling how good the solution is, there is an integration of our soluti
 \section{The breadth-first search - BFS}
 \label{sec:breadth-first search}
 
+The main application of the breadth-first search, illustrated by Cormen, Leiserson, Rivest and Stein \cite{cormen_introduction_2009}, is to find the shortest path between two nodes, in our case the root node and a successor node, measured by the number of edges between these two nodes. In comparison to that the path that is found by a depth-first search can be any path. It is not guaranteed that it is the shortest one.
+
 \subsection{Sequential BFS}
 \label{sec:sequential-bfs}
 
 \begin{listing}[h]
 \begin{ccode}
 /*
-input: egde list as buffer
+input: adjacency list, root node
 output: parent array
 */
 BFS(edge_list, root){
@@ -80,8 +82,8 @@ BFS(edge_list, root){
 \label{lst:seq}
 \end{listing}
 
-The sequential BFS (breadth-first search) algorithm in Listing~\ref{lst:seq} is not difficult to understand. If we have a given tree or alternatively a graph data structure we start with a specific node. That is our root node. We can split the graph or tree into levels, each level is handled in one single iteration of the BFS. So we can say, we start with level 0 at the root node.
-Then there starts the first round of the BFS. We take all nodes (root node for the first level) of the current level (that is level 0) and visit all neighbours of the nodes of the current level. All neighbours that have been visited are now the nodes of the next level (in this case that is level 1). The next step is to take all nodes of level 1 and visit all neighbours of these nodes. The BFS algorithm ends if the current level has no neighbours anymore or a specific search key is found. Output of the algorithm is a parent array, which contains parent information of each node.
+The sequential BFS (breadth-first search) algorithm in Listing~\ref{lst:seq} is not difficult to understand. Input is an adjacency list, which describes the set of neighbours of each vertex in the graph. We can split the graph or tree into levels, each level is handled in one single iteration of the BFS. So we can say, we start with level 0 at the root node. In other words the level is the length of the path from the root node to all nodes of a specific level.
+Then there starts the first round of the BFS. We take all nodes (root node for the first level) of the current level (that is level 0) and visit all neighbours of the nodes of the current level. All neighbours that have been visited are now the nodes of the next level (in this case that is level 1). The next step is to take all nodes of level 1 and visit all neighbours of these nodes. The BFS algorithm ends if the current level has no neighbours anymore. Output of the algorithm is a parent array, which saves the vertex identifier of the parent node for each vertex of the graph.
 
 \subsection{Parallel BFS}
 \label{sec:parallel-bfs}
