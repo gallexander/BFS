@@ -60,16 +60,16 @@ The main application of the breadth-first search, illustrated by Cormen, Leisers
 \begin{listing}[h]
 \begin{ccode}
 /*
-input: adjacency list, root node
+input: adjacency buffer, root node
 output: parent array
 */
-BFS(edge_list, root){
+BFS(adj_buffer, root){
 	set_level(level, root);
 	while level has nodes {
 		for each Node n in level {
 			for each Node m in neighbours(n){
 				set_level(next_level, m);
-				set_parent(parents, n, m); // sets the parent of m to n in parents
+				set_parent(parents, n, m);
 			}
 		}
 		level = next_level;
@@ -82,8 +82,9 @@ BFS(edge_list, root){
 \label{lst:seq}
 \end{listing}
 
-The sequential BFS (breadth-first search) algorithm in Listing~\ref{lst:seq} is not difficult to understand. Input is an adjacency list, which describes the set of neighbours of each vertex in the graph. We can split the graph or tree into levels, each level is handled in one single iteration of the BFS. So we can say, we start with level 0 at the root node. In other words the level is the length of the path from the root node to all nodes of a specific level.
-Then there starts the first round of the BFS. We take all nodes (root node for the first level) of the current level (that is level 0) and visit all neighbours of the nodes of the current level. All neighbours that have been visited are now the nodes of the next level (in this case that is level 1). The next step is to take all nodes of level 1 and visit all neighbours of these nodes. The BFS algorithm ends if the current level has no neighbours anymore. Output of the algorithm is a parent array, which saves the vertex identifier of the parent node for each vertex of the graph.
+The sequential BFS (breadth-first search) algorithm in Listing~\ref{lst:seq} is not difficult to understand. Input is an adjacency buffer, which stores the neighbours of each vertex in the graph. Additionally there is an array necessary, which stores the index referred to the adjacency buffer for each node. But that is not important for understanding the algorithm, it will be explained in Section~\ref{sec:impl_details}. So there is no extra field given in the input parameters. \\
+We can split the graph or tree into levels, each level is handled in one single iteration of the BFS. In other words the level is the length of the path from the root node to all nodes of a specific level.
+Then there starts the first round of the BFS. We take all nodes (root node for the first level) of the current level (that is level 0) and visit all neighbours of the nodes of the current level. All neighbours that have been visited are now the nodes of the next level (in this case that is level 1). The next step is to take all nodes of level 1 and visit all neighbours of these nodes. The BFS algorithm ends if the current level has no neighbours anymore. Output of the algorithm is a parent array, which saves the vertex identifier of the parent node for each vertex of the graph. For that reason it is called parent array.
 
 \subsection{Parallel BFS}
 \label{sec:parallel-bfs}
@@ -91,15 +92,15 @@ Then there starts the first round of the BFS. We take all nodes (root node for t
 \begin{listing}[h]
 \begin{ccode}
 /*
-input: for each processor - edge list as buffer of owned nodes, level information of owned nodes as array
+input: for each processor - adjacency buffer of assigned nodes, level information
 output: parent array
 */
-BFS_PAR(edge_list, level){
+BFS_PAR(adj_buffer, level){
 	while level has nodes {
 		for each Node n in level {
 			for each Node m in neighbours(n){
 				set_level(next_level, m);
-				set_parent(parents, n, m); // sets the parent of m to n in parents
+				set_parent(parents, n, m); 
 			}
 		}
 		level = synchronize(next_level);
@@ -112,8 +113,10 @@ BFS_PAR(edge_list, level){
 \label{lst:parallel}
 \end{listing}
 
-To make an algorithm parallel, the main problem is to split the work of the sequential algorithm into smaller pieces and assign that pieces of work to the existing processors of the system which are in use.  The first approach of splitting the BFS is to split the nodes of each level to the processors. Every processor of the system just visits the neighbours of the owned nodes. The problem with this approach is that the communication costs are pretty high, because it's necessary to split the work every round (level) of the BFS algorithm.\\
-So the second and also chosen approach, illustrated in Listing~\ref{lst:parallel}, is to divide all the existing nodes and corresponding edges of the graph to the processors. With that approach the highest amount of communication is before the algorithm begins. After that the cores have to communicate in such a way, that they know which nodes are in the next level. That can happen in different ways, symbolized with \cinline/level = synchronize(next_level);/ but it is important that we have a parent array at the end of the algorithm. 
+To run an implementation of an algorithm on a distributed memory system, the main problem is to split the work of the sequential algorithm into smaller pieces and assign that pieces of work to the existing processors of the system which are in use.  The first approach of splitting the BFS is to split the nodes of each level to the processors. Every processor of the system just visits the neighbours of the nodes which were distributed before to that processor. The problem with this approach is that the communication costs are pretty high, because it is necessary to distribute the nodes and edges every round (level) of the BFS algorithm.\\
+So the second and also chosen approach, illustrated in Listing~\ref{lst:parallel}, is to distribute all the existing nodes and corresponding edges of the graph to the processors. With that approach the highest amount of communication is before the algorithm starts. After that the processors have to communicate in such a way, that they know which nodes are in the next level. But that is less information to distribute than to distribute plenty of nodes and edges in every iteration of the algorithm.\\
+So the function \cinline/BFS_PAR/ of Listing~\ref{lst:parallel} is called from every involved processor of the system with the adjacency buffer of the assigned nodes and a level information as input. The structure of the level information can be neglected at this point, but the structure will be handled in the different implementations/versions in Section~\ref{sec:implementations} and~\ref{sec:versions}. The structure of the level information and the relating synchronization of the level information, symbolized with \cinline/level = synchronize(next_level)/ in Listing~\ref{lst:parallel}, influences the runtime of the implementation extremely. The neighbours of the actual nodes, which are denoted in the level information, are marked for the next round or level. That happens in the next level structure, which should be the same as the level structure, so it is easier to work with it. With the synchronization of the next level information the processors know which nodes they have to handle in the next round.\\
+Output of this algorithm is a parent array again. What is not evident, but can be necessary, is the synchronization of the parent array. 
 
 \section{Implementation of the BFS and some improvements}
 \label{sec:implementations}
@@ -156,6 +159,7 @@ As Listing~\ref{lst:detailedparallel} shows, we need at first a flag \cinline/on
 So if there is a new node in the current level, the processors have to iterate over the owned nodes and check if there is one of them in the current level and unvisited. If there is a new one in the current level, the processor iterates the neighbours of that node. For each neighbour there is a checking if it is set to 1 in the reduced visited bitmap and not visited in a level before. Is that the case the node is set to 1 in the visited bitmap and the owned node is saved as the parent of the neighbour node. After that the processors must reduce the \cinline/oneChildisVisited/ and \cinline/visited_bitmap/ information with the bitwise OR operation.
 
 \subsection{Implementation details of the BFS}
+\label{sec:impl_details}
 
 In this section we will show some commands from the pseudo code in \ref{sec:core} and how to implement it in the programming language C with MPI. A good description of MPI is given by Rauber and R{\"u}nger \cite{rauber}. \\
 Let us start with the first condition in the for-loop. 
@@ -198,6 +202,7 @@ MPI_Allreduce(MPI_IN_PLACE, (void *)level, (pow(2,SCALE) / BITS), MPI_UNSIGNED_L
 which was \cinline/allreduce(visited_bitmap, BITWISE_OR)/ in pseudo code. After the reduce operation the next level starts.
 
 \subsection{History of our BFS algorithm}
+\label{sec:versions}
 
 The solution of the algorithm in section \ref{sec:implementations} was not our first approach to solve the BFS problem. Our first idea was to solve it with matrices where each element represents an edge between two nodes. The problem with this approach is that if we have a sparse matrix we have a high waste of memory. More about this way of solving the BFS problem with matrices was researched by Buluç and Madduri \cite{matrices}.\\
 It was our next idea to save only the edges that are existing and to leave out the rest. We decided to store all existing edges in a buffer and to work with an index array to find the edges of each node. So the next important question was if every processor has his own part of the buffer how should each processor share the information which nodes are in the current or next level of the BFS. So we came to the first version of the BFS implementation:
