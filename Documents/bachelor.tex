@@ -145,9 +145,9 @@ void* BFS(adj_buffer, visited_bitmap){
 			}
 		}	
 	}
-	allreduce(oneChildisVisited, BITWISE_OR); // all procs get the information if there is a neighbour visited at all
+	synchronize(oneChildisVisited);
 	if (oneChildisVisited){
-		allreduce(visited_bitmap, BITWISE_OR); // there has to be a reduction of all visited bitmaps to one
+		sychronize(visited_bitmap);
 	}
 	return parent_array;
 }
@@ -156,9 +156,8 @@ void* BFS(adj_buffer, visited_bitmap){
 \label{lst:detailedparallel}
 \end{listing}
 As Listing~\ref{lst:detailedparallel} shows, there are two input parameters. The first one is the adjacency buffer, like mentioned in Section~\ref{sec:sequential-bfs}. The second parameter, called \cinline/visited_bitmap/, is a bitmap with a size of the involved nodes in the breadth-first search. If a bit on position \(n\) in the bitmap is set (1) it means that the node with the identifier \(n\) is visited, otherwise a bit that is clear (0) stands for unvisited. So this bitmap gives the information which nodes are visited already and which nodes not.\\
-Important is the flag \cinline/oneChildisVisited/. This flag keeps the information, if there is any new node visited at any processor and is synchronized at line 20. The \cinline/allreduce/ operation means that there are all \cinline/oneChildisVisited/ chars taken and then a bitwise OR is performed on these chars. If the reduced char variable is set (1), the \cinline/visited_bitmap/ will be synchronized with \cinline/allreduce(visited_bitmap, BITWISE_OR);/.
-So if the processors communicate through \cinline/oneChildisVisited/ that there is at least one new visited node for the next round, the processors have to iterate over the assigned nodes and check if there is one of them set in the \cinline/visited_bitmap/ and not visited in a iteration before. The checking if a node or vertex is visited already is not handled in this Section and can be implemented in multiple ways.
-     If there is a new one in the current level, the processor iterates the neighbours of that node. For each neighbour there is a checking if it is set to 1 in the reduced visited bitmap and not visited in a level before. Is that the case the node is set to 1 in the visited bitmap and the owned node is saved as the parent of the neighbour node. After that the processors must reduce the \cinline/oneChildisVisited/ and \cinline/visited_bitmap/ information with the bitwise OR operation.
+Important is the flag \cinline/oneChildisVisited/. This flag keeps the information, if there is any new node visited at any processor and is synchronized at line 20. The \cinline/synchonize(oneChildisVisited)/ operation means that there are all \cinline/oneChildisVisited/ chars taken and then a bitwise OR is performed on these chars. If the reduced char variable is set (1), the \cinline/visited_bitmap/ will be synchronized with \cinline/synchronize(visited_bitmap);/.\\
+So if the processors communicate through \cinline/oneChildisVisited/ that there is at least one new visited node for the next round, the processors have to iterate over the assigned nodes and check if there is one of them set in the \cinline/visited_bitmap/ and not visited in a iteration before. The checking if a node or vertex is visited already is not handled in this Section and can be implemented in multiple ways. If there is a node which is not visited before and the bit in the \cinline/visited_bitmap/ related to that node is set, then the algorithm iterates over the neighbours of that node. If the neighbour is visited for the first time, the bit of that node is set in the \cinline/visited_bitmap/ and the processor saves the parent of that neighbour in the \cinline/parent_array/. If the node with the vertex identifier \(n\) is parent of the node with vertex identifier \(m\), then the number \(n\) is stored on position \(m\) in the \cinline/parent_array/. After checking all nodes, there have to be a synchronization, like mentioned before in this section. First the \cinline/oneChildisVisited/ is synchronized and dependent from that there is a synchronization of the \cinline/visited_bitmap/. After the synchronization of the \cinline/visited_bitmap/ it is important that all processors have the same bitmap where all nodes, which are visited in the iterations before from any processor, are set. 
 
 \subsection{Implementation details of the BFS}
 \label{sec:impl_details}
