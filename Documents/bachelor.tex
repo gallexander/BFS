@@ -136,6 +136,7 @@ void* BFS(adj_buffer, visited_bitmap){
 	oneChildisVisited = 0;
 	for (i = 0; i < size(nodes_owned); i++){
 		if (nodes_owned[i] is visited for the first time) {
+			neighbours = get_neighbours(adj_buffer, nodes_owned[i]);
 			for (j = 0; j < size(neighbours); j++){
 				if (neighbours[j] is not visited) {
 					oneChildisVisited = 1;
@@ -155,15 +156,20 @@ void* BFS(adj_buffer, visited_bitmap){
 \caption{Parallel BFS in more detail.}
 \label{lst:detailedparallel}
 \end{listing}
-As Listing~\ref{lst:detailedparallel} shows, there are two input parameters. The first one is the adjacency buffer, like mentioned in Section~\ref{sec:sequential-bfs}. The second parameter, called \cinline/visited_bitmap/, is a bitmap with a size of the involved nodes in the breadth-first search. If a bit on position \(n\) in the bitmap is set (1) it means that the node with the identifier \(n\) is visited, otherwise a bit that is clear (0) stands for unvisited. So this bitmap gives the information which nodes are visited already and which nodes not.\\
+As Listing~\ref{lst:detailedparallel} shows, there are two input parameters. The first one is the adjacency buffer, like mentioned in Section~\ref{sec:sequential-bfs}. The second parameter, called \cinline/visited_bitmap/, is a bitmap with a size of the involved nodes in the breadth-first search. If a bit on position \(n\) in the bitmap is set (1) it means that the node with the identifier \(n\) is visited, otherwise a bit that is clear (0) stands for unvisited. So this bitmap gives the information which nodes are visited already and which nodes not. Additionally to that \cinline/nodes_owned/ represents an array of nodes, which are assigned to the specific processor.\\
 Important is the flag \cinline/oneChildisVisited/. This flag keeps the information, if there is any new node visited at any processor and is synchronized at line 20. The \cinline/synchonize(oneChildisVisited)/ operation means that there are all \cinline/oneChildisVisited/ chars taken and then a bitwise OR is performed on these chars. If the reduced char variable is set (1), the \cinline/visited_bitmap/ will be synchronized with \cinline/synchronize(visited_bitmap);/.\\
-So if the processors communicate through \cinline/oneChildisVisited/ that there is at least one new visited node for the next round, the processors have to iterate over the assigned nodes and check if there is one of them set in the \cinline/visited_bitmap/ and not visited in a iteration before. The checking if a node or vertex is visited already is not handled in this Section and can be implemented in multiple ways. If there is a node which is not visited before and the bit in the \cinline/visited_bitmap/ related to that node is set, then the algorithm iterates over the neighbours of that node. If the neighbour is visited for the first time, the bit of that node is set in the \cinline/visited_bitmap/ and the processor saves the parent of that neighbour in the \cinline/parent_array/. If the node with the vertex identifier \(n\) is parent of the node with vertex identifier \(m\), then the number \(n\) is stored on position \(m\) in the \cinline/parent_array/. After checking all nodes, there have to be a synchronization, like mentioned before in this section. First the \cinline/oneChildisVisited/ is synchronized and dependent from that there is a synchronization of the \cinline/visited_bitmap/. After the synchronization of the \cinline/visited_bitmap/ it is important that all processors have the same bitmap where all nodes, which are visited in the iterations before from any processor, are set. 
+So if the processors communicate through \cinline/oneChildisVisited/ that there is at least one new visited node for the next round, the processors have to iterate over the assigned nodes and check if there is one of them set in the \cinline/visited_bitmap/ and not visited in a iteration before. The checking if a node or vertex is visited already is not handled in this Section and can be implemented in multiple ways. If there is a node which is not visited before and the bit in the \cinline/visited_bitmap/ related to that node is set, then the algorithm iterates over the neighbours of that node, where the obtaining of the neighbours of a node is simplified with \cinline/get_neighbours(adj_buffer, nodes_owned[i])/. If the neighbour is visited for the first time, the bit of that node is set in the \cinline/visited_bitmap/ and the processor saves the parent of that neighbour in the \cinline/parent_array/. If the node with the vertex identifier \(n\) is parent of the node with vertex identifier \(m\), then the number \(n\) is stored on position \(m\) in the \cinline/parent_array/. After checking all nodes, there have to be a synchronization, like mentioned before in this section. First the \cinline/oneChildisVisited/ is synchronized and dependent from that there is a synchronization of the \cinline/visited_bitmap/. After the synchronization of the \cinline/visited_bitmap/ it is important that all processors have the same bitmap where all bits of nodes, which are visited in the iterations before from any processor, are set. 
 
 \subsection{Implementation details of the BFS}
 \label{sec:impl_details}
 
-In this section we will show some commands from the pseudo code in \ref{sec:core} and how to implement it in the programming language C with MPI. A good description of MPI is given by Rauber and R{\"u}nger \cite{rauber}. \\
-Let us start with the first condition in the for-loop. 
+In this section we will show some commands from the pseudo code in \ref{sec:core} and a possibility how to implement it in the programming language C with MPI. A good description of MPI is given by Rauber and R{\"u}nger \cite{rauber}. \\
+Let us start with the function declaration of the BFS function. There are more parameters necessary than in Listing~\ref{lst:detailedparallel}.
+\begin{ccode}
+void bfs(uint64_t *level, uint64_t *buffer, uint64_t buffer_size, uint64_t *index_of_node, int my_rank, int procs, int scale, uint64_t *parent_array);
+\end{ccode}
+\cinline/level/ is a bitmap of type \cinline/uint64_t/ and contains the information, which nodes of the entire graph are visited and which not. cinline/buffer/ is an array and saves the neighbours of the nodes, which are assigned to the processor calling the function.
+The function 
 \begin{ccode}
 nodes_owned[i] is visited for the first time
 \end{ccode}
