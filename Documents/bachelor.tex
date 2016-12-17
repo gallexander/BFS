@@ -163,12 +163,15 @@ So if the processors communicate through \cinline/oneChildisVisited/ that there 
 \subsection{Implementation details of the BFS}
 \label{sec:impl_details}
 
-In this section we will show some commands from the pseudo code in \ref{sec:core} and a possibility how to implement it in the programming language C with MPI. A good description of MPI is given by Rauber and R{\"u}nger \cite{rauber}. \\
+In this section there is an explantion of the algorithm in Section~\ref{sec:core} with low-level implementation details. The programming language is C and we make use of the OpenMPI library. A good basic description of MPI is given by Rauber and R{\"u}nger \cite{rauber}. \\
 Let us start with the function declaration of the BFS function. There are more parameters necessary than in Listing~\ref{lst:detailedparallel}.
 \begin{ccode}
-void bfs(uint64_t *level, uint64_t *buffer, uint64_t buffer_size, uint64_t *index_of_node, int my_rank, int procs, int scale, uint64_t *parent_array);
+void bfs(uint64_t *visited_bitmap, uint64_t *adj_buffer, uint64_t adj_buffer_size, uint64_t *index_of_node, int my_rank, int procs, int scale, uint64_t *parent_array);
 \end{ccode}
-\cinline/level/ is a bitmap of type \cinline/uint64_t/ and contains the information, which nodes of the entire graph are visited and which not. cinline/buffer/ is an array and saves the neighbours of the nodes, which are assigned to the processor calling the function.
+\cinline/visited_bitmap/ is a bitmap of type \cinline/uint64_t/ and contains the information, which nodes of the entire graph are visited and which not. \cinline/uint64_t/ is an integer type and is equal respectively to unsigned long long. The important fact of this type is that we can set 64 bits in one value. \\ 
+\cinline/adj_buffer/ is an array and saves the neighbours of the nodes, which are assigned to the processor calling the function. For \cinline/adj_buffer/ we also use the data type \cinline/uint64_t/ to address vertex identifiers up to a number of \(2^{64}-1\). The parameter \cinline/index_of_node/ is a helper array with a size of the to the processor assigned nodes. Each entry of \cinline/index_of_node/ stores an index of the array \cinline/adj_buffer/ and therefore the indices where the neighbours of the nodes are located in the \cinline/adj_buffer/. \\
+The parameters \cinline/my_rank/ and \cinline/procs/ contain the processor identifier and the number of working processors. Dependent of the processor identifier the graph is scattered to the processors.\\
+The last parameter \cinline/parent_array/ is the result of this algorithm.
 The function 
 \begin{ccode}
 nodes_owned[i] is visited for the first time
