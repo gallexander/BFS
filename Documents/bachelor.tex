@@ -169,21 +169,21 @@ Let us start with the function declaration of the BFS function. There are more p
 void bfs(uint64_t *visited_bitmap, uint64_t *adj_buffer, uint64_t adj_buffer_size, uint64_t *index_of_node, int my_rank, int procs, int scale, uint64_t *parent_array);
 \end{ccode}
 \cinline/visited_bitmap/ is a bitmap of type \cinline/uint64_t/ and contains the information, which nodes of the entire graph are visited and which not. \cinline/uint64_t/ is an integer type and is equal respectively to unsigned long long. The important fact of this type is that we can set 64 bits in one value. \\ 
-\cinline/adj_buffer/ is an array and saves the neighbours of the nodes, which are assigned to the processor calling the function. For \cinline/adj_buffer/ we also use the data type \cinline/uint64_t/ to address vertex identifiers up to a number of \(2^{64}-1\). The parameter \cinline/index_of_node/ is a helper array with a size of the to the processor assigned nodes. Each entry of \cinline/index_of_node/ stores an index of the array \cinline/adj_buffer/ and therefore the indices where the neighbours of the nodes are located in the \cinline/adj_buffer/. \\
-The parameters \cinline/my_rank/ and \cinline/procs/ contain the processor identifier and the number of working processors. Dependent of the processor identifier the graph is scattered to the processors.\\
-The last parameter \cinline/parent_array/ is the result of this algorithm.
-The function 
+\cinline/adj_buffer/ is an array and saves the neighbours of the nodes, which are assigned to the processor calling the function. For \cinline/adj_buffer/ we also use the data type \cinline/uint64_t/ to address vertex identifiers up to a number of \(2^{64}-1\). The parameter \cinline/index_of_node/ is a helper array with a size of the to the processor assigned nodes. Each entry of \cinline/index_of_node/ stores an index of the array \cinline/adj_buffer/ and therefore the indices, where the neighbours of the nodes are located in the \cinline/adj_buffer/. \\
+The parameters \cinline/my_rank/ and \cinline/procs/ contain the processor identifier and the number of working processors. Dependent of the processor identifier \cinline/my_rank/ the graph is scattered to the processors.\\
+With the parameter \cinline/scale/ the number of nodes can be calculated that are assigned to the processor. In our implementations the processors have always the same number of nodes. To ensure that we always use a power of two for the number of vertices of the graph and the number of working processors. \\
+The last parameter \cinline/parent_array/ is the result of this algorithm. \\
+After checking if there is at least one new visited node, every processor iterates over the bitmap \cinline/visited_bitmap/ which is synchronized over all processors. The processors iterate over different parts of the \cinline/visited_bitmap/ dependent on the processor identifier \cinline/my_rank/. For each node that is assigned to the processor there must be a check if it is visited for the first time.\\
+So the pseudo code line
 \begin{ccode}
-nodes_owned[i] is visited for the first time
+if (nodes_owned[i] is visited for the first time){
 \end{ccode}
-This condition can be translated into
-\begin{ccode}
-position & level[((nodes_owned*my_rank+i) / BITS)] & ~visited[(i / BITS)]
-\end{ccode}
-where 
+can be translated into
 \begin{ccode}
 position = (uint64_t) pow(2, (i % BITS));
+if (position & visited_bitmap[((nodes_owned_count*my_rank+i) / BITS)] & ~visited_local[(i / BITS)]) {
 \end{ccode}
+
 We work with bitmaps of type \cinline/uint64_t/, so it is possible to save true or false (0 or 1) information of 64 nodes in one variable or field. To get the position of a node in a bitmap, we have to calculate two to the power of \(n\) where \(n\) is the number of the specific node modulo the count of possible bits, which is 64 in our case. For instance if our processor owns 256 nodes and we want to get the position of node number 90, our \(n\) is 26 and we calculate two to the power of 26. With that calculation we get the value, where the 26th bit is set to one.\\
 The next step is to prove that the specific node is also set to one in the level array. The level array is a bitmap of all nodes of the graph and shows us which nodes were visited in the levels before. With \cinline/nodes_owned*my_rank+i/ we get the absolute position of the specific node, where \cinline/i/ is just the relative position. So if the absolute position is divided by the count of possible bits we get the correct field of the level array where the specific node is located. Let us show that with the example of node number 90 and with two processors where each processor has 256 nodes. There must be an level array with \(512/64 = 8\) fields and our node with number 90 must be at field number \((256*0+90) / 64 = 1\) where the fields begin with number 0 and the rank of the first processor is 0.\\
 The visited array or bitmap gives us the information if a node is already visited or not. So if the bit of a specific node is set to one in the level array and the associated bit in the visited array is zero, we know through the bitwise AND operation \cinline/&/ that the node is visited for the first time. Otherwise if the bit in the visited array is one already, we know that the node was visited in a level or round before.\\
