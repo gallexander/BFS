@@ -192,13 +192,24 @@ position = (uint64_t) pow(2, (adj_buffer[j] % 64));
 if (position & ~visited_bitmap[(adj_buffer[j] / 64)]){
 \end{ccode}
 Firstly we need the position of the neighbour with the vertex identifier \cinline/adj_buffer[j]/. Secondly there is a check if the neighbour is already visited through a bitwise AND between the position and the inversion of the \cinline/visited_bitmap/.
-If the condition evaluated to true following code is executed
+If the condition evaluates to true the following code is executed
 \begin{ccode}
 parent_array[adj_buffer[j]] = (uint64_t) nodes_owned_count*my_rank+i+1;
 visted_bitmap[(adj_buffer[j] / 64)] = visited_bitmap[(adj_buffer[j] / 64)] | position;
 oneChildisVisited = 1;
 \end{ccode}
-which replaces the pseudo functions \cinline/set_visited_bitmap/ and \cinline/save_parent/ from Listing~\ref{lst:detailedparallel}.
+which replaces the pseudo functions \cinline/set_visited_bitmap/ and \cinline/save_parent/ from Listing~\ref{lst:detailedparallel}. At first we save the parent of the neighbour \cinline/adj_buffer[j]/ in the array \cinline/parent_array/. For the identification of a parent the vertex identifier of the vertex number \cinline/i/ is saved and is calculated like before with \cinline/nodes_owned_count*my_rank+i+1/, but we add \(+1\) to the vertex identifier. That is because we want the number \(0\) for nodes in the \cinline/parent_array/ which do not have a parent. So if the node with the vertex identifier \(0\) is the parent of another node, we save \(1\) instead of \(0\) in the \cinline/parent_array/.\\
+The next step is to set the bit in the bitmap \cinline/visited_bitmap/ on the position of the neighbour \cinline/adj_buffer[j]/. In addition to that the flag \cinline/oneChildIsVisited/ is set. With these steps we lay the foundation for the next round of the algorithm where the nodes of the next level are handled.\\
+To share the information which nodes should be handled in the next round we have to synchronize the flag \cinline/oneChildisVisited/ and the bitmap \cinline/visited_bitmap/. That is done with
+\begin{ccode}
+MPI_Allreduce(MPI_IN_PLACE, (void *) &oneChildisVisited, 1, MPI_CHAR, MPI_BOR, MPI_COMM_WORLD);        
+if (oneChildisVisited){
+        MPI_Allreduce(MPI_IN_PLACE, (void *) visited_bitmap, (pow(2,scale) / BITS), MPI_UINT64_T, MPI_BOR, MPI_COMM_WORLD);
+}
+\end{ccode}
+Here we make use of the operation \cinline/MPI_Allreduce/ of MPI. In MPI we just work with processes, it is not necessary to have specific information about the underlying system which can be a distributed-memory or shared-memory system. The distribution of processes to the processors is not done by the programmer, it is done by the operating system and MPI implementation. It is also possible to use a resource manager like SLURM (REF!!!). With MPI a specific number of processes is executed, which have to share a communicator to have the possibility to communicate with each other.\\
+If a MPI operation is used it is necessary to specify a communicator which is \cinline/MPI_COMM_WORLD/ in our case. This communicator is a predefined one and contains all executed processes. So if this communicator is used we communicate with all other processes.\\
+In short the \cinline/MPI_Allreduce/ operation takes data of all processes, applies a specific reduction operation on that data and returns the result to every process. The first parameter requires a pointer to a buffer that should be part of the operation. This is \cinline/MPI_IN_PLACE/ in our case, what means that we use the same buffer for input and output of the operation. So with \cinline/MPI_IN_PLACE/ we refer to the buffer of the second parameter. The second parameter specifies the location where the result should be stored. In our implementation \cinline/&oneChildisVisited/ and \cinline/visited_bitmap/ serve as input and output buffers. The third parameter gives the information how many elements should be taken from the buffer of the type that is specified in the fourth parameter. \cinline/MPI_BOR/ is our reduction operation in both cases and stands for the bitwise OR operation. A requirement for a reduction operation is that it takes any number of input values and returns one output value. We used \cinline/MPI_BOR/, because 
 
 
 and \cinline/buffer[j]/ is one of the neighbours of the actual node, we check that this neighbour is visited in that level for the first time because of the synchronized level array, unless another node in the same level also visits that node. Here comes a race condition up, but for us it is enough that at the end the BFS tree represented through the parent array is correct.\\
