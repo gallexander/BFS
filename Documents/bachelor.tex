@@ -123,27 +123,29 @@ Output of this algorithm is a parent array again. What is not evident, but can b
 
 In this section there is a presentation of different realizations of the algorithm of Section~\ref{sec:parallel-bfs}. We show three different versions how this parallel concept can be implemented. The third and last version is the version which fits the requirements best, so it is explained in a more detailed way and is also used in the implementation of the graph500 project.
 
-\subsubsection{First version - next level bitmap}
+\subsection{First version - level bitmap}
 \label{sec:firstversion}
 
 At the beginning the first idea was to solve the breadth-first search problem with matrices where each element represents an edge between two nodes, like Buluç and Madduri did in their research paper \cite{matrices}. The problem with that approach is that if there is a sparse matrix there is a high waste of memory, so we developed a solution which better fits our requirements.\\
 It was our next idea to save only the edges that are existing and to leave out the rest. We decided to store all existing edges in a buffer and to work with an index array to find the edges of each node. So the next important question was if every processor has his own part of the buffer how should each processor share the information which nodes are in the current or next level of the BFS. So we came to the first version of the BFS implementation.\\
-The first version of the algorithm is characterized by a next level bitmap, because every processor stores the information about new visited nodes in a next level bitmap which has a size of \(n\) bits where \(n\) is the count of nodes of the whole graph. In every round the processors iterate over the owned nodes and check if the actual node in the iteration is in the current level and not visited. If that is the case the algorithm sets all bits of the neighbours of the current node in the next level bitmap to one. At the end of each round there must be a reduce scatter operation between the processors to ensure that every processor gets the level information of the next round.\\
-The only problem with that approach is that it is difficult to create a parent array if you just synchronize a next level bitmap and no other information between the processors.
+The first version of the algorithm is very similar to the algorithm in Listing~\ref{lst:parallel} and is characterized by a level and next level bitmap. Every node that is assigned to the processor has a bit in this level bitmap. If the bit is set it signalizes that the node belongs to the actual level. So the level bitmap has the information which nodes are active.\\
+At every round of the algorithm, where all nodes of the actual level should be handled, each processor has to iterate over the level bitmap and checks if a bit is set or clear. If the bit is set, the processor iterates over the neighbours of this active node. That can be achieved with an array like \cinline/adj_buffer/ from Listing~\ref{lst:parallel}, where all neighbours of the to the processor assigned nodes are saved. Now we make use of the next level bitmap, where all bits are clear at the beginning of each round. If a node is active and we iterate over the neighbours, each neighbour is set in the next level bitmap. The next level bitmap has a size of \(n\) bits where \(n\) is the count of nodes of the whole graph. That is necessary because we also have to set bits of nodes that are not assigned to the specific processor. The nodes that are set in the next level bitmap will be the active nodes in the next round of the algorithm.\\
+The following step is to synchronize the next level bitmaps of every processor. If there are \(m\) processors the \(m\) bitmaps are taken, a bitwise OR operation is executed on them and then dependent on the assigned nodes of each processor the right part of the synchronized next level bitmap is returned to the processors and is used as the level bitmap for the next round. In short the used synchronization operation can also be called reduce scatter operation, because there are many buffer or arrays gathered and then reduced to one with a reduction operation like the bitwise OR. After that reduction the information is scattered again.\\
+That solution of the parallel breadth-first search has very good results as we can see in Section~\ref{sec:testingall}. The only problem with that approach is that it is difficult to add the functionality that it is possible to create an parent array and return it as a result of the implementation. Every try to add this functionality would make this approach inefficient.
 
-\subsubsection{Second version - \cinline/uint64_t/ next level array}
+\subsection{Second version - \cinline/uint64_t/ level array}
 \label{sec:secondversion}
 
 In the second version of the algorithm we did not use a next level bitmap, instead we used a next level array of type \cinline/uint64_t/. At the position where we normally set the bit to one in the next level bitmap, we store the parent of the specific visited node. After the reduce scatter operation of the next level array with the MAX operation, every processor knows the parent of these nodes, which are already visited and which the processor owns. Unfortunately this approach is very inefficient because reducing the next level arrays in each round is really time-consuming and becomes more sophisticated with the increasing number of processors.
 
-\subsubsection{Third and current version - visited bitmap}
+\subsection{Third and current version - visited bitmap}
 \label{sec:thirdversion}
 
 The basic idea of this approach is that that we do not have a next level bitmap or array, we always keep a bitmap of all visited nodes in all levels synchronized. All processors know which node is already visited and which not and the parent of each node can be correctly stored at each processor. Before the algorithm ends the parent arrays of each processor get combined to one parent array with an allreduce operation. Section \ref{sec:implementations} gives detailed information about this approach.\\
 If you want to study the algorithm and the history of that algorithm in a more detailed way, you can check the appendix of this paper. There is the source code of every version in the Appendix~\ref{sec:sourcecode}.
 
 
-\subsection{Core of the parallel BFS solution}
+\subsubsection{Core of the parallel BFS solution}
 \label{sec:core}
 Here we will present our solution of the core of our parallel BFS algorithm in a more detailed pseudo code.\\
 \begin{listing}[h]
@@ -182,7 +184,7 @@ As Listing~\ref{lst:detailedparallel} shows, there are two input parameters. The
 Important is the flag \cinline/oneChildisVisited/. This flag keeps the information, if there is any new node visited at any processor and is synchronized at line 20. The \cinline/synchonize(oneChildisVisited)/ operation means that there are all \cinline/oneChildisVisited/ chars taken and then a bitwise OR is performed on these chars. If the reduced char variable is set (1), the \cinline/visited_bitmap/ will be synchronized with \cinline/synchronize(visited_bitmap);/.\\
 So if the processors communicate through \cinline/oneChildisVisited/ that there is at least one new visited node for the next round, the processors have to iterate over the assigned nodes and check if there is one of them set in the \cinline/visited_bitmap/ and not visited in a iteration before. The checking if a node or vertex is visited already is not handled in this Section and can be implemented in multiple ways. If there is a node which is not visited before and the bit in the \cinline/visited_bitmap/ related to that node is set, then the algorithm iterates over the neighbours of that node, where the obtaining of the neighbours of a node is simplified with \cinline/get_neighbours(adj_buffer, nodes_owned[i])/. If the neighbour is visited for the first time, the bit of that node is set in the \cinline/visited_bitmap/ and the processor saves the parent of that neighbour in the \cinline/parent_array/. If the node with the vertex identifier \(n\) is parent of the node with vertex identifier \(m\), then the number \(n\) is stored on position \(m\) in the \cinline/parent_array/. After checking all nodes, there have to be a synchronization, like mentioned before in this section. First the \cinline/oneChildisVisited/ is synchronized and dependent from that there is a synchronization of the \cinline/visited_bitmap/. After the synchronization of the \cinline/visited_bitmap/ it is important that all processors have the same bitmap where all bits of nodes, which are visited in the iterations before from any processor, are set. 
 
-\subsection{Implementation details of the BFS}
+\subsubsection{Implementation details of the BFS}
 \label{sec:impl_details}
 
 In this section there is an explantion of the algorithm in Section~\ref{sec:core} with low-level implementation details. The programming language is C and we make use of the OpenMPI library. A good basic description of MPI is given by Rauber and R{\"u}nger \cite{rauber}. \\
@@ -243,6 +245,7 @@ In short the \cinline/MPI_Allreduce/ operation takes data of all processes, appl
 For better understanding how manipulations in the algorithm influence the speed of the algorithm we compare the results of the different versions on Jupiter. In the following figures we work with a graph of scale 25 and an edgefactor of 4. That means that we have \(2^{25}\) nodes and \(2^{27}\) edges. The edges were generated by a Kronecker graph generator, researched by Leskovec, Chakrabarti, Kleinberg, Faloutsos and Ghahramani~\cite{kronecker}, and there are 64 bits allocated per node.
 
 \subsection{Testing the first version}
+\label{sec:testingall}
 
 Let us start with the first version from section \ref{sec:firstversion}.
 
