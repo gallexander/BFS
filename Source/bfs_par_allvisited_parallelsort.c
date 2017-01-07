@@ -117,7 +117,7 @@ void kernel_1(uint64_t *startVertex, uint64_t *endVertex, uint64_t edges, int pr
 
 void kernel_2(uint64_t *buffer, uint64_t *index_of_node, int my_rank, int procs, int scale, uint64_t *startVertex, uint64_t *endVertex){
     srand(time(NULL));
-    uint64_t root;;
+    uint64_t root;
     uint64_t nodes = pow(2, (scale));
     uint64_t *level = (uint64_t *) calloc(nodes / BITS, sizeof(uint64_t));
     uint64_t *parent_array = (uint64_t *) calloc(pow(2,scale), sizeof(uint64_t));
@@ -130,7 +130,7 @@ void kernel_2(uint64_t *buffer, uint64_t *index_of_node, int my_rank, int procs,
         }
         MPI_Bcast((void *)level, nodes / BITS, MPI_UINT64_T, 0, MPI_COMM_WORLD);
         bfs(level, buffer, index_of_node[nodes/procs], index_of_node, my_rank, procs, scale, parent_array);
-        if (my_rank == 0){
+        /*if (my_rank == 0){
             uint64_t i;
             uint64_t count = 0;
             for (i = 0; i < pow(2,scale)*EDGEFACTOR; i++){
@@ -142,7 +142,7 @@ void kernel_2(uint64_t *buffer, uint64_t *index_of_node, int my_rank, int procs,
                 }
             }
             printf("count: %llu\n", (unsigned long long) count);
-        }
+        }*/
     }
     free(parent_array);
     free(level);
@@ -154,7 +154,7 @@ void bfs(uint64_t *level, uint64_t *buffer, uint64_t buffer_size, uint64_t *inde
     uint64_t nodes_owned = pow(2,scale) / procs;
     uint64_t *visited = (uint64_t *) calloc(nodes_owned / BITS, sizeof(uint64_t));
     char oneChildisVisited = 1;
-    //int level_count = 0;
+    int level_count = 0;
     uint64_t i;
     uint64_t position;
     while (oneChildisVisited){
@@ -191,13 +191,16 @@ void bfs(uint64_t *level, uint64_t *buffer, uint64_t buffer_size, uint64_t *inde
         // AFTER SEND LEVEL BUFFER, ALLTOALL
         if (oneChildisVisited){
             MPI_Allreduce(MPI_IN_PLACE, (void *)level, (pow(2,scale) / BITS), MPI_UINT64_T, MPI_BOR, MPI_COMM_WORLD);
+            level_count++;
         }
     }
     if (my_rank){
         MPI_Reduce((void *) parent_array, NULL, pow(2, scale), MPI_UINT64_T, MPI_MAX, 0, MPI_COMM_WORLD);
     }else{
         MPI_Reduce(MPI_IN_PLACE, (void *) parent_array, pow(2, scale), MPI_UINT64_T, MPI_MAX, 0, MPI_COMM_WORLD);
+        printf("rounds: %i\n", level_count);
     }
+    
     free(visited);
 }
 

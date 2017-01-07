@@ -149,7 +149,7 @@ void bfs(uint64_t *level, uint64_t *buffer, uint64_t buffer_size, uint64_t *inde
         oneChildisVisited = 0;
         for (i = 0; i < nodes_owned; i++){
             if (level[i] != 0 && parent_array[i] == 0){ //checks if the current node in the iteration is in the current level and not visited
-                parent_array[i] = level[i];
+                parent_array[i] = level[i]; 
                 uint64_t j = index_of_node[i];
                 if (i == nodes_owned -1){ //differentiate between the last node of the owned nodes and one node in the middle
                     for (; j < buffer_size; j++){
