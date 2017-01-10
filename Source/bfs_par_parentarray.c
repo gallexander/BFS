@@ -176,11 +176,6 @@ void bfs(uint64_t *level, uint64_t *buffer, uint64_t buffer_size, uint64_t *inde
             memset((void *) next_level, 0, pow(2,SCALE)*sizeof(uint64_t));
         }
     }
-    /*printf("parent array: ");
-    for (i = 0; i < nodes_owned; i++){
-        printf("%llu ", (unsigned long long) parent_array[i]);
-    }
-    printf("\n");*/
     printf("Time for reduce_scattering: %f\n", time_sum);
     free(parent_array);
     free(next_level);

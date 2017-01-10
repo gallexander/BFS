@@ -121,10 +121,7 @@ Output of this algorithm is a parent array again. What is not evident, but can b
 \section{Implementations of the parallel breadth-first search}
 \label{sec:implementations}
 
-In this section there is a presentation of different realizations of the algorithm of Section~\ref{sec:parallel-bfs}. We show three different versions how this parallel concept can be implemented. The third and last version is the version that fits the requirements best, so it is explained in a more detailed way and is also used in the implementation of the graph500 project.\\
-
-The number of processes is also a power of two, so we can ensure that all processes have the same number of nodes what makes it easier to say which nodes are assigned to which process.
-
+In this section there is a presentation of different realizations of the algorithm of Section~\ref{sec:parallel-bfs}. We show three different versions how this parallel concept can be implemented. The third and last version is the version that fits the requirements best, so it is explained in a more detailed way and is also used in the implementation of the graph500 project. We always assume that the number of nodes and the number of processors are a power of two. With that assumption we can ensure that all processors have the same number of nodes and it is easier to work with bitmaps. Also the synchronization between the processors is quite easier.\\
 The source code of any version can be found in Appendix~\ref{sec:versions}.
 
 \subsection{First version - level bitmap}
@@ -240,7 +237,7 @@ Here we make use of the operation \cinline/MPI_Allreduce/ of MPI. In MPI we just
 If a MPI operation is used it is necessary to specify a communicator which is \cinline/MPI_COMM_WORLD/ in our case. This communicator is a predefined one and contains all executed processes. So if this communicator is used we communicate with all other processes.\\
 In short the \cinline/MPI_Allreduce/ operation takes data of all processes, applies a specific reduction operation on that data and returns the result to every process. That MPI operation is blocking. That means that it waits for all processes, which share this communicator, till the processes reach this line of code. The first parameter requires a pointer to a buffer that should be part of the operation. This is \cinline/MPI_IN_PLACE/ in our case, what means that we use the same buffer for input and output of the operation. So with \cinline/MPI_IN_PLACE/ we refer to the buffer of the second parameter. The second parameter specifies the location where the result should be stored. In our implementation \cinline/&oneChildisVisited/ and \cinline/visited_bitmap/ serve as input and output buffers. The third parameter gives the information how many elements should be taken from the buffer of the type that is specified in the fourth parameter. \cinline/MPI_BOR/ is our reduction operation in both cases and stands for the bitwise OR operation. A requirement for a reduction operation is that it takes any number of input values and returns one output value. We used the reduction operation \cinline/MPI_BOR/ in our implementation because we want a bitmap as result where every bit on a position is set which was also set in one of the input bitmaps on that position. That result bitmap is used in the next round of the algorithm where the nodes of the next level are handled.
 
-\section{Testing the algorithm on Jupiter}
+\section{Testing the implementations on Jupiter}
 \label{sec:testing}
 
 For better understanding how manipulations in the algorithm influence the speed of the algorithm we compare the results of the different versions on Jupiter.
@@ -260,12 +257,12 @@ After scattering the adjacency buffer to all processes the timer starts and ends
 \begin{figure}[!ht]
    \centering
    \includegraphics[width=1.00\textwidth]{allversions}
-   \caption{Results of timing all versions of the breadth-first search.}
+   \caption{Results of timing all versions of the breadth-first search. Version 3 is not the fastest solution, but it is really close to version 1 and fits the requirements in a better way.}
    \label{fig:allversions}
 \end{figure}
 Figure~\ref{fig:allversions} shows the results of all three versions. We used different configurations of Jupiter to test the different versions. A configuration is characterized by the number of nodes and the number of cores that are used of each node. So if we write \(2x16\) it means that we use 2 nodes and 16 cores of each node. Altogether we have 32 processes in that example.\\
 Version 1 has a quite good speedup with a higher number of cores, but the problem, like mentioned in Section~\ref{sec:firstversion}, is that we do not have a parent array at the end of this algorithm and it is hard to extend this approach to get one.\\
-The Implementation of Version 2 has a very bad speedup with the raising number of cores. Reason for that bad speedup is the synchronization of the next level array of type \cinline/uint64_t/. It takes too much time to reduce the entries of the next level array with the reduction operation \cinline/MPI_MAX/. In Table~\ref{tab:reducescatter} it is shown how much time the synchronization consumes for the different count of processes.\\
+The implementation of Version 2 has a very bad speedup with the raising number of cores. Reason for that bad speedup is the synchronization of the next level array of type \cinline/uint64_t/. It takes too much time to reduce the entries of the next level array with the reduction operation \cinline/MPI_MAX/. In Table~\ref{tab:reducescatter} it is shown how much time the synchronization consumes for the different count of processes.\\
 \begin{table}[!ht]
 	\centering
 	\begin{tabular}{ | l | l |}
@@ -351,9 +348,9 @@ int kernel_1(edge_list, edges, *buffer){
 \caption{Kernel 1}
 \label{lst:kernel1}
 \end{listing}
-The sorting of the edge list is done in parallel with a quicksort merge implementation to get a good performance for the first kernel. We choose the sorting algorithm quicksort, because it is a efficient sorting algorithm, particularly and that is important, in average case. The procedure is to scatter the edge list to the processors and every processor does the quicksort on the received edge list. The next step is to merge the different sorted edge lists in a way, that the processor with identifier 0 has the whole sorted edge list at the end. Instead of calling the merge operation \(p\) times in sequential order, where \(p\) is the count of processes, we decided to implement a tree based merging of the edge lists, like Puneet Kataria presented in his work \cite{quickmerge}.\\
-With the sorted and merged edge list the \cinline/scale/ or rather the count of nodes is calculated at the processor with identifier 0 and the edge list is scattered again to the processors. Every processor gets the edges of the nodes he owns, what is guaranteed with \cinline/bounds = calculate_bounds(edge_list);/ . For instance if we have 64 nodes and four processors then the first processor gets the edges with the start vertex from 0 to 15. The second processor gets the edges from 16 to 31, the third from 32 to 47, the last from 48 to 63. So the processors can get a different count of edges, dependent on the start vertex of the edges. We first send the processors the count of the specific edges with \cinline/scatter(bounds);/. Then the processor allocates memory for that edges and receives them. \\
-With the splitted edge list the adjacency buffer, which will be used in kernel 2, is created in such a way that the buffer contains the end vertex entries of the received edges. Duplicate edges are eliminated. To know at which entry the edges of each node start, we need an additional array of the size of owned nodes. With that the first kernel is completed. \\
+The sorting of the edge list is done in parallel with a quicksort merge implementation to get a good performance for the first kernel. We choose the sorting algorithm quicksort, because it is a efficient sorting algorithm, particularly and that is important, in average case. The procedure is to scatter the edge list to the processors and every processor does the quicksort on the received edge list. The next step is to merge the different sorted edge lists in a way, that the processor with identifier 0 has the whole sorted edge list at the end. Instead of calling the merge operation \(p\) times in sequential order, where \(p\) is the number of processors, we decided to implement a tree based merging of the edge lists, like Puneet Kataria presented in his work \cite{quickmerge}.\\
+With the sorted and merged edge list the \cinline/scale/ or rather the number of nodes is calculated at the processor with identifier 0. The \cinline/scale/ is not known from the beginning. The implementation of the graph500 has to calculate it from the given edge list. So the processor with identifier 0 calculates this information and communicates it with the other processors. After that the sorted edge list is scattered to the processors. Every processor gets the edges of the nodes he owns, what is guaranteed with \cinline/bounds = calculate_bounds(edge_list);/ . For instance if we have 64 nodes and four processors then the first processor gets the edges with the start vertex from 0 to 15. The second processor gets the edges from 16 to 31, the third from 32 to 47, the last from 48 to 63. The processors can get a different count of edges dependent on the start vertex of the edges. We first send the processors the count of the specific edges with \cinline/scatter(bounds);/. Then the processor allocates memory for that edges and receives them. \\
+With the splitted edge list the adjacency buffer, which will be used in kernel 2, is created in such a way that the buffer contains the end vertex entries of the received edges. Duplicate edges are eliminated. To know at which entry the edges of each node start, we need an additional array of the size of owned nodes. With that the first kernel is completed.\\
 \begin{listing}[H]
 \begin{ccode}
 /*
@@ -375,7 +372,7 @@ For the second kernel, as illustrated in Listing~\ref{lst:kernel2}, there have t
 \begin{ccode}
 keys = generate_keys(scale, 64);
 \end{ccode}
-Secondly we iterate over them and compute a parent array for earch search key \cinline/k/ with
+Secondly we iterate over them and compute a parent array for each search key \cinline/k/ with
 \begin{ccode}
 parent_array = BFS(buffer, k);
 \end{ccode}
@@ -391,9 +388,6 @@ The performance of Jupiter is measured by Kernel 1, where the graph is generated
 In contrast Kernel 2 is measured by the performance metric TEPS (traversed edges per second).  Let \(m\) be the number of input edge tuples within the component traversed by the search and \(t(n)\) be the execution time for Kernel 2. Then the normalized performance rate is: \(TEPS(n) = m / t(n)\)\\
 Figure~\ref{fig:kernel2} shows the TEPS with a scale of 24 and an edgefactor of 16 with different counts of computing cores.
 
-\section{Why no parallel realisation of depth-first search?}
-\label{sec:depth-first search}
-
 \section{Summary}
 \label{sec:summary}
 
@@ -406,7 +400,9 @@ Figure~\ref{fig:kernel2} shows the TEPS with a scale of 24 and an edgefactor of 
 \appendix
 \section{BFS versions}
 \label{sec:versions}
-Bla bla
+\lstinputlisting[firstline=138,lastline=196,caption={Version 1 - level bitmap},label=version1]{../Source/bfs_par.c}
+\lstinputlisting[firstline=135,lastline=183,caption={Version 2 - level array},label=version2]{../Source/bfs_par_parentarray.c}
+\lstinputlisting[firstline=153,lastline=205,caption={Version 3 - visited bitmap},label=version3]{../Source/bfs_par_allvisited_parallelsort.c}
 \section{Source Code - graph500}
 \label{sec:sourcecode}
 \lstinputlisting[caption={BFS solution},label=bfs]{../Source/bfs_par_allvisited_parallelsort.c}
