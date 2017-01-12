@@ -34,12 +34,16 @@ int main(int argc, char *argv[]){
         printf("Time for generating edge buffer, sorting and scattering: %f\n", timer/1000000);
     }
     int i = 0;
-    uint64_t *roots = (uint64_t *) calloc(16, sizeof(uint64_t));
+    uint64_t *roots = NULL;
+    if (my_rank == 0){
+        roots = (uint64_t *) calloc(64, sizeof(uint64_t));
+    }
     uint64_t root = 0;
     uint64_t root_local = 0;
     uint64_t answer = 0;
     srand(time(NULL));
-    while (i < 16){
+    printf("ROOTS: ");
+    while (i < 64){
         if (my_rank == 0){
             root = ((uint64_t) random()) % ((uint64_t)(pow(2,result.scale)));
         }
@@ -54,22 +58,24 @@ int main(int argc, char *argv[]){
         }else{
             answer = 0;
         }
-        if (my_rank == 0){
-            MPI_Reduce(&answer, &root_local, 1, MPI_UINT64_T, MPI_SUM, 0, MPI_COMM_WORLD);
-            if (root_local == 1){
-                roots[i++] = root;
+        MPI_Allreduce(&answer, &root_local, 1, MPI_UINT64_T, MPI_SUM, MPI_COMM_WORLD);
+        if (root_local == 1){
+            if (my_rank == 0){
+                roots[i] = root;
+                printf("%llu, ", (unsigned long long) root);
             }
-        }else{
-            MPI_Reduce(&answer, NULL, 1, MPI_UINT64_T, MPI_SUM, 0, MPI_COMM_WORLD);
+            i++;
         }
     }
+    printf("\n");
     if (my_rank == 0){
         timer = mytime();
     }
-    kernel_2(result.buffer, result.index_of_node, my_rank, procs, result.scale, startVertex, endVertex, roots);
+    uint64_t traversed_edges = kernel_2(result.buffer, result.index_of_node, my_rank, procs, result.scale, startVertex, endVertex, roots);
     if (my_rank == 0){
         timer = mytime() - timer;
         printf("Time for bfs searching: %f\n", timer/1000000);
+        printf("GTEPS: %f\n", traversed_edges/timer/1000000000);
     }
     free(startVertex);
     free(endVertex);
@@ -147,14 +153,14 @@ void kernel_1(uint64_t *startVertex, uint64_t *endVertex, uint64_t edges, int pr
     free(endVertex_recvbuf);
 }
 
-void kernel_2(uint64_t *buffer, uint64_t *index_of_node, int my_rank, int procs, int scale, uint64_t *startVertex, uint64_t *endVertex, uint64_t *roots){
+uint64_t kernel_2(uint64_t *buffer, uint64_t *index_of_node, int my_rank, int procs, int scale, uint64_t *startVertex, uint64_t *endVertex, uint64_t *roots){
     uint64_t root;
     uint64_t nodes = pow(2, (scale));
     uint64_t *level;
     uint64_t *parent_array;
     uint64_t count = 0;
     uint64_t j;
-    for (j = 0; j < 16; j++){
+    for (j = 0; j < 64; j++){
         level = (uint64_t *) calloc(nodes / BITS, sizeof(uint64_t));
         parent_array = (uint64_t *) calloc(pow(2,scale), sizeof(uint64_t));
         if (my_rank == 0){
@@ -171,13 +177,13 @@ void kernel_2(uint64_t *buffer, uint64_t *index_of_node, int my_rank, int procs,
                     count++;
                 }
             }
-            printf("count: %llu\n", (unsigned long long) count);
         }
         free(parent_array);
         free(level);
     }
     free(buffer);
     free(index_of_node);
+    return count;
 }
 
 void bfs(uint64_t *level, uint64_t *buffer, uint64_t buffer_size, uint64_t *index_of_node, int my_rank, int procs, int scale, uint64_t *parent_array){
@@ -230,7 +236,7 @@ void bfs(uint64_t *level, uint64_t *buffer, uint64_t buffer_size, uint64_t *inde
         MPI_Reduce((void *) parent_array, NULL, pow(2, scale), MPI_UINT64_T, MPI_MAX, 0, MPI_COMM_WORLD);
     }else{
         MPI_Reduce(MPI_IN_PLACE, (void *) parent_array, pow(2, scale), MPI_UINT64_T, MPI_MAX, 0, MPI_COMM_WORLD);
-        printf("rounds: %i\n", level_count);
+        //printf("rounds: %i\n", level_count);
     }
     
     free(visited);
