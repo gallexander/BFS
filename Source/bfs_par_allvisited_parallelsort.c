@@ -42,15 +42,15 @@ int main(int argc, char *argv[]){
     uint64_t root_local = 0;
     uint64_t answer = 0;
     srand(time(NULL));
-    printf("ROOTS: ");
     while (i < 64){
         if (my_rank == 0){
-            root = ((uint64_t) random()) % ((uint64_t)(pow(2,result.scale)));
+            root = rand() % ((uint64_t)pow(2,result.scale));
         }
         MPI_Bcast(&root, 1, MPI_UINT64_T, 0, MPI_COMM_WORLD);
-        if (pow(2,result.scale)/procs*(my_rank+1) > root){
+        if (pow(2,result.scale)/procs*my_rank <= root && pow(2,result.scale)/procs*(my_rank+1) > root){
             root_local = root % (uint64_t)(pow(2,result.scale)/procs);
             if (result.index_of_node[root_local] < result.index_of_node[root_local+1]){
+                printf("i = %i, root = %llu, my_rank = %i\n", i, (unsigned long long) root, my_rank);
                 answer = 1;
             }else{
                 answer = 0;
@@ -62,20 +62,21 @@ int main(int argc, char *argv[]){
         if (root_local == 1){
             if (my_rank == 0){
                 roots[i] = root;
-                printf("%llu, ", (unsigned long long) root);
             }
             i++;
+        }else{
         }
     }
-    printf("\n");
     if (my_rank == 0){
+        printf("\n");
         timer = mytime();
     }
     uint64_t traversed_edges = kernel_2(result.buffer, result.index_of_node, my_rank, procs, result.scale, startVertex, endVertex, roots);
     if (my_rank == 0){
         timer = mytime() - timer;
         printf("Time for bfs searching: %f\n", timer/1000000);
-        printf("GTEPS: %f\n", traversed_edges/timer/1000000000);
+        printf("GTEPS: %f\n", traversed_edges/(timer/1000000.0)/1000000000);
+        free(roots);
     }
     free(startVertex);
     free(endVertex);
