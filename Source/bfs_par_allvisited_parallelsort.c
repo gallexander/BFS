@@ -6,11 +6,9 @@
 */
 
 int main(int argc, char *argv[]){
-    int my_rank, procs, tag=0;
+    int my_rank, procs;
     uint64_t nodes = pow(2,SCALE);
     uint64_t edges = nodes*EDGEFACTOR;
-        
-    MPI_Status status;
 
     MPI_Init (&argc, &argv);
     MPI_Comm_rank (MPI_COMM_WORLD, &my_rank);
@@ -23,9 +21,10 @@ int main(int argc, char *argv[]){
     if (my_rank == 0){
         startVertex = (uint64_t *) calloc(edges, I64_BYTES);
         endVertex = (uint64_t *) calloc(edges, I64_BYTES);
-
+        timer = mytime();
         read_graph(SCALE, EDGEFACTOR, startVertex, endVertex);
-        
+        timer = mytime() - timer;
+        printf("Time for reading the graph: %f\n", timer/1000000);
         timer = mytime();
     }
     kernel_1(startVertex, endVertex, edges, procs, my_rank, &result);
@@ -50,7 +49,7 @@ int main(int argc, char *argv[]){
         if (pow(2,result.scale)/procs*my_rank <= root && pow(2,result.scale)/procs*(my_rank+1) > root){
             root_local = root % (uint64_t)(pow(2,result.scale)/procs);
             if (result.index_of_node[root_local] < result.index_of_node[root_local+1]){
-                printf("i = %i, root = %llu, my_rank = %i\n", i, (unsigned long long) root, my_rank);
+                //printf("i = %i, root = %llu, my_rank = %i\n", i, (unsigned long long) root, my_rank);
                 answer = 1;
             }else{
                 answer = 0;

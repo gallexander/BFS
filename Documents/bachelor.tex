@@ -8,6 +8,7 @@
 \usepackage{filecontents}
 \usepackage{minted}
 \usepackage{url}
+\usepackage[labelfont=bf,textfont=it]{caption}
 
 \definecolor{lstcolor}{rgb}{0.95,0.95,0.95}
 
@@ -257,7 +258,7 @@ After scattering the adjacency buffer to all processes the timer starts and ends
 \begin{figure}[!ht]
    \centering
    \includegraphics[width=1.00\textwidth]{allversions}
-   \caption{Results of timing all versions of the breadth-first search. Version 3 is not the fastest solution, but it is really close to version 1 and fits the requirements in a better way.}
+   \caption{Results of timing all versions of the breadth-first search. The x-axis defines the MPI processes in that way that we know how many cores of each node are used.Version 3 is not the fastest solution, but it is really close to version 1 and fits the requirements in a better way.}
    \label{fig:allversions}
 \end{figure}
 Figure~\ref{fig:allversions} shows the results of all three versions. We used different configurations of Jupiter to test the different versions. A configuration is characterized by the number of nodes and the number of cores that are used of each node. So if we write \(2x16\) it means that we use 2 nodes and 16 cores of each node. Altogether we have 32 processes in that example.\\
@@ -372,6 +373,7 @@ For the second kernel, as illustrated in Listing~\ref{lst:kernel2}, there have t
 \begin{ccode}
 keys = generate_keys(scale, 64);
 \end{ccode}
+One key stands for the vertex identifier of a node and the degree of that node must be at least one, not counting self-loops. That is a bit tricky in our solution because we do not save the degree of each node. So instead of iterating over the edge list for each randomly sampled key and checking the degree of that node we broadcast a message to all processors after generating a key. The processor that is responsible for that key counts the edges and gives an answer to the processor with the identifier zero, which is responsible for generating the keys. If the key is acceptable, the key will be one of the search keys. If not, the procedure will be repeated.\\
 Secondly we iterate over them and compute a parent array for each search key \cinline/k/ with
 \begin{ccode}
 parent_array = BFS(buffer, k);
@@ -382,11 +384,11 @@ Further informations and code details of our solution of the graph500 benchmark 
 \section{Graph500 performance of Jupiter}
 \label{sec:performance}
 
-The performance of Jupiter is measured by Kernel 1, where the graph is generated from the input edge list, and Kernel 2, where 64 parent arrays are computed within a BFS search. Figure~\ref{fig:kernel1} shows the execution times in seconds of the first kernel from a scale of nodes from 24 to .... and an edgefactor of 16 with 1 core up to 512 cores.
+The performance of Jupiter is measured by Kernel 1, where the graph is generated from the input edge list, and Kernel 2, where 64 parent arrays are computed within a BFS search. Figure~\ref{fig:kernel1} shows the execution times in seconds of the first kernel. There are different graph sizes defined on the x-axis. The edgefactor is always 16. That means that we have 16 times more edges than nodes. Jupiter is configured in a way that we use 32 nodes and in the one case 8 cores and in the other case 16 cores of each node. The y-axis defines the seconds for kernel 1.
 
 
 In contrast Kernel 2 is measured by the performance metric TEPS (traversed edges per second).  Let \(m\) be the number of input edge tuples within the component traversed by the search and \(t(n)\) be the execution time for Kernel 2. Then the normalized performance rate is: \(TEPS(n) = m / t(n)\)\\
-Figure~\ref{fig:kernel2} shows the TEPS with a scale of 24 and an edgefactor of 16 with different counts of computing cores.
+Figure~\ref{fig:kernel2} shows the TEPS on the y-axis and the graph sizes on the x-axis. The scale of the graph goes from 12 to 22 and the edgefactor is 16, like in kernel 1. The configuration of Jupiter is equal to kernel 1.
 
 \section{Summary}
 \label{sec:summary}
