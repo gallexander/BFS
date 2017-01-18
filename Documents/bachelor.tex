@@ -238,6 +238,12 @@ Here we make use of the operation \cinline/MPI_Allreduce/ of MPI. In MPI we just
 If a MPI operation is used it is necessary to specify a communicator which is \cinline/MPI_COMM_WORLD/ in our case. This communicator is a predefined one and contains all executed processes. So if this communicator is used we communicate with all other processes.\\
 In short the \cinline/MPI_Allreduce/ operation takes data of all processes, applies a specific reduction operation on that data and returns the result to every process. That MPI operation is blocking. That means that it waits for all processes, which share this communicator, till the processes reach this line of code. The first parameter requires a pointer to a buffer that should be part of the operation. This is \cinline/MPI_IN_PLACE/ in our case, what means that we use the same buffer for input and output of the operation. So with \cinline/MPI_IN_PLACE/ we refer to the buffer of the second parameter. The second parameter specifies the location where the result should be stored. In our implementation \cinline/&oneChildisVisited/ and \cinline/visited_bitmap/ serve as input and output buffers. The third parameter gives the information how many elements should be taken from the buffer of the type that is specified in the fourth parameter. \cinline/MPI_BOR/ is our reduction operation in both cases and stands for the bitwise OR operation. A requirement for a reduction operation is that it takes any number of input values and returns one output value. We used the reduction operation \cinline/MPI_BOR/ in our implementation because we want a bitmap as result where every bit on a position is set which was also set in one of the input bitmaps on that position. That result bitmap is used in the next round of the algorithm where the nodes of the next level are handled.
 
+\subsubsection{Algorithm analysis}
+\label{sec:analysis}
+
+While the sequential breadth-first search has a time complexity of \(\mathcal{O}(n + e)\), where \(n\) is the number of nodes and \(e\) is the number of edges, the time complexity of the third parallel implementation is different. In every round or level of the algorithm the processors have to iterate over all nodes that are assigned to them and check if they were visited in the last round. In the sequential solution it is sufficient to iterate over the nodes that are in the current level, but that is not possible in the parallel solution, because we work with other data structures. There results a time complexity of \(\mathcal{O}(dn + e)\) in the parallel solution. \(d\) defines the diameter of the graph and is the greatest distance between any pair of vertices.\\
+Both the sequential and the parallel solution occupy \(\Theta(n + e)\) space in memory. If the sequential algorithm used an adjacency matrix instead of a list, the sequential algorithm would have a space complexity of \(\Theta(n^{2})\).
+
 \section{Testing the implementations on Jupiter}
 \label{sec:testing}
 
@@ -386,12 +392,13 @@ Further informations and code details of our solution of the graph500 benchmark 
 
 The performance of Jupiter is measured by Kernel 1, where the graph is generated from the input edge list, and Kernel 2, where 64 parent arrays are computed within a BFS search. Figure~\ref{fig:kernel1} shows the execution times in seconds of the first kernel. There are different graph sizes defined on the x-axis. The edgefactor is always 16. That means that we have 16 times more edges than nodes. Jupiter is configured in a way that we use 32 nodes and in the one case 8 cores and in the other case 16 cores of each node. The y-axis defines the seconds for kernel 1.
 
-
 In contrast Kernel 2 is measured by the performance metric TEPS (traversed edges per second).  Let \(m\) be the number of input edge tuples within the component traversed by the search and \(t(n)\) be the execution time for Kernel 2. Then the normalized performance rate is: \(TEPS(n) = m / t(n)\)\\
 Figure~\ref{fig:kernel2} shows the TEPS on the y-axis and the graph sizes on the x-axis. The scale of the graph goes from 12 to 22 and the edgefactor is 16, like in kernel 1. The configuration of Jupiter is equal to kernel 1.
 
 \section{Summary}
 \label{sec:summary}
+
+
 
 \clearpage
 
