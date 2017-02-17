@@ -9,24 +9,28 @@
 \usepackage{filecontents}
 \usepackage{url}
 \usepackage[labelfont=bf,textfont=it]{caption}
+\usepackage{courier}
 
 \definecolor{lstcolor}{rgb}{0.95,0.95,0.95}
 
 \lstdefinestyle{customc}{
-  belowcaptionskip=1\baselineskip,
-  breaklines=true,
-  frame=L,
-  xleftmargin=\parindent,
-  language=C,
-  showstringspaces=false,
-  basicstyle=\ttfamily\scriptsize,
-  keywordstyle=\bfseries\color{green!40!black},
-  commentstyle=\itshape\color{purple!40!black},
-  identifierstyle=\color{blue},
-  stringstyle=\color{orange},
-  tabsize=2
+	basicstyle=\footnotesize\ttfamily,
+	keywordstyle=\color{black}\bfseries\underbar,
+	identifierstyle=,
+	commentstyle=\color{white},
+	stringstyle=\ttfamily,
+	showstringspaces=false,
+  	tabsize=2,
+	mathescape=true,
+	numbers=left,
+	numberstyle=\tiny,
+	numbersep=10pt,
+	captionpos=b,
+	frame=trBL,
+	breaklines=true
 }
-\lstset{escapechar=@,style=customc}
+\lstset{style=customc}
+\renewcommand{\lstlistingname}{Algorithmus}
 
 %opening
 \title{Parallele Breitensuche}
@@ -64,7 +68,27 @@ Um die Breitensuche zu konkretisieren beziehungsweise besser beschreiben zu kön
 \end{figure}
 Ausgehend vom Startknoten wurde die Breitensuche auf den Graph von Abbildung~\ref{fig:graph} angewendet. Dadurch wird der Graph in die einzelnen Levels unterteilt, welche aus der Beschriftung der Knoten ersichtlich sind. Der grau hinterlegte Knoten entspricht einem Knoten, der durch die Breitensuche nicht erreicht wurde. Der Durchmesser ist gleich dem höchstem Level im Graphen und ist in diesem Fall \(3\).
 Es ist auch möglich andere Informationen als die Distanz in Bezug auf einen Knoten abzuspeichern. Dies wird von vielen unterschiedlichen Applikationen, die die Breitensuche anwenden, erwartet beziehungsweise gefordert. Ein Beispiel dafür ist das Abspeichern des Vaterknotens für jeden besuchten Knoten, damit man am Ende der Breitensuche einen Spannbaum der besuchten Knoten liefern kann. Aus Performancezwecken und auch als Beitrag zur Einfachheit und Parallelität sollten zusätzlichen Informationen oder Berechnungen, wenn möglich, beim erstmaligen Besuchen des Knoten durchgeführt werden.\\
-Nachdem die grundlegenden Bestandteile und Eigenschaften eines Graphen geklärt sind, widmen wir uns weiters dem eigentlichen Thema dieser Arbeit, nämlich der Breitensuche. Auch wenn das Grundkonzept der Breitensuche schon verstanden wurde, geben wir zuerst eine klassische sequentielle Variante des Algorithmus von Cormen, Leiserson, Rivest and Stein \cite{cormen_introduction_2009} an, welche eine Warteschlange (\textit{queue}) verwendet, die im FIFO (\textit{first in first out}) Prinzip arbeitet.
+Nachdem die grundlegenden Bestandteile und Eigenschaften eines Graphen geklärt sind, widmen wir uns weiters dem eigentlichen Thema dieser Arbeit, nämlich der Breitensuche. Auch wenn das Grundkonzept der Breitensuche schon erklärt wurde, zeigt Algorithmus~\ref{fifo} eine klassische sequentielle Variante von Cormen, Leiserson, Rivest and Stein \cite{cormen_introduction_2009}, welche eine Warteschlange (\textit{queue}) verwendet, die im FIFO (\textit{first in first out}) Prinzip arbeitet. Diese Variante der Implementierung gehört zu einer der einfachsten der Breitensuche.
+\begin{lstlisting}[caption={Klassische Variante der Breitensuche unter Verwendung einer FIFO Warteschlange als Datenstruktur. Wird auf einem Graph \(G\) mit Startknoten \(v_{0} \in V(G)\) angewandt. Der Algorithmus bestimmt die Distanz und den Vaterknoten von denjenigen Knoten, die ausgehend vom Startknoten erreichbar sind.},label=fifo]
+$\textbf{SERIAL-BFS}$(G,$v_{0}$)
+	$\textbf{for}$ each vertex $\in$ V(G) - {$v_{0}$}
+		u.d = $\infty$
+		u.$\pi$ = NIL
+	$v_{0}$.d = 0
+	$v_{0}$.$\pi$ = NIL
+	Q = {$v_{0}$}
+	$\textbf{while}$ Q $\neq$ 0
+		u = DEQUEUE(Q)
+		$\textbf{for}$ each v $\in$ G.Adj[u]
+			$\textbf{if}$ v.d == $\infty$
+				v.d = u.d + 1
+				v.$\pi$ = u
+				ENQUEUE(Q,v)
+\end{lstlisting}
+Zu Beginn von Algorithmus~\ref{fifo} werden alle Knoten, die in \(V(G)\) enthalten sind, in den Zeilen 2-4 initialisiert. Ein Knoten \(u \in V\) besitzt die Attribute \lstinline{u.d} für die Distanz und \lstinline{u.$\pi$} für den Vaterknoten. Da zu Beginn noch keine Knoten besucht wurden, wird die Distanz \lstinline{u.d} auf \lstinline{$\infty$} und der Vaterknoten \lstinline{u.$\pi$} auf \lstinline{NIL} gesetzt. Das hat auch folgenden Grund, dass Knoten, die nicht durch die Breitensuche erreicht werden, keine Vaterknoten besitzen, \lstinline{u.$\pi$ = NIL}, und keine gültige Distanz, \lstinline{u.d = $\infty$}, ausgehend vom Startknoten aufweisen.\\
+Zeile 5 weist dem Attribut Distanz des Startknotens den Wert 0 zu. In Zeile 6 wird der Vaterknoten des Startknotens auf \lstinline{NIL} gesetzt. In Zeile 7 und 8 wird die Warteschlange initialisiert und bekommt als erstes Element den Startknoten. Nun wird die \lstinline{$\textbf{while}$} Schleife von Zeile 8-14 solange ausgeführt, solange es Knoten gibt, die noch nicht besucht wurden, aber vom Startknoten erreichbar sind. Innerhalb der \lstinline{$\textbf{while}$} Schleife wird in Zeile 9 das Element nach dem FIFO Prinzip aus der Warteschlange genommen, das heißt das Element, das zeitlich am längsten in der Warteschlange war. Die \lstinline{$\textbf{for}$} Schleife in den Zeilen 10-14 iteriert über die Nachbarn \lstinline{v $\in$ G.Adj[u]} des aktuellen Knoten \lstinline{u}. Als Nachbar werden folgende Knoten bezeichnet, die adjazent zum jeweiligen Knoten sind, also durch eine Kante verbunden sind. In Zeile 11 wird überprüft, ob der Knoten \lstinline{v} noch nicht besucht wurde, was mittels \lstinline{$\textbf{if}$} Bedingung
+\lstinline{v.d == $\infty$} geprüft wird. Ist dies der Fall, wird \lstinline{v.d} auf \lstinline{u.d + 1} gesetzt und \lstinline{u} wird als Vater in \lstinline{v.$\pi$} gekennzeichnet. Danach wird der Knoten \lstinline{u} in die Warteschlange aufgenommen.
+\textbf{Breadth-first trees}
 \clearpage
 
 \nocite{*}
