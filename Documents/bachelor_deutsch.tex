@@ -73,7 +73,7 @@ Es ist auch möglich andere Informationen als die Distanz in Bezug auf einen Kno
 \subsection*{Sequentielle Breitensuche}
 Nachdem die grundlegenden Bestandteile und Eigenschaften eines Graphen geklärt sind, widmen wir uns weiters dem eigentlichen Thema dieser Arbeit, nämlich der Breitensuche. Auch wenn das Grundkonzept der Breitensuche schon erklärt wurde, zeigt Algorithmus~\ref{fifo} eine klassische sequentielle Variante von Cormen, Leiserson, Rivest und Stein \cite{cormen_introduction_2009}, welche eine Warteschlange (\textit{queue}) verwendet, die im FIFO (\textit{first in first out}) Prinzip arbeitet. Diese Variante der Implementierung gehört zu einer der einfachsten der Breitensuche.
 \begin{lstlisting}[caption={Klassische Variante der Breitensuche unter Verwendung einer FIFO Warteschlange als Datenstruktur. Wird auf einem Graph \(G\) mit Startknoten \(v_{0} \in V(G)\) angewandt. Der Algorithmus bestimmt die Distanz und den Vaterknoten von denjenigen Knoten, die ausgehend vom Startknoten erreichbar sind.},label=fifo]
-$\textbf{SERIAL-BFS}$(G,$v_{0}$)
+$\textbf{SERIAL-BFS-QUEUE}$(G,$v_{0}$)
 	$\textbf{for}$ each vertex $\in$ V(G) - {$v_{0}$}
 		u.d = $\infty$
 		u.$\pi$ = NIL
@@ -114,7 +114,29 @@ Neben der Laufzeit und des Speedups eines parallelen Programms spielt in unserer
 	C_{p}(n) = T_{p}(n) \cdot p
  \end{equation}
 und ist die von allen Prozessoren ausgeführte Arbeit. Unser Ziel in Bezug auf die Kosten ist es, ein paralleles Programm zu finden, dass \textit{kostenoptimal} beziehungsweise annähernd kostenoptimal ist, also bei dem gilt \(C_{p}(n) = T^{*}(n)\). Das heißt es sollen vom parallelen Programm insgesamt genauso viele Operationen ausgeführt werden wie von einem optimalen sequentiellen Verfahren.\\
-Nachdem beschrieben wurde, wie ein paralleles Programm in unserer Arbeit bewertet wird, auch in Bezug auf das sequentielle Verfahren, wenden wir uns wieder dem eigentlichen Thema zu, der Breitensuche und deren Parallelisierung. Es ist bei vielen Problemen schwierig einen sequentiellen Algorithmus mit nur wenig Änderungen in einen parallelen umzusetzen. Oft muss man eine andere Sicht auf das zu lösende Problem bekommen und sich eine ähnliche oder andere Lösung ausdenken, bei der eine parallele Umsetzung besser möglich ist. Ein Beispiel dafür ist Algorithmus~\ref{fifo}.\\
+Nachdem beschrieben wurde, wie ein paralleles Programm in unserer Arbeit bewertet wird, auch in Bezug auf das sequentielle Verfahren, wenden wir uns wieder dem eigentlichen Thema zu, der Breitensuche und deren Parallelisierung. Es ist bei vielen Problemen schwierig einen sequentiellen Algorithmus mit nur wenig Änderungen in einen parallelen umzusetzen. Oft muss man eine andere Sicht auf das zu lösende Problem bekommen und sich eine ähnliche oder andere Lösung heranziehen, bei der eine parallele Umsetzung besser möglich ist. Ein Beispiel dafür ist Algorithmus~\ref{fifo}.  Dieser Algorithmus zur Lösung der Breitensuche ist schwierig zu parallelisieren, da die FIFO Warteschlange ein Hindernis für die Parallelisierung darstellt, falls man diese im parallelen Algorithmus synchronisiert halten will. Ein ausführlichere Beschreibung liefert hierbei Leiserson und Schardl~\cite{leiserson}.\\
+Aus diesem Grund geben wir noch einen weiteren sequentiellen Algorithmus durch Algorithmus~\ref{stacks} an, der anstatt der FIFO Warteschlange zwei Stapelspeicher (\textit{stacks}) verwendet, wodurch ein level-basiertes Durchsuchen des Graphen, wie in Abbildung~\ref{fig:graph_level}, ersichtlicher wird. Mit Hilfe von Algorithmus~\ref{stacks} ist es einfacher, einen parallelen Algorithmus abzuleiten. Dieser Algorithmus wird auch von Buluc und Madduri~\cite{buluc} als Basis für deren Arbeit zur parallelen Breitensuche verwendet und ist auch in deren Arbeit abgebildet.
+\begin{lstlisting}[caption={Eine weitere sequentielle Variante der Breitensuche unter Verwendung von zwei Stacks \lstinline{FS} und \lstinline{NS} als Datenstrukturen. Dieser Algorithmus liefert das gleiche Ergebnis wie Algorithmus~\ref{fifo} und hat auch die gleiche Laufzeit wie dieser, ermöglicht jedoch eine bessere Sicht auf das level-basierte Durchsuchen des Graphen, was das Ableiten eines parallelen Algorithmus einfacher macht.},label=stacks]
+$\textbf{SERIAL-BFS-STACKS}$(G,$v_{0}$)
+	$\textbf{for}$ each vertex $\in$ V(G) - {$v_{0}$}
+		u.d = $\infty$
+		u.$\pi$ = NIL
+	$v_{0}$.d = 0
+	$v_{0}$.$\pi$ = NIL
+	level = 1
+	FS = {$v_{0}$}
+	NS = $\emptyset$
+	$\textbf{while}$ FS $\neq$ 0
+		$\textbf{for}$ each u $\in$ FS
+			$\textbf{for}$ each v $\in$ G.Adj[u]
+				$\textbf{if}$ v.d == $\infty$
+					v.d = level
+					v.$\pi$ = u
+					NS = NS $\cup$ {v}
+		FS = NS
+		NS = $\emptyset$
+		level = level + 1
+\end{lstlisting}
 Länge des längsten Pfades vom Startknoten \(v_{0}\) zu einem erreichbaren Knoten, was dem Durchmesser des Subgraphen \(G_{\pi}\) entspricht.
 \clearpage
 
