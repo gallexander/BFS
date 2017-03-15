@@ -10,6 +10,7 @@
 \usepackage{url}
 \usepackage[labelfont=bf,textfont=it]{caption}
 \usepackage{courier}
+\usepackage{subcaption}
 
 \definecolor{lstcolor}{rgb}{0.95,0.95,0.95}
 
@@ -113,8 +114,9 @@ Neben der Laufzeit und des Speedups eines parallelen Programms spielt in unserer
 \begin{equation}
 	C_{p}(n) = T_{p}(n) \cdot p
  \end{equation}
-und ist die von allen Prozessoren ausgeführte Arbeit. Unser Ziel in Bezug auf die Kosten ist es, ein paralleles Programm zu finden, dass \textit{kostenoptimal} beziehungsweise annähernd kostenoptimal ist, also bei dem gilt \(C_{p}(n) = T^{*}(n)\). Das heißt es sollen vom parallelen Programm insgesamt genauso viele Operationen ausgeführt werden wie von einem optimalen sequentiellen Verfahren.\\
-Nachdem beschrieben wurde, wie ein paralleles Programm in unserer Arbeit bewertet wird, auch in Bezug auf das sequentielle Verfahren, wenden wir uns wieder dem eigentlichen Thema zu, der Breitensuche und deren Parallelisierung. Es ist bei vielen Problemen schwierig einen sequentiellen Algorithmus mit nur wenig Änderungen in einen parallelen umzusetzen. Oft muss man eine andere Sicht auf das zu lösende Problem bekommen und sich eine ähnliche oder andere Lösung heranziehen, bei der eine parallele Umsetzung besser möglich ist. Ein Beispiel dafür ist Algorithmus~\ref{fifo}.  Dieser Algorithmus zur Lösung der Breitensuche ist schwierig zu parallelisieren, da die FIFO Warteschlange ein Hindernis für die Parallelisierung darstellt, falls man diese im parallelen Algorithmus synchronisiert halten will. Ein ausführlichere Beschreibung liefert hierbei Leiserson und Schardl~\cite{leiserson}.\\
+und ist die von allen Prozessoren ausgeführte Arbeit. Unser Ziel in Bezug auf die Kosten ist es, ein paralleles Programm zu finden, dass \textit{kostenoptimal} beziehungsweise annähernd kostenoptimal ist, also bei dem gilt \(C_{p}(n) = T^{*}(n)\). Das heißt es sollen vom parallelen Programm insgesamt genauso viele Operationen ausgeführt werden wie von einem optimalen sequentiellen Verfahren.
+\subsection*{Erste Schritte}
+Nachdem beschrieben wurde, wie ein paralleles Programm in unserer Arbeit bewertet wird, auch in Bezug auf das sequentielle Verfahren, wenden wir uns wieder dem eigentlichen Thema zu, der Breitensuche und deren Parallelisierung. Es ist bei vielen Problemen schwierig einen sequentiellen Algorithmus mit nur wenigen Änderungen in einen parallelen umzusetzen. Oft muss man eine andere Sicht auf das zu lösende Problem bekommen und sich eine ähnliche oder andere Lösung heranziehen, bei der eine parallele Umsetzung besser möglich ist. Ein Beispiel dafür ist Algorithmus~\ref{fifo}.  Dieser Algorithmus zur Lösung der Breitensuche ist schwierig zu parallelisieren, da die FIFO Warteschlange ein Hindernis für die Parallelisierung auf Rechnern mit physikalisch verteiltem Speicher darstellt, falls man diese im parallelen Algorithmus synchronisiert halten will. Ein ausführlichere Beschreibung liefert hierbei Leiserson und Schardl~\cite{leiserson}.\\
 Aus diesem Grund geben wir noch einen weiteren sequentiellen Algorithmus durch Algorithmus~\ref{stacks} an, der anstatt der FIFO Warteschlange zwei Stapelspeicher (\textit{stacks}) verwendet, wodurch ein level-basiertes Durchsuchen des Graphen, wie in Abbildung~\ref{fig:graph_level}, ersichtlicher wird. Mit Hilfe von Algorithmus~\ref{stacks} ist es einfacher, einen parallelen Algorithmus abzuleiten. Dieser Algorithmus wird auch von Buluc und Madduri~\cite{buluc} als Basis für deren Arbeit zur parallelen Breitensuche verwendet und ist auch in deren Arbeit abgebildet.
 \begin{lstlisting}[caption={Eine weitere sequentielle Variante der Breitensuche unter Verwendung von zwei Stacks \lstinline{FS} und \lstinline{NS} als Datenstrukturen. Dieser Algorithmus liefert das gleiche Ergebnis wie Algorithmus~\ref{fifo} und hat auch die gleiche Laufzeit wie dieser, ermöglicht jedoch eine bessere Sicht auf das level-basierte Durchsuchen des Graphen, was das Ableiten eines parallelen Algorithmus einfacher macht.},label=stacks]
 $\textbf{SERIAL-BFS-STACKS}$(G,$v_{0}$)
@@ -139,7 +141,31 @@ $\textbf{SERIAL-BFS-STACKS}$(G,$v_{0}$)
 \end{lstlisting}
 Algorithmus~\ref{stacks} ist sehr ähnlich zu Algorithmus~\ref{fifo}. Es werden jedoch zwei Datenstrukturen benötigt und es gibt eine weitere verschachtelte Schleife in Zeile 11. Bei den zwei Datenstrukturen handelt es sich um \lstinline{FS} (\textit{frontier stack}), der Stapelspeicher, wo die Knoten des aktuellen Levels gespeichert sind, und \lstinline{NS} (\textit{newly-visited stack}), der Stapelspeicher, wo die neu besuchten Knoten gespeichert werden, also die Knoten, die ein um eins höheres Level haben als die Knoten in \lstinline{FS}.\\
 Nach der Initialisierung wird die \lstinline{$\textbf{while}$} von Zeile 10-19 solange ausgeführt bis es keine neu besuchten Knoten im nächsten Level gibt, also keine Knoten mehr ausgehend vom Startknoten \lstinline{$v_{0}$} erreicht werden können. In den Zeilen 11-16 wird mittels \lstinline{$\textbf{for}$} Schleife über alle Knoten des aktuellen Levels iteriert. Durch die Bedingung in Zeile 10 muss zumindest ein Element \lstinline{u} in \lstinline{FS} enthalten sein. Über die Nachbarn des Knoten \lstinline{u} in Zeile 12-16 wird genauso iteriert wie in Algorithmus~\ref{fifo}, außer dass hier die Nachbarn \lstinline{v}, die zuvor noch nicht besucht wurden, also \lstinline{v.d == $\infty$}, im Stapelspeicher \lstinline{NS} abgelegt werden. Ebenfalls sehr entscheidend für diesen Algorithmus ist, dass nachdem alle Knoten des aktuellen Levels abgearbeitet wurden, der Stapelspeicher \lstinline{FS} die Elemente von \lstinline{NS} übernimmt und \lstinline{NS} geleert wird. \lstinline{FS} hat also alle Knoten nun gespeichert, die zuvor in Zeile 14-16 neu besucht wurden. Danach wird der Wert von \lstinline{level}, der den neu besuchten Knoten durch \lstinline{v.d = level} zugewiesen wird, um eins erhöht und die nächste Iteration mit den neu besuchten Knoten startet.\\
-Die Laufzeit von Algorithmus~\ref{stacks} ist genauso wie bei Algorithmus~\ref{fifo} \($O$(n + m)\), wobei die Anzahl der Iterationen von der \lstinline{$\textbf{while}$} Schleife von Zeile 10-19 gebunden ist an die Länge des längsten Pfades vom Startknoten \(v_{0}\) zu einem erreichbaren Knoten im Graphen \(G\), was dem Durchmesser \(D\) des Subgraphen \(G_{\pi}\) entspricht.
+Die Laufzeit von Algorithmus~\ref{stacks} ist genauso wie bei Algorithmus~\ref{fifo} \($O$(n + m)\), wobei die Anzahl der Iterationen von der \lstinline{$\textbf{while}$} Schleife von Zeile 10-19 gebunden ist an die Länge des längsten Pfades vom Startknoten \(v_{0}\) zu einem erreichbaren Knoten im Graphen \(G\), was dem Durchmesser (\textit{diameter}) \(D\) des Subgraphen \(G_{\pi}\) entspricht.\\
+Anhand dieser Überlegungen gibt es nun unterschiedliche Wege die Breitensuche zu parallelisieren. Wie schon durch Buluc und Madduri~\cite{buluc} spezifiert, gibt es zwei grundlegende Varianten, wie man dieses Problem parallelisiert, nämlich durch Zerlegung beziehungsweise Aufteilung des Graphen auf die zur Verfügung stehenden Prozessoren. Natürlich hängt diese Zerlegung auch von der Repräsentation des Graphen in der Implementierung ab, womit wir uns aber erst in Kapitel~\ref{sec:details} genauer beschäftigen werden. Vorerst ist nur die Idee der Zerlegung wichtig. Wir gehen davon aus, dass die Knoten des Graphen durchgehend nummeriert sind und dass wir mit jeder Knotennummer direkt auf die Kanten dieses Knoten zugreifen können.\\
+\textbf{Eindimensionale} Zerlegung des Graphen bedeutet nun, dass man die Knoten des Graphen \(V(G)\) auf die Prozessoren so aufteilt, dass wenn \(n = |V(G)|\) jeder Prozessor in Besitz von \(n / p\) Knoten ist, wobei \(p\) die Anzahl der verfügbaren Prozessoren darstellt. Zusätzlich besitzt jeder Prozessor lokal die Kanten, die mit den einem auf dem Prozessor gespeicherten Knoten verbunden sind, also jede Kante \(e = \{v_{1},v_{2}\}, e \in E(G)\), wo entweder \(v_{1}\) oder \(v_{2}\) ein lokaler Knoten des Prozessors ist. Bei der \textbf{zweidimensionalen} Zerlegung werden nicht nur die Knoten unter den Prozessoren aufgeteilt, sondern es werden auch die zu den Knoten zugehörigen Kanten unter mehreren Prozessoren aufgeteilt. Das heißt es kann sein, dass mehrere Prozessoren die gleiche Knotenmenge besitzen, jedoch unterschiedliche Kanten zu diesen Knoten. Diese Zerlegungen lassen sich sehr gut mit einer Adjazenzmatrix darstellen, es ist jedoch nicht notwendig auch eine Matrix als Graphrepräsentation in der Implementierung zu verwenden, diese Repräsentation soll nur zum Verständnis beitragen.
+\begin{figure}[h]
+    \centering
+    \begin{subfigure}[b]{0.3\textwidth}
+        \includegraphics[width=0.9\textwidth]{eindim}
+        \caption{eindimensional}
+        \label{fig:eindim}
+    \end{subfigure}
+   \qquad
+    \begin{subfigure}[b]{0.3\textwidth}
+        \includegraphics[width=0.9\textwidth]{zweidim}
+        \caption{zweidimensional}
+        \label{fig:zweidim}
+    \end{subfigure}
+    \caption{Es ist möglich, den Graphen ein- oder zweidimensional zu zerlegen. Diese abstrakte Darstellung einer Adjazenzmatrix in Abbildung~\ref{fig:eindim} zeigt, dass im eindimensionalen Fall die Zerlegung nur auf einer Achse erfolgt, im zweidimensionalen Fall in Abbildung~\ref{fig:zweidim} auf zwei Achsen.}
+\label{fig:zerlegung}
+\end{figure}
+Abbildung~\ref{fig:zerlegung} zeigt die Zerlegung des Graphen im ein- und zweidimensionalen Fall. Repräsentiert wird der Graph durch eine Adjazenzmatrix. Das heißt, dass auf beiden Achsen die Knoten eingetragen sind und jeder Eintrag in der Matrix die Information speichert, ob eine Kante zwischen diesen Knoten existiert oder nicht.  Im eindimensionalen Fall heißt das, dass die Knoten, die auf der horizontalen Achse eingetragen sind, und alle zugehörigen Kanten, dargestellt durch die Spalten in der Matrix, unter den Prozessoren aufgeteilt werden. Ein Rahmen (\textit{frame}) spiegelt also wider, was in einem Prozessor abgespeichert wird. Im Gegensatz dazu wird bei der zweidimensionalen Zerlegung auch die vertikale Achse auf mehrere Prozessoren aufgeteilt, wodurch es, wie schon weiter oben erwähnt, der Fall ist, dass sich mehrere Prozessoren die gleiche Knotenmenge teilen, aber unterschiedliche Kanten zu diesen Knoten abspeichern beziehungsweise behandeln.
+\section{Implementierungsdetails}
+\label{sec:details}
+\section{Analyse der Algorithmen und Versuchsergebnisse}
+\label{sec:analyse}
+
 \clearpage
 
 \bibliographystyle{abbrv}
