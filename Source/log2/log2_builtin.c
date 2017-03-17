@@ -26,18 +26,24 @@ const int tab64[64] = {
 int log2_64(uint64_t value);
 
 int main(){
-    srand(time(NULL));
+    FILE *fp;
+    fp = fopen("numbers","r");
     int i;
-    uint32_t x;
-    unsigned int result;
+    uint64_t x;
+    uint64_t position;
+    uint64_t counter = 0;
     double time = mytime();
-    for (i = 0; i < pow(2,30); i++){
-        x = rand();
-        //result = log2_64(x);
-        result = LOG2(x);
+    for (i = 0; i < pow(2,22); i++){
+        fscanf(fp, "%llu\n", (unsigned long long *) (&x));
+        while (x){
+            position = LOG2(x);
+            x = x & ~((unsigned long long) pow(2,position));
+            counter++;
+        }
     }
     time = mytime() -time;
-    printf("Time for log2: %f\n", time/1000000);
+    printf("Time for log2: %f counter: %llu\n", time/1000000, (unsigned long long) counter);
+    fclose(fp);
     return 0;
 }
 
