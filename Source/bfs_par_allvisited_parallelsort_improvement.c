@@ -164,7 +164,8 @@ uint64_t kernel_2(uint64_t *buffer, uint64_t *index_of_node, int my_rank, int pr
         level = (uint64_t *) calloc(nodes / BITS, sizeof(uint64_t));
         parent_array = (uint64_t *) calloc(pow(2,scale), sizeof(uint64_t));
         if (my_rank == 0){          
-            root = roots[j];
+            root = j;            
+            //root = roots[j];
             level[(root/BITS)] = level[(root/BITS)] | (uint64_t) pow(2,(root % BITS));
         }
         MPI_Bcast((void *)level, nodes / BITS, MPI_UINT64_T, 0, MPI_COMM_WORLD);

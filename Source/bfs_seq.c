@@ -19,6 +19,7 @@ int main(int argc, char *argv[]){
     uint64_t *roots;
     double timer;
     struct result1 result;
+    srand(time(NULL));
     if (my_rank == 0){
         startVertex = (uint64_t *) calloc(edges, I64_BYTES);
         endVertex = (uint64_t *) calloc(edges, I64_BYTES);
@@ -91,7 +92,8 @@ uint64_t kernel_2(uint64_t *buffer, uint64_t *index_of_node, int my_rank, int pr
     uint64_t j;
     for (j = 0; j < 64; j++){
         parent_array = (uint64_t *) calloc(pow(2,scale), sizeof(uint64_t));
-        root = roots[j];
+        root = j;        
+        //root = roots[j];
         bfs_seq(root, buffer, index_of_node[nodes], index_of_node, scale, parent_array);
         parent_array[root] = root + 1;
         uint64_t i;
