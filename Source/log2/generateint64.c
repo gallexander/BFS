@@ -10,7 +10,7 @@ int main(){
     fp = fopen("numbers","w");
     uint64_t i;
     uint64_t r;
-    for (i = 0; i < pow(2,22); i++){
+    for (i = 0; i < pow(2,23); i++){
         r = rand();
         r <<= 32;
         r = r | rand();

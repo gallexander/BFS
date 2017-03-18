@@ -6,7 +6,8 @@
 #include <string.h>
 #include <sys/time.h>
 
-#define SCALE 24    // 2^30 MALLOC MAX = SCALE 26 + EDGEFACTOR 16
+#define LOG2(X) ((unsigned) (8*sizeof (unsigned long long) - __builtin_clzll((X)) - 1))
+#define SCALE 20    // 2^30 MALLOC MAX = SCALE 26 + EDGEFACTOR 16
 #define EDGEFACTOR 32
 
 #define I64_BYTES 8
@@ -40,6 +41,7 @@ uint64_t kernel_2(uint64_t *buffer, uint64_t *index_of_node, int my_rank, int pr
 //BFS
 //void bfs(unsigned long *level, uint64_t *buffer, uint64_t buffer_size, uint64_t *index_of_node, uint64_t nodes_owned, int procs);
 void bfs(uint64_t *level, uint64_t *buffer, uint64_t buffer_size, uint64_t *index_of_node, int my_rank, int procs, int scale, uint64_t *parent_array);
+void bfs_seq(uint64_t root, uint64_t *buffer, uint64_t buffer_size, uint64_t *index_of_node, int scale, uint64_t *parent_array);
 
 //GENERATING
 void generate_graph(int scale, int edgefactor, float *initiator, uint64_t *startVertex, uint64_t *endVertex, int procs, int my_rank, uint64_t *index_buffer);

@@ -36,10 +36,10 @@ int main(int argc, char *argv[]){
         write_graph(SCALE, EDGEFACTOR, startVertex, endVertex);
         time = mytime() - time;
         printf("Time for generating and writing the graph to a file: %f\n", time/1000000);
-        time = mytime();
+        /*time = mytime();
         read_graph(SCALE, EDGEFACTOR, startVertex, endVertex);
-        time = mytime() - time();
-        printf("Time for reading graph: %f\n", time/1000000);
+        time = mytime() - time;
+        printf("Time for reading graph: %f\n", time/1000000);*/
     }else{
         MPI_Gather((void *) startVertex, (edges / procs), MPI_UINT64_T, NULL, (edges / procs), MPI_UINT64_T, 0, MPI_COMM_WORLD);
         MPI_Gather((void *) endVertex, (edges / procs), MPI_UINT64_T, NULL, (edges / procs), MPI_UINT64_T, 0, MPI_COMM_WORLD);

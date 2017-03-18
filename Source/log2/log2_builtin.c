@@ -32,8 +32,9 @@ int main(){
     uint64_t x;
     uint64_t position;
     uint64_t counter = 0;
+    uint64_t null = 0;
     double time = mytime();
-    for (i = 0; i < pow(2,22); i++){
+    for (i = 0; i < pow(2,23); i++){
         fscanf(fp, "%llu\n", (unsigned long long *) (&x));
         while (x){
             position = LOG2(x);
@@ -43,6 +44,7 @@ int main(){
     }
     time = mytime() -time;
     printf("Time for log2: %f counter: %llu\n", time/1000000, (unsigned long long) counter);
+    printf("log of 2^64-1: %u\n", LOG2(~null));
     fclose(fp);
     return 0;
 }

@@ -163,9 +163,8 @@ uint64_t kernel_2(uint64_t *buffer, uint64_t *index_of_node, int my_rank, int pr
     for (j = 0; j < 64; j++){
         level = (uint64_t *) calloc(nodes / BITS, sizeof(uint64_t));
         parent_array = (uint64_t *) calloc(pow(2,scale), sizeof(uint64_t));
-        if (my_rank == 0){
-            root = j;            
-            //root = roots[j];
+        if (my_rank == 0){          
+            root = roots[j];
             level[(root/BITS)] = level[(root/BITS)] | (uint64_t) pow(2,(root % BITS));
         }
         MPI_Bcast((void *)level, nodes / BITS, MPI_UINT64_T, 0, MPI_COMM_WORLD);
@@ -193,31 +192,33 @@ void bfs(uint64_t *level, uint64_t *buffer, uint64_t buffer_size, uint64_t *inde
     char oneChildisVisited = 1;
     int level_count = 0;
     uint64_t i;
-    uint64_t position;
+    uint64_t position_actual, position_neigh;
+    uint64_t not_visited;
     while (oneChildisVisited){
         oneChildisVisited = 0;
-        for (i = 0; i < nodes_owned; i++){
-            position = (uint64_t) pow(2,(i % BITS));
-            //checks if the current node in the iteration is in the current level and not visited
-            if (position & level[((nodes_owned*my_rank+i) / BITS)] & ~visited[(i / BITS)]){
-                visited[(i / BITS)] = visited[(i / BITS)] | position;
-                uint64_t j = index_of_node[i];
+        for (i = 0; i < (nodes_owned / BITS); i++){
+            not_visited = ~visited[i] & level[(nodes_owned/BITS)*my_rank+i];
+            visited[i] = visited[i] | not_visited;
+            while (not_visited){
+                position_actual = LOG2(not_visited);
+                not_visited = not_visited & ~((unsigned long long) pow(2,position_actual));
+                uint64_t j = index_of_node[i*BITS+position_actual];
                 //differentiate between the last node of the owned nodes and one node in the middle
-                if (i == nodes_owned -1){
+                if ((i*BITS+position_actual) == nodes_owned -1){
                     for (; j < buffer_size; j++){
-                        position = (uint64_t) pow(2, (buffer[j] % BITS));
-                        if (position & ~level[(buffer[j]/BITS)]){
-                            parent_array[buffer[j]] = (uint64_t) nodes_owned*my_rank+i+1;
-                            level[(buffer[j]/BITS)] = level[(buffer[j]/BITS)] | position;
+                        position_neigh = (uint64_t) pow(2, (buffer[j] % BITS));
+                        if (position_neigh & ~level[(buffer[j]/BITS)]){
+                            parent_array[buffer[j]] = (uint64_t) nodes_owned*my_rank+(i*BITS+position_actual)+1;
+                            level[(buffer[j]/BITS)] = level[(buffer[j]/BITS)] | position_neigh;
                             oneChildisVisited = 1;
                         }
                     }
                 }else{
-                    for (; j < buffer_size && j < index_of_node[i+1]; j++){
-                        position = (uint64_t) pow(2, (buffer[j] % BITS));
-                        if (position & ~level[(buffer[j]/BITS)]){
-                            parent_array[buffer[j]] = (uint64_t) nodes_owned*my_rank+i+1;
-                            level[(buffer[j]/BITS)] = level[(buffer[j]/BITS)] | position;
+                    for (; j < buffer_size && j < index_of_node[i*BITS+position_actual+1]; j++){
+                        position_neigh = (uint64_t) pow(2, (buffer[j] % BITS));
+                        if (position_neigh & ~level[(buffer[j]/BITS)]){
+                            parent_array[buffer[j]] = (uint64_t) nodes_owned*my_rank+(i*BITS+position_actual)+1;
+                            level[(buffer[j]/BITS)] = level[(buffer[j]/BITS)] | position_neigh;
                             oneChildisVisited = 1;
                         }
                     }

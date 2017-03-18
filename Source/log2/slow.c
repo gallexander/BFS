@@ -19,7 +19,7 @@ int main(){
     uint64_t position;
     uint64_t counter = 0;
     double time = mytime();
-    for (i = 0; i < pow(2,22); i++){
+    for (i = 0; i < pow(2,23); i++){
         fscanf(fp, "%llu\n", (unsigned long long *) (&x));
         int j;
         for (j = 0; j < 64; j++){
@@ -30,7 +30,7 @@ int main(){
         }
     }
     time = mytime() -time;
-    printf("Time for log2: %f counter: %llu", time/1000000, (unsigned long long) counter);
+    printf("Time for log2: %f counter: %llu\n", time/1000000, (unsigned long long) counter);
     fclose(fp);
     return 0;
 }
