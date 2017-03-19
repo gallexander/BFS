@@ -1,0 +1,31 @@
+gallex@gallex-PC:~/Study/Bachelor/BFS/Source$ mpirun -np 4 bfs_seq
+Time for reading the graph: 68.456648
+Time for generating edge buffer, sorting and scattering: 17.965642
+Time for bfs searching: 55.892867
+Traversed edges: 0
+GTEPS: 0.000000
+gallex@gallex-PC:~/Study/Bachelor/BFS/Source$ mpirun -np 2 par_normal
+Time for reading the graph: 65.872701
+Time for generating edge buffer, sorting and scattering: 24.254082
+Time for bfs searching: 205.770489
+Traversed edges: 0
+GTEPS: 0.000000
+gallex@gallex-PC:~/Study/Bachelor/BFS/Source$ mpirun -np 4 par_normal
+Time for reading the graph: 67.206601
+Time for generating edge buffer, sorting and scattering: 17.190085
+Time for bfs searching: 112.770292
+Traversed edges: 0
+GTEPS: 0.000000
+gallex@gallex-PC:~/Study/Bachelor/BFS/Source$ mpirun -np 2 par_improv
+Time for reading the graph: 68.529940
+Time for generating edge buffer, sorting and scattering: 24.275233
+Time for bfs searching: 188.092276
+Traversed edges: 0
+GTEPS: 0.000000
+gallex@gallex-PC:~/Study/Bachelor/BFS/Source$ mpirun -np 4 par_improv
+Time for reading the graph: 68.481770
+Time for generating edge buffer, sorting and scattering: 17.158892
+Time for bfs searching: 101.503063
+Traversed edges: 0
+GTEPS: 0.000000
+

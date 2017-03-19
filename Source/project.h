@@ -7,7 +7,7 @@
 #include <sys/time.h>
 
 #define LOG2(X) ((unsigned) (8*sizeof (unsigned long long) - __builtin_clzll((X)) - 1))
-#define SCALE 20    // 2^30 MALLOC MAX = SCALE 26 + EDGEFACTOR 16
+#define SCALE 22    // 2^30 MALLOC MAX = SCALE 26 + EDGEFACTOR 16
 #define EDGEFACTOR 32
 
 #define I64_BYTES 8
@@ -16,6 +16,16 @@
 #define GRAPHFILE "graph"
 
 #define ROOT 0
+
+const int tab64[64] = {
+    63,  0, 58,  1, 59, 47, 53,  2,
+    60, 39, 48, 27, 54, 33, 42,  3,
+    61, 51, 37, 40, 49, 18, 28, 20,
+    55, 30, 34, 11, 43, 14, 22,  4,
+    62, 57, 46, 52, 38, 26, 32, 41,
+    50, 36, 17, 19, 29, 10, 13, 21,
+    56, 45, 25, 31, 35, 16,  9, 12,
+    44, 24, 15,  8, 23,  7,  6,  5};
 
 struct edge {
     uint64_t end;
@@ -33,6 +43,8 @@ double mytime(void){
     gettimeofday(&now,NULL);
     return (double) ((long long)now.tv_usec+(long long)now.tv_sec*1000000);
 }
+
+int log2_64(uint64_t);
 
 //KERNELS
 void kernel_1(uint64_t *startVertex, uint64_t *endVertex, uint64_t edges, int procs, int my_rank, struct result1 *result);

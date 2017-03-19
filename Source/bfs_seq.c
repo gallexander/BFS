@@ -90,18 +90,18 @@ uint64_t kernel_2(uint64_t *buffer, uint64_t *index_of_node, int my_rank, int pr
     uint64_t *parent_array;
     uint64_t count = 0;
     uint64_t j;
-    for (j = 0; j < 64; j++){
+    for (j = 0; j < 32; j++){
         parent_array = (uint64_t *) calloc(pow(2,scale), sizeof(uint64_t));
         root = j;        
         //root = roots[j];
         bfs_seq(root, buffer, index_of_node[nodes], index_of_node, scale, parent_array);
         parent_array[root] = root + 1;
-        uint64_t i;
+        /*uint64_t i;
         for (i = 0; i < pow(2,scale)*EDGEFACTOR; i++){
             if (parent_array[startVertex[i]] != 0){
                 count++;
             }
-        }
+        }*/
         free(parent_array);
     }
     free(buffer);
