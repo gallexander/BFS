@@ -75,7 +75,7 @@ Es ist auch möglich andere Informationen als die Distanz in Bezug auf einen Kno
 Nachdem die grundlegenden Bestandteile und Eigenschaften eines Graphen geklärt sind, widmen wir uns weiters dem eigentlichen Thema dieser Arbeit, nämlich der Breitensuche. Auch wenn das Grundkonzept der Breitensuche schon erklärt wurde, zeigt Algorithmus~\ref{fifo} eine klassische sequentielle Variante von Cormen, Leiserson, Rivest und Stein \cite{cormen_introduction_2009}, welche eine Warteschlange (\textit{queue}) verwendet, die im FIFO (\textit{first in first out}) Prinzip arbeitet. Diese Variante der Implementierung gehört zu einer der einfachsten der Breitensuche.
 \begin{lstlisting}[caption={Klassische Variante der Breitensuche unter Verwendung einer FIFO Warteschlange als Datenstruktur. Wird auf einem Graph \(G\) mit Startknoten \(v_{0} \in V(G)\) angewandt. Der Algorithmus bestimmt die Distanz und den Vaterknoten von denjenigen Knoten, die ausgehend vom Startknoten erreichbar sind.},label=fifo]
 $\textbf{SERIAL-BFS-QUEUE}$(G,$v_{0}$)
-	$\textbf{for}$ each vertex $\in$ V(G) - {$v_{0}$}
+	$\textbf{for}$ each vertex u $\in$ V(G) - {$v_{0}$}
 		u.d = $\infty$
 		u.$\pi$ = NIL
 	$v_{0}$.d = 0
@@ -120,7 +120,7 @@ Nachdem beschrieben wurde, wie ein paralleles Programm in unserer Arbeit bewerte
 Aus diesem Grund geben wir noch einen weiteren sequentiellen Algorithmus durch Algorithmus~\ref{stacks} an, der anstatt der FIFO Warteschlange zwei Stapelspeicher (\textit{stacks}) verwendet, wodurch ein level-basiertes Durchsuchen des Graphen, wie in Abbildung~\ref{fig:graph_level}, ersichtlicher wird. Mit Hilfe von Algorithmus~\ref{stacks} ist es einfacher, einen parallelen Algorithmus abzuleiten. Dieser Algorithmus wird auch von Buluc und Madduri~\cite{buluc} als Basis für deren Arbeit zur parallelen Breitensuche verwendet und ist auch in deren Arbeit abgebildet.
 \begin{lstlisting}[caption={Eine weitere sequentielle Variante der Breitensuche unter Verwendung von zwei Stacks \lstinline{FS} und \lstinline{NS} als Datenstrukturen. Dieser Algorithmus liefert das gleiche Ergebnis wie Algorithmus~\ref{fifo} und hat auch die gleiche Laufzeit wie dieser, ermöglicht jedoch eine bessere Sicht auf das level-basierte Durchsuchen des Graphen, was das Ableiten eines parallelen Algorithmus einfacher macht.},label=stacks]
 $\textbf{SERIAL-BFS-STACKS}$(G,$v_{0}$)
-	$\textbf{for}$ each vertex $\in$ V(G) - {$v_{0}$}
+	$\textbf{for}$ each vertex u $\in$ V(G) - {$v_{0}$}
 		u.d = $\infty$
 		u.$\pi$ = NIL
 	$v_{0}$.d = 0
@@ -166,10 +166,33 @@ Diese Zerlegungen lassen sich sehr gut mit einer Adjazenzmatrix darstellen, es i
 \end{figure}
 Abbildung~\ref{fig:zerlegung} zeigt die Zerlegung des Graphen im ein- und zweidimensionalen Fall. Repräsentiert wird der Graph durch eine Adjazenzmatrix. Das heißt, dass auf beiden Achsen die Knoten eingetragen sind und jeder Eintrag in der Matrix die Information speichert, ob eine Kante zwischen diesen Knoten existiert oder nicht.  Im eindimensionalen Fall heißt das, dass die Knoten, die auf der horizontalen Achse eingetragen sind, und alle zugehörigen Kanten, dargestellt durch die Spalten in der Matrix, unter den Prozessoren aufgeteilt werden. Ein Rahmen (\textit{frame}) spiegelt also wider, was in einem Prozessor abgespeichert wird. Im Gegensatz dazu wird bei der zweidimensionalen Zerlegung auch die vertikale Achse auf mehrere Prozessoren aufgeteilt, wodurch es, wie schon weiter oben erwähnt, der Fall ist, dass sich mehrere Prozessoren die gleiche Knotenmenge teilen, aber unterschiedliche Kanten zu diesen Knoten abspeichern beziehungsweise behandeln.\\
 Ausgehend von der level-basierten sequentiellen Breitensuche, dargestellt durch Algorithmus~\ref{stacks}, und der eindimensionalen Zerlegung des Graphen, werden wir zwei Algorithmen zur parallelen Breitensuche abstrakt veranschaulichen. Grundlegender Unterschied dieser zwei Algorithmen ist die Synchronisation zwischen den Prozessoren, also welche Daten werden wie synchronisiert. Außerdem liegen Unterschiede darin, wieviel die Prozessoren über den Gesamtzustand des Systems wissen, also zum Beispiel ob Knoten, die anderen Prozessoren zugeordnet sind, bereits besucht wurden und deshalb im nächsten Level nicht mehr berücksichtigt werden müssen. Wichtig ist jedoch, dass beide Algorithmen mit einer 1D Zerlegung des Graphen arbeiten. Details über die Implementierung und welche Auswirkungen diese Unterschiede auf die Laufzeit des Algorithmus haben, sind in Kapitel~\ref{sec:details} beziehungsweise Kapitel~\ref{sec:analyse} zu finden.
-\subsection{BFS mit Allreduce Kommunikation}
+\subsection{Paralleler BFS mit Allreduce Kommunikation}
 \label{sec:bfs_alltoall}
 Die Idee hinter diesem Algorithmus war neben der eindimensionalen Zerlegung des Graphen und damit parallelen Abarbeitung der Levels, dass die Prozessoren mehr Informationen über die anderen Prozessoren haben und deren Knoten. Bei vielen parallelen Algorithmen der Breitensuche, wie auch beim Algorithmus in Kapitel~\ref{sec:bfs_alltoall} ist es so, dass die Prozessoren nur Informationen über die lokal gespeicherten Knoten besitzen und anhand dieser Informationen Entscheidungen treffen müssen, wodurch es zu einen erhöhten Kommunikationsaufwand zwischen den Prozessoren kommen kann. Zum Beispiel ist es einem Prozessor, der die Nachbarn eines neu besuchten Knoten durchläuft, bei diesen Algorithmen nicht bekannt, ob ein Knoten, der nicht zu den lokalen gehört, bereits besucht wurde, da dies nur der Prozessor weiß, dem der Knoten zugeteilt ist. Deshalb muss jedes Mal bei einem fremden Knoten beziehungsweise Nachbarn, zwischen den Prozessoren kommuniziert werden, ob dieser Knoten bereits in einem vorherigen Level besucht wurde.\\
-Aufgrund dieser Tatsache wird bei unserem ersten Algorithmus eine Datenstruktur zwischen den Prozessoren synchron gehalten, die alle bisherig besuchten Knoten enthält. Falls wir uns also gerade im Level \(d\) befinden, weiß jeder Prozessor welche Knoten im Graphen bis einschließlich zum Level \(d-1\) besucht wurden.
+Aufgrund dieser Tatsache wird bei unserem ersten Algorithmus eine Datenstruktur zwischen den Prozessoren synchron gehalten, die alle bisherig besuchten Knoten enthält. Falls wir uns also gerade im Level \(d\) befinden, weiß jeder Prozessor welche Knoten im Graphen bis einschließlich zum Level \(d-1\) besucht wurden. Dazu verwenden wir als Datenstruktur ein Array, also eine Datenstruktur wo der Zugriff auf die einzelnen Elemente über einen Index erfolgt.
+alle Algorithmen auf Startknoten s ändern und arrays statt attribute (.d .pi etc.) verwenden (bei allen!!!)
+\begin{lstlisting}[caption={blablabla.},label=par_allvisited]
+$\textbf{PARALLEL-BFS-ALLREDUCE}$($G_{p}$,$v_{0}$)
+	$\textbf{for}$ 0 $\leq$ i $<$ n $\textbf{do}$
+		a[i] = 0
+		p[i] = NIL
+	a[s] = \textbf{true}
+	
+	$v_{0}$.d = 0
+	$v_{0}$.$\pi$ = NIL
+	FS = {$v_{0}$}
+	NS = $\emptyset$
+	$\textbf{while}$ FS $\neq$ 0
+		$\textbf{for}$ each u $\in$ FS
+			$\textbf{for}$ each v $\in$ G.Adj[u]
+				$\textbf{if}$ v.d == $\infty$
+					v.d = level
+					v.$\pi$ = u
+					NS = NS $\cup$ {v}
+		FS = NS
+		NS = $\emptyset$
+		level = level + 1
+\end{lstlisting}
 \subsection{BFS mit All-to-all Kommunikation}
 \label{sec:bfs_alltoall}
 \section{Implementierungsdetails}
