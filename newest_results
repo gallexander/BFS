@@ -29,3 +29,131 @@ Time for bfs searching: 101.503063
 Traversed edges: 0
 GTEPS: 0.000000
 
+
+
+
+[e1026090@jupiter ~]$ srun -p q_student -N 4 --ntasks-per-node=4 ./bfs_seq
+Time for reading the graph: 71.144574
+Time for generating edge buffer, sorting and scattering: 22.722384
+Time for bfs searching: 122.470012
+Traversed edges: 0
+GTEPS: 0.000000
+[e1026090@jupiter ~]$ mpicc -Wall -o par_normal bfs_par_allvisited_parallelsort.c -lm
+[e1026090@jupiter ~]$ srun -p q_student -N 4 --ntasks-per-node=1 ./par_normal
+Time for reading the graph: 69.553600
+Time for generating edge buffer, sorting and scattering: 28.735290
+Time for bfs searching: 194.296771
+Traversed edges: 0
+GTEPS: 0.000000
+[e1026090@jupiter ~]$ srun -p q_student -N 8 --ntasks-per-node=1 ./par_normal
+Time for reading the graph: 70.191330
+Time for generating edge buffer, sorting and scattering: 21.811938
+Time for bfs searching: 103.267651
+Traversed edges: 0
+GTEPS: 0.000000
+[e1026090@jupiter ~]$ srun -p q_student -N 16 --ntasks-per-node=1 ./par_normal
+Time for reading the graph: 69.858624
+Time for generating edge buffer, sorting and scattering: 18.825726
+Time for bfs searching: 57.982479
+Traversed edges: 0
+GTEPS: 0.000000
+[e1026090@jupiter ~]$ srun -p q_student -N 32 --ntasks-per-node=1 ./par_normal
+Time for reading the graph: 69.838430
+Time for generating edge buffer, sorting and scattering: 17.769892
+Time for bfs searching: 41.398387
+Traversed edges: 0
+GTEPS: 0.000000
+[e1026090@jupiter ~]$ exit
+Abgemeldet
+Connection to jupiter.par.tuwien.ac.at closed.
+Alexanders-MacBook-Air:~ gallex$ ssh jupiter
+Last login: Sun Mar 19 11:14:14 2017 from venus.par.tuwien.ac.at
+====================================================
+No jobs should be run on the head node (jupiter)!
+Run only short tests of your MPI programs!
+All longer jobs must be executed through SLURM.
+
+If this is not respected, your account will be 
+deactivated.
+In case of questions, contact admin@par.tuwien.ac.at
+====================================================
+[e1026090@jupiter ~]$ PATH=$PATH":"/opt/slurm/bin/
+[e1026090@jupiter ~]$ module load mpi/openmpiS
+[e1026090@jupiter ~]$ mpicc -Wall -o par_improv bfs_par_allvisited_parallelsort_improvement.c -lm
+[e1026090@jupiter ~]$ srun -p q_student -N 32 --ntasks-per-node=1 ./par_normal
+Time for reading the graph: 69.878574
+Time for generating edge buffer, sorting and scattering: 17.699273
+Time for bfs searching: 41.256011
+Traversed edges: 0
+GTEPS: 0.000000
+[e1026090@jupiter ~]$ srun -p q_student -N 16 --ntasks-per-node=1 ./par_normal
+Time for reading the graph: 70.248991
+Time for generating edge buffer, sorting and scattering: 18.876277
+Time for bfs searching: 58.096571
+Traversed edges: 0
+GTEPS: 0.000000
+[e1026090@jupiter ~]$ srun -p q_student -N 32 --ntasks-per-node=2 ./par_normal
+Time for reading the graph: 69.553132
+Time for generating edge buffer, sorting and scattering: 18.090061
+Time for bfs searching: 87.286506
+Traversed edges: 0
+GTEPS: 0.000000
+[e1026090@jupiter ~]$ srun -p q_student -N 8 --ntasks-per-node=1 ./par_normal
+Time for reading the graph: 70.639929
+Time for generating edge buffer, sorting and scattering: 21.739012
+Time for bfs searching: 103.144932
+Traversed edges: 0
+GTEPS: 0.000000
+[e1026090@jupiter ~]$ srun -p q_student -N 4 --ntasks-per-node=4 ./bfs_seq
+Time for reading the graph: 71.032133
+Time for generating edge buffer, sorting and scattering: 22.489736
+Time for bfs searching: 122.170298
+Traversed edges: 0
+GTEPS: 0.000000
+[e1026090@jupiter ~]$ mpicc -Wall -o par_improv bfs_par_allvisited_parallelsort_improvement.c -lm
+[e1026090@jupiter ~]$ srun -p q_student -N 1 --ntasks-per-node=1 ./par_improv
+Time for reading the graph: 70.715794
+Time for generating edge buffer, sorting and scattering: 72.189237
+Time for bfs searching: 425.565607
+Traversed edges: 0
+GTEPS: 0.000000
+[e1026090@jupiter ~]$ srun -p q_student -N 2 --ntasks-per-node=1 ./par_improv
+Time for reading the graph: 69.599074
+Time for generating edge buffer, sorting and scattering: 43.149944
+Time for bfs searching: 373.252546
+Traversed edges: 0
+GTEPS: 0.000000
+[e1026090@jupiter ~]$ srun -p q_student -N 4 --ntasks-per-node=1 ./par_improv
+Time for reading the graph: 70.655618
+Time for generating edge buffer, sorting and scattering: 28.476168
+Time for bfs searching: 180.849124
+Traversed edges: 0
+GTEPS: 0.000000
+[e1026090@jupiter ~]$ srun -p q_student -N 8 --ntasks-per-node=1 ./par_improv
+Time for reading the graph: 70.544341
+Time for generating edge buffer, sorting and scattering: 21.599715
+Time for bfs searching: 95.747226
+Traversed edges: 0
+GTEPS: 0.000000
+[e1026090@jupiter ~]$ srun -p q_student -N 16 --ntasks-per-node=1 ./par_improv
+Time for reading the graph: 69.367904
+Time for generating edge buffer, sorting and scattering: 18.734612
+Time for bfs searching: 53.318328
+Traversed edges: 0
+GTEPS: 0.000000
+[e1026090@jupiter ~]$ srun -p q_student -N 32 --ntasks-per-node=1 ./par_improv
+Time for reading the graph: 71.331089
+Time for generating edge buffer, sorting and scattering: 17.700500
+Time for bfs searching: 38.920795
+Traversed edges: 0
+GTEPS: 0.000000
+
+log2_64 method
+
+[e1026090@jupiter ~]$ srun -p q_student -N 32 --ntasks-per-node=1 ./par_improv
+Time for reading the graph: 70.880785
+Time for generating edge buffer, sorting and scattering: 17.563824
+Time for bfs searching: 38.865822
+Traversed edges: 0
+GTEPS: 0.000000
+
