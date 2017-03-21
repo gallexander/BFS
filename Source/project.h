@@ -7,8 +7,8 @@
 #include <sys/time.h>
 
 #define LOG2(X) ((unsigned) (8*sizeof (unsigned long long) - __builtin_clzll((X)) - 1))
-#define SCALE 22    // 2^30 MALLOC MAX = SCALE 26 + EDGEFACTOR 16
-#define EDGEFACTOR 32
+#define SCALE 23    // 2^30 MALLOC MAX = SCALE 26 + EDGEFACTOR 16
+#define EDGEFACTOR 64
 
 #define I64_BYTES 8
 #define BLOCKS 4

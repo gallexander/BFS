@@ -90,7 +90,7 @@ uint64_t kernel_2(uint64_t *buffer, uint64_t *index_of_node, int my_rank, int pr
     uint64_t *parent_array;
     uint64_t count = 0;
     uint64_t j;
-    for (j = 0; j < 32; j++){
+    for (j = 0; j < 16; j++){
         parent_array = (uint64_t *) calloc(pow(2,scale), sizeof(uint64_t));
         root = j;        
         //root = roots[j];
