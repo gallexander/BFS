@@ -36,7 +36,7 @@ int main(int argc, char *argv[]){
         roots = (uint64_t *) calloc(64, sizeof(uint64_t));
         int i = 0;
         uint64_t root;
-        while (i < 64){
+        while (i < SEARCHKEY_CNT){
             root = rand() % ((uint64_t)pow(2,result.scale));
             if (result.index_of_node[root] < result.index_of_node[root+1]){
                 roots[i++] = root;
@@ -90,7 +90,7 @@ uint64_t kernel_2(uint64_t *buffer, uint64_t *index_of_node, int my_rank, int pr
     uint64_t *parent_array;
     uint64_t count = 0;
     uint64_t j;
-    for (j = 0; j < 16; j++){
+    for (j = 0; j < SEARCHKEY_CNT; j++){
         parent_array = (uint64_t *) calloc(pow(2,scale), sizeof(uint64_t));
         root = j;        
         //root = roots[j];

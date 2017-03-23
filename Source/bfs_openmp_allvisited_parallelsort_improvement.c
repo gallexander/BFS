@@ -178,12 +178,12 @@ uint64_t kernel_2(uint64_t *buffer, uint64_t *index_of_node, int my_rank, int pr
         bfs(level, buffer, index_of_node[nodes/procs], index_of_node, my_rank, procs, scale, parent_array);
         if (my_rank == 0){
             parent_array[root] = root + 1;
-            uint64_t i;
+            /*uint64_t i;
             for (i = 0; i < pow(2,scale)*EDGEFACTOR; i++){
                 if (parent_array[startVertex[i]] != 0){
                     count++;
                 }
-            }
+            }*/
         }
         free(parent_array);
         free(level);
