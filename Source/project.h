@@ -5,10 +5,12 @@
 #include <time.h>
 #include <string.h>
 #include <sys/time.h>
+#include <omp.h>
 
 #define LOG2(X) ((unsigned) (8*sizeof (unsigned long long) - __builtin_clzll((X)) - 1))
-#define SCALE 23    // 2^30 MALLOC MAX = SCALE 26 + EDGEFACTOR 16
-#define EDGEFACTOR 64
+#define SCALE 20
+#define EDGEFACTOR 32
+#define SEARCHKEY_CNT 16
 
 #define I64_BYTES 8
 #define BLOCKS 4

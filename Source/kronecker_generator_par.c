@@ -3,15 +3,15 @@
 
 int main(int argc, char *argv[]){
     int my_rank, procs, tag=0;
-    float initiator[] = {0.7,0.1,0.1,0.1};
-    //float initiator[] = {0.57,0.19,0.19,0.05};
+    //float initiator[] = {0.7,0.1,0.1,0.1};
+    float initiator[] = {0.57,0.19,0.19,0.05};
     MPI_Status status;
     
     MPI_Init (&argc, &argv);
     MPI_Comm_rank (MPI_COMM_WORLD, &my_rank);
     MPI_Comm_size (MPI_COMM_WORLD, &procs);
     uint64_t nodes = pow(2,SCALE);
-    uint64_t edges = nodes*EDGEFACTOR; // *2 because of undirected edges
+    uint64_t edges = nodes*EDGEFACTOR;
     uint64_t *startVertex = NULL;
     uint64_t *endVertex = NULL;
     uint64_t *index_buffer = (uint64_t *) calloc(nodes, sizeof(uint64_t));

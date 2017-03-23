@@ -6,13 +6,19 @@
 */
 
 int main(int argc, char *argv[]){
-    int my_rank, procs;
+    int my_rank, procs, omp_rank, mpisupport;
     uint64_t nodes = pow(2,SCALE);
     uint64_t edges = nodes*EDGEFACTOR;
 
-    MPI_Init (&argc, &argv);
+    MPI_Init_thread(&argc, &argv, MPI_THREAD_FUNNELED,&mpisupport);
     MPI_Comm_rank (MPI_COMM_WORLD, &my_rank);
     MPI_Comm_size (MPI_COMM_WORLD, &procs);
+
+    #pragma omp parallel private(omp_rank)
+    {
+        omp_rank = omp_get_thread_num();
+        printf("Hello. This is process %d, thread %d\n",my_rank, omp_rank);
+    }
 
     uint64_t *startVertex = NULL;
     uint64_t *endVertex = NULL;
@@ -172,12 +178,12 @@ uint64_t kernel_2(uint64_t *buffer, uint64_t *index_of_node, int my_rank, int pr
         bfs(level, buffer, index_of_node[nodes/procs], index_of_node, my_rank, procs, scale, parent_array);
         if (my_rank == 0){
             parent_array[root] = root + 1;
-            /*uint64_t i;
+            uint64_t i;
             for (i = 0; i < pow(2,scale)*EDGEFACTOR; i++){
                 if (parent_array[startVertex[i]] != 0){
                     count++;
                 }
-            }*/
+            }
         }
         free(parent_array);
         free(level);
@@ -197,6 +203,7 @@ void bfs(uint64_t *level, uint64_t *buffer, uint64_t buffer_size, uint64_t *inde
     uint64_t not_visited;
     while (oneChildisVisited){
         oneChildisVisited = 0;
+        #pragma omp parallel for default(shared) private(not_visited,position_actual,position_neigh) schedule(static)  
         for (i = 0; i < (nodes_owned / BITS); i++){
             not_visited = ~visited[i] & level[(nodes_owned/BITS)*my_rank+i];
             visited[i] = visited[i] | not_visited;
