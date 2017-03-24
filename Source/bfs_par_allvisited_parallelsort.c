@@ -41,7 +41,7 @@ int main(int argc, char *argv[]){
     uint64_t root_local = 0;
     uint64_t answer = 0;
     srand(time(NULL));
-    while (i < 64){
+    while (i < SEARCHKEY_CNT){
         if (my_rank == 0){
             root = rand() % ((uint64_t)pow(2,result.scale));
         }
@@ -160,7 +160,7 @@ uint64_t kernel_2(uint64_t *buffer, uint64_t *index_of_node, int my_rank, int pr
     uint64_t *parent_array;
     uint64_t count = 0;
     uint64_t j;
-    for (j = 0; j < 32; j++){
+    for (j = 0; j < SEARCHKEY_CNT; j++){
         level = (uint64_t *) calloc(nodes / BITS, sizeof(uint64_t));
         parent_array = (uint64_t *) calloc(pow(2,scale), sizeof(uint64_t));
         if (my_rank == 0){ 
