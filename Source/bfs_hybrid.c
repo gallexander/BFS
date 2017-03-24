@@ -6,7 +6,7 @@
 */
 
 int main(int argc, char *argv[]){
-    int my_rank, procs, omp_rank, mpisupport;
+    int my_rank, procs, mpisupport;
     uint64_t nodes = pow(2,SCALE);
     uint64_t edges = nodes*EDGEFACTOR;
 
@@ -14,12 +14,12 @@ int main(int argc, char *argv[]){
     MPI_Comm_rank (MPI_COMM_WORLD, &my_rank);
     MPI_Comm_size (MPI_COMM_WORLD, &procs);
 
-    #pragma omp parallel private(omp_rank)
+    /*#pragma omp parallel private(omp_rank)
     {
         omp_rank = omp_get_thread_num();
 
         printf("Hello. This is process %d, thread %d\n",my_rank, omp_rank);
-    }
+    }*/
     if (my_rank == 0)
         printf("Procs Count: %d\n", procs);
     uint64_t *startVertex = NULL;
@@ -171,6 +171,7 @@ uint64_t kernel_2(uint64_t *buffer, uint64_t *index_of_node, int my_rank, int pr
 
     double time_allwork = 0;
     double time_allreduce = 0;
+    double time_parentreduce = 0;
     for (j = 0; j < SEARCHKEY_CNT; j++){
         level = (uint64_t *) calloc(nodes / BITS, sizeof(uint64_t));
         parent_array = (uint64_t *) calloc(pow(2,scale), sizeof(uint64_t));
@@ -180,7 +181,7 @@ uint64_t kernel_2(uint64_t *buffer, uint64_t *index_of_node, int my_rank, int pr
             level[(root/BITS)] = level[(root/BITS)] | (uint64_t) pow(2,(root % BITS));
         }
         MPI_Bcast((void *)level, nodes / BITS, MPI_UINT64_T, 0, MPI_COMM_WORLD);
-        bfs(level, buffer, index_of_node[nodes/procs], index_of_node, my_rank, procs, scale, parent_array, &time_allwork, &time_allreduce);
+        bfs(level, buffer, index_of_node[nodes/procs], index_of_node, my_rank, procs, scale, parent_array, &time_allwork, &time_allreduce, &time_parentreduce);
         if (my_rank == 0){
             parent_array[root] = root + 1;
             /*uint64_t i;
@@ -194,13 +195,13 @@ uint64_t kernel_2(uint64_t *buffer, uint64_t *index_of_node, int my_rank, int pr
         free(level);
     }
     if (my_rank == 0)
-        printf("Time for all reducing: %f\nTime for work without reducing: %f\n", time_allreduce/1000000, (time_allwork-time_allreduce)/1000000);
+        printf("Time for all reducing: %f\nTime for work without reducing: %f\nTime for reducing parent array: %f\n", time_allreduce/1000000, (time_allwork-time_allreduce)/1000000, time_parentreduce/1000000);
     free(buffer);
     free(index_of_node);
     return count;
 }
 
-void bfs(uint64_t *level, uint64_t *buffer, uint64_t buffer_size, uint64_t *index_of_node, int my_rank, int procs, int scale, uint64_t *parent_array, double *time_allwork, double *time_allreduce){
+void bfs(uint64_t *level, uint64_t *buffer, uint64_t buffer_size, uint64_t *index_of_node, int my_rank, int procs, int scale, uint64_t *parent_array, double *time_allwork, double *time_allreduce, double *time_parentreduce){
     uint64_t nodes_owned = pow(2,scale) / procs;
     uint64_t *visited = (uint64_t *) calloc(nodes_owned / BITS, sizeof(uint64_t));
     char oneChildisVisited = 1;
@@ -211,6 +212,7 @@ void bfs(uint64_t *level, uint64_t *buffer, uint64_t buffer_size, uint64_t *inde
 
     double time_reduce = 0;
     double time_work = 0;
+    double time_parent = 0;
     if (my_rank == 0){
         time_work = mytime();
     }
@@ -269,8 +271,12 @@ void bfs(uint64_t *level, uint64_t *buffer, uint64_t buffer_size, uint64_t *inde
     if (my_rank != 0){
         MPI_Reduce((void *) parent_array, NULL, pow(2, scale), MPI_UINT64_T, MPI_MAX, 0, MPI_COMM_WORLD);
     }else{
+        time_parent = mytime();
         MPI_Reduce(MPI_IN_PLACE, (void *) parent_array, pow(2, scale), MPI_UINT64_T, MPI_MAX, 0, MPI_COMM_WORLD);
-        //printf("rounds: %i\n", level_count);
+    }
+    if (my_rank == 0){
+        time_parent = mytime() - time_parent;
+        *time_parentreduce += time_parent;
     }
     
     free(visited);
