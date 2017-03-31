@@ -3163,5 +3163,175 @@ Traversed edges: 0
 GTEPS: 0.000000
 [e1026090@jupiter ~]$ srun -p q_student -n 2 -c 4 ./bfs_hybrid
 
+SCALE 23
+EDGEFACTOR 32
+SEARCHKEYS 16
+
+[e1026090@jupiter ~]$ srun -p q_student -N 8 --ntasks-per-node=8 ./bfs_seq
+Time for reading the graph: 140.212276
+Time for generating edge buffer, sorting and scattering: 42.446817
+Time for bfs searching: 74.246777
+Traversed edges: 0
+GTEPS: 0.000000
+[e1026090@jupiter ~]$ vim kronecker_generator_par.c 
+[e1026090@jupiter ~]$ mpicc -Wall bfs_par_allvisited_parallelsort_improvement.c -o bfs_par_normal -lm
+[e1026090@jupiter ~]$ srun -p q_student -N 1 --ntasks-per-node=1 ./bfs_par_normal
+Time for reading the graph: 138.862881
+Time for generating edge buffer, sorting and scattering: 151.739424
+Time for all reducing: 0.000052
+Time for work without reducing: 237.317272
+Time for reducing parent array: 0.000036
+Time for bfs searching: 238.181779
+Traversed edges: 0
+GTEPS: 0.000000
+[e1026090@jupiter ~]$ srun -p q_student -N 2 --ntasks-per-node=1 ./bfs_par_normal
+Time for reading the graph: 138.710613
+Time for generating edge buffer, sorting and scattering: 89.427525
+Time for all reducing: 65.313149
+Time for work without reducing: 119.444882
+Time for reducing parent array: 2.020424
+Time for bfs searching: 188.942170
+Traversed edges: 0
+GTEPS: 0.000000
+[e1026090@jupiter ~]$ srun -p q_student -N 4 --ntasks-per-node=1 ./bfs_par_normal
+Time for reading the graph: 138.460927
+Time for generating edge buffer, sorting and scattering: 58.828001
+Time for all reducing: 27.271439
+Time for work without reducing: 60.251796
+Time for reducing parent array: 5.090327
+Time for bfs searching: 94.750577
+Traversed edges: 0
+GTEPS: 0.000000
+[e1026090@jupiter ~]$ srun -p q_student -N 8 --ntasks-per-node=1 ./bfs_par_normal
+Time for reading the graph: 138.459654
+Time for generating edge buffer, sorting and scattering: 44.822797
+Time for all reducing: 15.638090
+Time for work without reducing: 30.411835
+Time for reducing parent array: 5.613996
+Time for bfs searching: 53.902215
+Traversed edges: 0
+GTEPS: 0.000000
+[e1026090@jupiter ~]$ srun -p q_student -N 16 --ntasks-per-node=1 ./bfs_par_normal
+Time for reading the graph: 149.810205
+Time for generating edge buffer, sorting and scattering: 37.313026
+Time for all reducing: 9.406945
+Time for work without reducing: 15.383212
+Time for reducing parent array: 15.219865
+Time for bfs searching: 40.852788
+Traversed edges: 0
+GTEPS: 0.000000
+[e1026090@jupiter ~]$ srun -p q_student -N 32 --ntasks-per-node=1 ./bfs_par_normal
+Time for reading the graph: 138.836343
+Time for generating edge buffer, sorting and scattering: 34.511783
+Time for all reducing: 4.093224
+Time for work without reducing: 7.878579
+Time for reducing parent array: 27.097788
+Time for bfs searching: 39.930694
+Traversed edges: 0
+GTEPS: 0.000000
+[e1026090@jupiter ~]$ srun -p q_student -N 32 --ntasks-per-node=2 ./bfs_par_normal
+Time for reading the graph: 139.007349
+Time for generating edge buffer, sorting and scattering: 34.271661
+Time for all reducing: 3.770616
+Time for work without reducing: 4.277010
+Time for reducing parent array: 52.984684
+Time for bfs searching: 62.001934
+Traversed edges: 0
+GTEPS: 0.000000
+[e1026090@jupiter ~]$ srun -p q_student -N 32 --ntasks-per-node=4 ./bfs_par_normal
+Time for reading the graph: 138.648294
+Time for generating edge buffer, sorting and scattering: 36.128557
+Time for all reducing: 1.504839
+Time for work without reducing: 2.374012
+Time for reducing parent array: 86.090515
+Time for bfs searching: 90.960247
+Traversed edges: 0
+GTEPS: 0.000000
+[e1026090@jupiter ~]$ srun -p q_student -N 32 --ntasks-per-node=8 ./bfs_par_normal
+Time for reading the graph: 142.232776
+Time for generating edge buffer, sorting and scattering: 39.212394
+Time for all reducing: 1.179221
+Time for work without reducing: 1.343401
+Time for reducing parent array: 103.426020
+Time for bfs searching: 107.220398
+Traversed edges: 0
+GTEPS: 0.000000
+[e1026090@jupiter ~]$ srun -p q_student -N 32 --ntasks-per-node=16 ./bfs_par_normal
+Time for reading the graph: 142.223459
+Time for generating edge buffer, sorting and scattering: 46.881134
+Time for all reducing: 2.399065
+Time for work without reducing: 0.813104
+Time for reducing parent array: 98.851199
+Time for bfs searching: 104.362913
+Traversed edges: 0
+GTEPS: 0.000000
+[e1026090@jupiter ~]$ mpicc -Wall -fopenmp bfs_hybrid.c -o bfs_hybrid -lm
+[e1026090@jupiter ~]$ srun -p q_student -n 32 -c 1 ./bfs_hybrid
+Procs Count: 32
+Time for reading the graph: 140.026955
+Time for generating edge buffer, sorting and scattering: 36.395800
+Time for all reducing: 4.328338
+Time for work without reducing: 7.987900
+Time for reducing parent array: 5.939680
+Time for bfs searching: 19.487650
+Traversed edges: 0
+GTEPS: 0.000000
+
+[e1026090@jupiter ~]$ export OMP_NUM_THREADS=16
+[e1026090@jupiter ~]$ srun -p q_student -n 32 -c 2 ./bfs_hybrid
+Procs Count: 32
+Time for reading the graph: 138.593418
+Time for generating edge buffer, sorting and scattering: 35.033907
+Time for all reducing: 2.466402
+Time for work without reducing: 4.645853
+Time for reducing parent array: 7.228839
+Time for bfs searching: 15.570121
+Traversed edges: 0
+GTEPS: 0.000000
+[e1026090@jupiter ~]$ srun -p q_student -n 32 -c 4 ./bfs_hybrid
+Procs Count: 32
+Time for reading the graph: 145.600061
+Time for generating edge buffer, sorting and scattering: 34.995034
+Time for all reducing: 2.088755
+Time for work without reducing: 3.071094
+Time for reducing parent array: 16.737146
+Time for bfs searching: 22.842960
+Traversed edges: 0
+GTEPS: 0.000000
+[e1026090@jupiter ~]$ export OMP_NUM_THREADS=4
+[e1026090@jupiter ~]$ srun -p q_student -n 32 -c 4 ./bfs_hybrid
+Procs Count: 32
+Time for reading the graph: 138.560033
+Time for generating edge buffer, sorting and scattering: 34.899482
+Time for all reducing: 2.353046
+Time for work without reducing: 2.423915
+Time for reducing parent array: 15.958455
+Time for bfs searching: 21.713507
+Traversed edges: 0
+GTEPS: 0.000000
+[e1026090@jupiter ~]$ export OMP_NUM_THREADS=8
+[e1026090@jupiter ~]$ srun -p q_student -n 32 -c 8 ./bfs_hybrid
+Procs Count: 32
+Time for reading the graph: 140.820969
+Time for generating edge buffer, sorting and scattering: 35.114063
+Time for all reducing: 1.711861
+Time for work without reducing: 2.899017
+Time for reducing parent array: 28.842630
+Time for bfs searching: 34.345118
+Traversed edges: 0
+GTEPS: 0.000000
+[e1026090@jupiter ~]$ export OMP_NUM_THREADS=16
+[e1026090@jupiter ~]$ srun -p q_student -n 32 -c 16 ./bfs_hybrid
+Procs Count: 32
+Time for reading the graph: 138.695471
+Time for generating edge buffer, sorting and scattering: 34.777499
+Time for all reducing: 1.017195
+Time for work without reducing: 2.664028
+Time for reducing parent array: 26.714816
+Time for bfs searching: 31.260167
+Traversed edges: 0
+GTEPS: 0.000000
+[e1026090@jupiter ~]$
+
 
 
