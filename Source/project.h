@@ -8,14 +8,15 @@
 #include <omp.h>
 
 #define LOG2(X) ((unsigned) (8*sizeof (unsigned long long) - __builtin_clzll((X)) - 1))
-#define SCALE 20
+#define SCALE 18
 #define EDGEFACTOR 32
-#define SEARCHKEY_CNT 16
+#define SEARCHKEY_CNT 8
 
 #define I64_BYTES 8
 #define BLOCKS 4
 #define BITS 64
 #define GRAPHFILE "graph"
+#define SEARCHKEYFILE "keys"
 
 #define ROOT 0
 

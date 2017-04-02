@@ -32,12 +32,19 @@ int main(int argc, char *argv[]){
         timer = mytime() - timer;
         printf("Time for generating edge buffer, sorting and scattering: %f\n", timer/1000000);
     }
-    int i = 0;
     uint64_t *roots = NULL;
     if (my_rank == 0){
         roots = (uint64_t *) calloc(64, sizeof(uint64_t));
+        FILE *fp = fopen(SEARCHKEYFILE, "r");
+        uint64_t i;
+        for (i = 0; i < SEARCHKEY_CNT; i++){
+            fscanf(fp, "%llu\n", (unsigned long long *)(roots+i));
+            printf("%llu, ", (unsigned long long)(roots[i]));
+        }
+        printf("\n");
+        fclose(fp);
     }
-    uint64_t root = 0;
+    /*uint64_t root = 0;
     uint64_t root_local = 0;
     uint64_t answer = 0;
     srand(time(NULL));
@@ -65,7 +72,7 @@ int main(int argc, char *argv[]){
             i++;
         }else{
         }
-    }
+    }*/
     if (my_rank == 0){
         timer = mytime();
     }
@@ -167,9 +174,8 @@ uint64_t kernel_2(uint64_t *buffer, uint64_t *index_of_node, int my_rank, int pr
     for (j = 0; j < SEARCHKEY_CNT; j++){
         level = (uint64_t *) calloc(nodes / BITS, sizeof(uint64_t));
         parent_array = (uint64_t *) calloc(pow(2,scale), sizeof(uint64_t));
-        if (my_rank == 0){          
-            root = j;            
-            //root = roots[j];
+        if (my_rank == 0){                     
+            root = roots[j];
             level[(root/BITS)] = level[(root/BITS)] | (uint64_t) pow(2,(root % BITS));
         }
         MPI_Bcast((void *)level, nodes / BITS, MPI_UINT64_T, 0, MPI_COMM_WORLD);

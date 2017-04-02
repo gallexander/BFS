@@ -33,6 +33,7 @@ int main(int argc, char *argv[]){
     if (my_rank == 0){
         timer = mytime() - timer;
         printf("Time for generating edge buffer, sorting and scattering: %f\n", timer/1000000);
+        FILE *fp = fopen(SEARCHKEYFILE,"w");
         roots = (uint64_t *) calloc(64, sizeof(uint64_t));
         int i = 0;
         uint64_t root;
@@ -40,8 +41,10 @@ int main(int argc, char *argv[]){
             root = rand() % ((uint64_t)pow(2,result.scale));
             if (result.index_of_node[root] < result.index_of_node[root+1]){
                 roots[i++] = root;
+                fprintf(fp, "%llu\n", (unsigned long long) root);
             }
         }
+        fclose(fp);
         timer = mytime();
         uint64_t traversed_edges = kernel_2(result.buffer, result.index_of_node, my_rank, procs, result.scale, startVertex, endVertex, roots);
         timer = mytime() - timer;
@@ -91,9 +94,8 @@ uint64_t kernel_2(uint64_t *buffer, uint64_t *index_of_node, int my_rank, int pr
     uint64_t count = 0;
     uint64_t j;
     for (j = 0; j < SEARCHKEY_CNT; j++){
-        parent_array = (uint64_t *) calloc(pow(2,scale), sizeof(uint64_t));
-        root = j;        
-        //root = roots[j];
+        parent_array = (uint64_t *) calloc(pow(2,scale), sizeof(uint64_t));       
+        root = roots[j];
         bfs_seq(root, buffer, index_of_node[nodes], index_of_node, scale, parent_array);
         parent_array[root] = root + 1;
         /*uint64_t i;
