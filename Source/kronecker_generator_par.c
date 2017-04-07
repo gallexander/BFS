@@ -2,10 +2,9 @@
 #include "mpi.h"
 
 int main(int argc, char *argv[]){
-    int my_rank, procs, tag=0;
-    //float initiator[] = {0.7,0.1,0.1,0.1};
+    int my_rank, procs;
+    //float initiator[] = {0.25,0.25,0.25,0.25};
     float initiator[] = {0.57,0.19,0.19,0.05};
-    MPI_Status status;
     
     MPI_Init (&argc, &argv);
     MPI_Comm_rank (MPI_COMM_WORLD, &my_rank);

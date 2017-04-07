@@ -33,15 +33,24 @@ int main(int argc, char *argv[]){
     if (my_rank == 0){
         timer = mytime() - timer;
         printf("Time for generating edge buffer, sorting and scattering: %f\n", timer/1000000);
-        FILE *fp = fopen(SEARCHKEYFILE,"w");
-        roots = (uint64_t *) calloc(64, sizeof(uint64_t));
-        int i = 0;
-        uint64_t root;
-        while (i < SEARCHKEY_CNT){
-            root = rand() % ((uint64_t)pow(2,result.scale));
-            if (result.index_of_node[root] < result.index_of_node[root+1]){
-                roots[i++] = root;
-                fprintf(fp, "%llu\n", (unsigned long long) root);
+        roots = (uint64_t *) calloc(SEARCHKEY_CNT, sizeof(uint64_t));
+        FILE *fp;
+        if (!VALID_CHECKING){
+            int i = 0;
+            uint64_t root;
+            fp = fopen(SEARCHKEYFILE, "w");
+            while (i < SEARCHKEY_CNT){
+                root = rand() % ((uint64_t)pow(2,result.scale));
+                if (result.index_of_node[root] < result.index_of_node[root+1]){
+                    roots[i++] = root;
+                    fprintf(fp, "%llu\n", (unsigned long long) root);
+                }
+            }
+        }else{
+            uint64_t i;
+            fp = fopen(SEARCHKEYFILE, "r");
+            for (i = 0; i < SEARCHKEY_CNT; i++){
+                fscanf(fp, "%llu\n", (unsigned long long *)(roots+i));
             }
         }
         fclose(fp);
@@ -91,13 +100,48 @@ uint64_t kernel_2(uint64_t *buffer, uint64_t *index_of_node, int my_rank, int pr
     uint64_t root;
     uint64_t nodes = pow(2, (scale));
     uint64_t *parent_array;
+    int *distance_array = NULL;
     uint64_t count = 0;
     uint64_t j;
     for (j = 0; j < SEARCHKEY_CNT; j++){
-        parent_array = (uint64_t *) calloc(pow(2,scale), sizeof(uint64_t));       
+        parent_array = (uint64_t *) calloc(pow(2,scale), sizeof(uint64_t));
+        if (VALID_CHECKING){
+            distance_array = (int *) calloc(pow(2,scale), sizeof(int));        
+        }       
         root = roots[j];
-        bfs_seq(root, buffer, index_of_node[nodes], index_of_node, scale, parent_array);
-        parent_array[root] = root + 1;
+        bfs_seq(root, buffer, index_of_node[nodes], index_of_node, scale, parent_array, distance_array);
+        uint64_t i;
+        uint64_t parent = 0;
+        char valid = 1;
+        uint64_t positions = 0;
+        if (SEARCHKEY_CNT == 1){
+            FILE *fp = NULL;
+            if (!VALID_CHECKING){
+                fp = fopen(PARENTFILE, "w");
+                for (i = 0; i < pow(2,scale); i++){
+                    fprintf(fp, "%llu\n", (unsigned long long) parent_array[i]);            
+                }
+            }else{
+                fp = fopen(PARENTFILE, "r");
+                for (i = 0; i < pow(2,scale); i++){
+                    fscanf(fp, "%llu\n", (unsigned long long *)(&parent));
+                    if (parent != parent_array[i]){
+                        if (distance_array[parent-1] != distance_array[parent_array[i]-1]){
+                            valid = 0;
+                            positions++;
+                            printf("%llu--> %llu:%i  != %llu:%i \n", (unsigned long long) i, (unsigned long long) parent-1, distance_array[parent-1], (unsigned long long) parent_array[i]-1, distance_array[parent_array[i]-1]);                   
+                        }
+                    }            
+                }
+                if (valid){
+                    printf("The parent array from the file is VALID.\n");            
+                }else{
+                    printf("THE parent array from the file is NOT VALID.\n");
+                    printf("NOT VALID ON %llu positions\n", (unsigned long long) positions);
+                }
+            }
+            fclose(fp);
+        }   
         /*uint64_t i;
         for (i = 0; i < pow(2,scale)*EDGEFACTOR; i++){
             if (parent_array[startVertex[i]] != 0){
@@ -105,19 +149,27 @@ uint64_t kernel_2(uint64_t *buffer, uint64_t *index_of_node, int my_rank, int pr
             }
         }*/
         free(parent_array);
+        if (VALID_CHECKING){
+            free(distance_array);    
+        }
     }
     free(buffer);
     free(index_of_node);
     return count;
 }
 
-void bfs_seq(uint64_t root, uint64_t *buffer, uint64_t buffer_size, uint64_t *index_of_node, int scale, uint64_t *parent_array){
+void bfs_seq(uint64_t root, uint64_t *buffer, uint64_t buffer_size, uint64_t *index_of_node, int scale, uint64_t *parent_array, int *distance_array){
     uint64_t nodes = pow(2,scale);
     uint64_t FS_count = 0;
     uint64_t NS_count = 0;
+    int level = 1;
     uint64_t *FS = (uint64_t *) calloc(pow(2,scale), sizeof(uint64_t));
     uint64_t *NS = (uint64_t *) calloc(pow(2,scale), sizeof(uint64_t));
     FS[FS_count++] = root;
+    parent_array[root] = root + 1;
+    if (VALID_CHECKING){
+        distance_array[root] = 0;        
+    }
     while (FS_count){
         uint64_t i;
         for (i = 0; i < FS_count; i++){
@@ -127,6 +179,9 @@ void bfs_seq(uint64_t root, uint64_t *buffer, uint64_t buffer_size, uint64_t *in
                     if (parent_array[buffer[j]] == 0){
                         NS[NS_count++] = buffer[j];
                         parent_array[buffer[j]] = FS[i] + 1;
+                        if (VALID_CHECKING){
+                            distance_array[buffer[j]] = level;
+                        }
                     }
                 }
             }else{
@@ -134,6 +189,9 @@ void bfs_seq(uint64_t root, uint64_t *buffer, uint64_t buffer_size, uint64_t *in
                     if (parent_array[buffer[j]] == 0){
                         NS[NS_count++] = buffer[j];
                         parent_array[buffer[j]] = FS[i] + 1;
+                        if (VALID_CHECKING){
+                            distance_array[buffer[j]] = level;
+                        }
                     }
                 }
             }
@@ -142,6 +200,7 @@ void bfs_seq(uint64_t root, uint64_t *buffer, uint64_t buffer_size, uint64_t *in
         memcpy((void *)FS, (void *)NS, sizeof(uint64_t)*NS_count);
         FS_count = NS_count;
         NS_count = 0;
+        level++;
     }
     free(FS);
     free(NS);
