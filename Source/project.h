@@ -5,12 +5,14 @@
 #include <time.h>
 #include <string.h>
 #include <sys/time.h>
+#include <sys/types.h>
+#include <unistd.h>
 #include <omp.h>
 
 #define LOG2(X) ((unsigned) (8*sizeof (unsigned long long) - __builtin_clzll((X)) - 1))
-#define SCALE 18
+#define SCALE 23
 #define EDGEFACTOR 32
-#define SEARCHKEY_CNT 1
+#define SEARCHKEY_CNT 16
 #define VALID_CHECKING 0
 #define PARENTFILE "parent"
 #define GRAPHFILE "graph"
@@ -22,16 +24,6 @@
 
 
 #define ROOT 0
-
-const int tab64[64] = {
-    63,  0, 58,  1, 59, 47, 53,  2,
-    60, 39, 48, 27, 54, 33, 42,  3,
-    61, 51, 37, 40, 49, 18, 28, 20,
-    55, 30, 34, 11, 43, 14, 22,  4,
-    62, 57, 46, 52, 38, 26, 32, 41,
-    50, 36, 17, 19, 29, 10, 13, 21,
-    56, 45, 25, 31, 35, 16,  9, 12,
-    44, 24, 15,  8, 23,  7,  6,  5};
 
 struct edge {
     uint64_t end;
@@ -50,7 +42,31 @@ double mytime(void){
     return (double) ((long long)now.tv_usec+(long long)now.tv_sec*1000000);
 }
 
-int log2_64(uint64_t);
+static unsigned int x=123456789,y=234567891,z=345678912,w=456789123,c=0;
+
+unsigned int JKISS32(){
+    int t;
+
+    y ^= (y<<5); y ^= (y>>7); y ^= (y<<22);
+    t = z+w+c; z = w; c = t < 0; w = t&2147483647;
+    x += 1411392427;
+
+    return x + y + w;
+}
+
+unsigned int devrand(void){
+    struct timespec now;
+    clock_gettime(CLOCK_REALTIME, &now);
+    return (unsigned int)now.tv_nsec*getpid();
+}
+
+/* Initialise KISS generator using /dev/urandom */
+void init_KISS(int my_rank){
+    x = devrand()*my_rank;
+    while (!(y = devrand()*my_rank)); /* y must not be zero!*/
+    z = devrand()*my_rank;
+    c = devrand()*my_rank % 698769068 + 1;
+}
 
 //KERNELS
 void kernel_1(uint64_t *startVertex, uint64_t *endVertex, uint64_t edges, int procs, int my_rank, struct result1 *result);

@@ -52,7 +52,7 @@ int main(int argc, char *argv[]){
 }
 
 void shuffle(uint64_t *index_buffer, uint64_t nodes){
-    srand(time(NULL));
+    init_KISS(1);
     uint64_t i;
     for (i = 0; i < nodes; i++){
         index_buffer[i] = i;
@@ -62,7 +62,7 @@ void shuffle(uint64_t *index_buffer, uint64_t nodes){
     uint64_t t;
     for (i = nodes - 1; i > 0; --i) {
         // generate random index
-        w = rand()%i;
+        w = JKISS32() % i;
         // swap items
         t = index_buffer[i];
         index_buffer[i] = index_buffer[w];
@@ -91,7 +91,7 @@ void read_graph(int scale, int edgefactor, uint64_t *startVertex, uint64_t *endV
 }
 
 void generate_graph(int scale, int edgefactor, float *initiator, uint64_t *startVertex, uint64_t *endVertex, int procs, int my_rank, uint64_t *index_buffer){
-    srand(time(NULL)*(my_rank+1));
+    init_KISS(my_rank+1);
     int i;
     int help_initiator[BLOCKS];
     int next;
@@ -108,7 +108,7 @@ void generate_graph(int scale, int edgefactor, float *initiator, uint64_t *start
         col = 0;
         row = 0;
         for (i = scale-1; i >= 0; i--){
-            next = rand() % 100;
+            next = JKISS32() % 100;
             int j;
             for (j = 0; j < BLOCKS; j++){
                 if (next < help_initiator[j]){

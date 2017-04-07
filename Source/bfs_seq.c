@@ -19,8 +19,9 @@ int main(int argc, char *argv[]){
     uint64_t *roots;
     double timer;
     struct result1 result;
-    srand(time(NULL));
     if (my_rank == 0){
+        init_KISS(my_rank+1);
+        printf("%f\n", JKISS32() / 4294967296.0);
         startVertex = (uint64_t *) calloc(edges, I64_BYTES);
         endVertex = (uint64_t *) calloc(edges, I64_BYTES);
         timer = mytime();
@@ -40,7 +41,7 @@ int main(int argc, char *argv[]){
             uint64_t root;
             fp = fopen(SEARCHKEYFILE, "w");
             while (i < SEARCHKEY_CNT){
-                root = rand() % ((uint64_t)pow(2,result.scale));
+                root = JKISS32() % ((uint64_t)pow(2,result.scale));
                 if (result.index_of_node[root] < result.index_of_node[root+1]){
                     roots[i++] = root;
                     fprintf(fp, "%llu\n", (unsigned long long) root);
