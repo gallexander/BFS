@@ -287,16 +287,15 @@ Abbildung~\ref{ergebnisse_normal_hybrid} zeigt die Ausführungszeiten unserer Va
 \bibliography{bachelor}
 \clearpage
 \appendix
-\section{BFS versions}
+\section{BFS Implementierungen}
 \label{sec:versions}
-\lstinputlisting[firstline=138,lastline=196,caption={Version 1 - level bitmap},label=version1]{../Source/bfs_par.c}
-\lstinputlisting[firstline=135,lastline=183,caption={Version 2 - level array},label=version2]{../Source/bfs_par_parentarray.c}
-\lstinputlisting[firstline=153,lastline=205,caption={Version 3 - visited bitmap},label=version3]{../Source/bfs_par_allvisited_parallelsort.c}
+\lstinputlisting[firstline=211,lastline=290,caption={Parallele Breitensuche mit Allreduce Kommunikation - MPI Only},label=mpionly_allreduce]{../Source/bfs_par_allvisited_parallelsort_improvement.c}
+\lstinputlisting[firstline=219,lastline=307,caption={Parallele Breitensuche mit Allreduce Kommunikation - MPI + OpenMP},label=hybrid_allreduce]{../Source/bfs_hybrid.c}
 \section{Source Code - graph500}
 \label{sec:sourcecode}
-\lstinputlisting[caption={BFS solution},label=bfs]{../Source/bfs_par_allvisited_parallelsort.c}
+\lstinputlisting[caption={graph500 - Breitensuche Implementierung },label=bfs]{../Source/bfs_par_allvisited_parallelsort_improvement.c}
 \clearpage
-\lstinputlisting[caption={Kronecker Generator},label=kronecker_generator]{../Source/kronecker_generator.c}
+\lstinputlisting[caption={Kronecker Generator},label=kronecker_generator]{../Source/kronecker_generator_par.c}
 \clearpage
 \lstinputlisting[caption={project.h},label=project]{../Source/project.h}
 
