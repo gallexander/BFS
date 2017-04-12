@@ -39,7 +39,7 @@ int main(int argc, char *argv[]){
         uint64_t i;
         for (i = 0; i < SEARCHKEY_CNT; i++){
             fscanf(fp, "%llu\n", (unsigned long long *)(roots+i));
-            printf("%llu, ", (unsigned long long)(roots[i]));
+            //printf("%llu, ", (unsigned long long)(roots[i]));
         }
         printf("\n");
         fclose(fp);
@@ -143,8 +143,6 @@ void kernel_1(uint64_t *startVertex, uint64_t *endVertex, uint64_t edges, int pr
     }
     
     MPI_Scatter((void *) edgelist_send_counts, 1, MPI_INT, &edgelist_counts_recvbuf, 1, MPI_INT, 0, MPI_COMM_WORLD);
-    
-    printf("my_rank: %i - edges: %i\n", my_rank, edgelist_counts_recvbuf);
     
     startVertex_recvbuf = (uint64_t *) calloc(edgelist_counts_recvbuf, I64_BYTES);
     endVertex_recvbuf = (uint64_t *) calloc(edgelist_counts_recvbuf, I64_BYTES);

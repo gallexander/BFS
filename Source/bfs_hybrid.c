@@ -47,7 +47,7 @@ int main(int argc, char *argv[]){
         uint64_t i;
         for (i = 0; i < SEARCHKEY_CNT; i++){
             fscanf(fp, "%llu\n", (unsigned long long *)(roots+i));
-            printf("%llu, ", (unsigned long long)(roots[i]));
+            //printf("%llu, ", (unsigned long long)(roots[i]));
         }
         printf("\n");
         fclose(fp);
