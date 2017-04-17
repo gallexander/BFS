@@ -10,9 +10,9 @@
 #include <omp.h>
 
 #define LOG2(X) ((unsigned) (8*sizeof (unsigned long long) - __builtin_clzll((X)) - 1))
-#define SCALE 23
+#define SCALE 18
 #define EDGEFACTOR 32
-#define SEARCHKEY_CNT 16
+#define SEARCHKEY_CNT 4
 #define VALID_CHECKING 0
 #define PARENTFILE "parent"
 #define GRAPHFILE "graph"

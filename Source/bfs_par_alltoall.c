@@ -207,6 +207,9 @@ uint64_t kernel_2(uint64_t *buffer, uint64_t *index_of_node, int my_rank, int pr
 void bfs_alltoall(uint64_t root, uint64_t *buffer, uint64_t buffer_size, uint64_t *index_of_node, int my_rank, int procs, int scale, uint64_t *parent_array, double *time_allwork, double *time_alltoall, double *time_parentgather){
     uint64_t nodes_owned = pow(2,scale) / procs;
     uint64_t *visited = (uint64_t *) calloc(pow(2,scale) / BITS, sizeof(uint64_t));
+    int *sdispls = (int *) calloc(procs, sizeof(int));
+    int *rcounts = (int *) calloc(procs, sizeof(int));
+    int *rdispls = (int *) calloc(procs, sizeof(int));
     uint64_t *prepare_edges[procs];
     int prepare_edges_count[procs];
     uint64_t *edges_received;
@@ -224,7 +227,10 @@ void bfs_alltoall(uint64_t root, uint64_t *buffer, uint64_t buffer_size, uint64_
 
     
     if ((root / nodes_owned) == my_rank){
-        // TODO        
+        edges_count = 0;
+        edges_received = (uint64_t *) calloc(2, sizeof(uint64_t));
+        edges_received[0] = root;
+        edges_received[1] = root+1;      
     }
 
     uint64_t i;
@@ -237,6 +243,9 @@ void bfs_alltoall(uint64_t root, uint64_t *buffer, uint64_t buffer_size, uint64_
         for (i = 0; i < procs; i++){
             prepare_edges[i] = (uint64_t *) calloc(nodes_owned*2, sizeof(uint64_t));
             prepare_edges_count[i] = 0;
+            sdispls[i] = 0;
+            rcounts[i] = 0;
+            rdispls[i] = 0;
         }
         for (i = 0; i < edges_count; i=i+2){
             intern_node_number = edges_received[i] % nodes_owned;
@@ -262,11 +271,9 @@ void bfs_alltoall(uint64_t root, uint64_t *buffer, uint64_t buffer_size, uint64_
         if (my_rank == 0){
             time = mytime();
         }
+        //TODO JUST ONE PROCESS HAS TO free in first round
         free(edges_received);
         if (oneChildisVisited){
-            int *sdispls = (int *) calloc(procs, sizeof(int));
-            int *rcounts = (int *) calloc(procs, sizeof(int));
-            int *rdispls = (int *) calloc(procs, sizeof(int));
             uint64_t *sendbuf;
             uint64_t sdispls_sum = 0;            
             edges_count = 0;
@@ -282,12 +289,11 @@ void bfs_alltoall(uint64_t root, uint64_t *buffer, uint64_t buffer_size, uint64_
                 memcpy((void *)(sendbuf+sdispls[i]), (void *) prepare_edges[i], prepare_edges_count[i]*sizeof(uint64_t)); 
             }
             edges_received = (uint64_t *) calloc(edges_count, sizeof(uint64_t));
+
             MPI_Alltoallv((void *)sendbuf, prepare_edges_count, sdispls, MPI_UINT64_T, edges_received, rcounts, rdispls, MPI_UINT64_T, MPI_COMM_WORLD);
+            
             level_count++;
             free(sendbuf);
-            free(sdispls);
-            free(rcounts);
-            free(rdispls);
         }
         if (my_rank == 0){
             time = mytime() - time;
@@ -314,6 +320,9 @@ void bfs_alltoall(uint64_t root, uint64_t *buffer, uint64_t buffer_size, uint64_
         *time_parentgather += time_parent;
     }*/
     free(visited);
+    free(sdispls);
+    free(rcounts);
+    free(rdispls);
 }
 
 uint64_t *create_buffer_from_edgelist(uint64_t *startVertex, uint64_t *endVertex, uint64_t nodes, uint64_t edges, uint64_t proc_number){
