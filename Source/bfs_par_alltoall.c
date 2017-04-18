@@ -171,14 +171,17 @@ uint64_t kernel_2(uint64_t *buffer, uint64_t *index_of_node, int my_rank, int pr
     double time_alltoall = 0;
     double time_parentgather = 0;
     for (j = 0; j < SEARCHKEY_CNT; j++){
-        parent_array = (uint64_t *) calloc(pow(2,scale)/procs, sizeof(uint64_t));
+        if (my_rank == 0){
+            parent_array = (uint64_t *) calloc(pow(2,scale), sizeof(uint64_t));
+        }else{
+            parent_array = (uint64_t *) calloc(pow(2,scale)/procs, sizeof(uint64_t));
+        }
         if (my_rank == 0){                     
             root = roots[j];
         }
         MPI_Bcast((void *)&root, 1, MPI_UINT64_T, 0, MPI_COMM_WORLD);
         bfs_alltoall(root, buffer, index_of_node[nodes/procs], index_of_node, my_rank, procs, scale, parent_array, &time_allwork, &time_alltoall, &time_parentgather);
         if (my_rank == 0){
-            parent_array[root] = root + 1;
             if (SEARCHKEY_CNT == 1){
                 FILE *fp;
                 fp = fopen(PARENTFILE, "w");
@@ -224,16 +227,19 @@ void bfs_alltoall(uint64_t root, uint64_t *buffer, uint64_t buffer_size, uint64_
     double time = 0;
     double time_work = 0;
     double time_parent = 0;
-
+    char this_round_active = 0;
     
     if ((root / nodes_owned) == my_rank){
-        edges_count = 0;
+        edges_count = 2;
         edges_received = (uint64_t *) calloc(2, sizeof(uint64_t));
         edges_received[0] = root;
-        edges_received[1] = root+1;      
+        edges_received[1] = root;
+        this_round_active = 1;     
     }
-
     uint64_t i;
+    for (i = 0; i < procs; i++){
+        prepare_edges[i] = (uint64_t *) calloc(nodes_owned*2, sizeof(uint64_t));
+    }
     if (my_rank == 0){
         time_work = mytime();
     }
@@ -241,12 +247,12 @@ void bfs_alltoall(uint64_t root, uint64_t *buffer, uint64_t buffer_size, uint64_
         oneChildisVisited = 0;
         //initialize the buffers that are sent to the procs at the end
         for (i = 0; i < procs; i++){
-            prepare_edges[i] = (uint64_t *) calloc(nodes_owned*2, sizeof(uint64_t));
+            memset((void *) prepare_edges[i], 0, sizeof(uint64_t)*(nodes_owned*2));
             prepare_edges_count[i] = 0;
-            sdispls[i] = 0;
-            rcounts[i] = 0;
-            rdispls[i] = 0;
         }
+        memset((void *) sdispls, 0, sizeof(int)*procs);
+        memset((void *) rcounts, 0, sizeof(int)*procs);
+        memset((void *) rdispls, 0, sizeof(int)*procs);
         for (i = 0; i < edges_count; i=i+2){
             intern_node_number = edges_received[i] % nodes_owned;
             if (parent_array[intern_node_number] == 0){
@@ -271,8 +277,10 @@ void bfs_alltoall(uint64_t root, uint64_t *buffer, uint64_t buffer_size, uint64_
         if (my_rank == 0){
             time = mytime();
         }
-        //TODO JUST ONE PROCESS HAS TO free in first round
-        free(edges_received);
+        if (this_round_active){
+            free(edges_received);
+        }
+        this_round_active = 1;
         if (oneChildisVisited){
             uint64_t *sendbuf;
             uint64_t sdispls_sum = 0;            
@@ -299,26 +307,20 @@ void bfs_alltoall(uint64_t root, uint64_t *buffer, uint64_t buffer_size, uint64_
             time = mytime() - time;
             *time_alltoall += time;
         }
-        for (i = 0; i < procs; i++){
-            free(prepare_edges[i]);
-        }
     }
     if (my_rank == 0){
         time_work = mytime() - time_work;
         *time_allwork += time_work;
-    }
-
-    // TODO GATHER Parent Array
-    /*if (my_rank != 0){
-        MPI_Reduce((void *) parent_array, NULL, pow(2, scale), MPI_UINT64_T, MPI_MAX, 0, MPI_COMM_WORLD);
-    }else{
         time_parent = mytime();
-        MPI_Reduce(MPI_IN_PLACE, (void *) parent_array, pow(2, scale), MPI_UINT64_T, MPI_MAX, 0, MPI_COMM_WORLD);
-    }
-    if (my_rank == 0){
+        MPI_Gather(MPI_IN_PLACE, pow(2,scale)/procs, MPI_UINT64_T, (void *)parent_array, pow(2,scale)/procs, MPI_UINT64_T, 0, MPI_COMM_WORLD);
         time_parent = mytime() - time_parent;
         *time_parentgather += time_parent;
-    }*/
+    }else{
+        MPI_Gather((void *)parent_array, pow(2,scale)/procs, MPI_UINT64_T, NULL, pow(2,scale)/procs, MPI_UINT64_T, 0, MPI_COMM_WORLD);
+    }
+    for (i = 0; i < procs; i++){
+        free(prepare_edges[i]);
+    }
     free(visited);
     free(sdispls);
     free(rcounts);

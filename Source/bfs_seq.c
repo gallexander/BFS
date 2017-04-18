@@ -21,7 +21,6 @@ int main(int argc, char *argv[]){
     struct result1 result;
     if (my_rank == 0){
         init_KISS(my_rank+1);
-        printf("%f\n", JKISS32() / 4294967296.0);
         startVertex = (uint64_t *) calloc(edges, I64_BYTES);
         endVertex = (uint64_t *) calloc(edges, I64_BYTES);
         timer = mytime();
