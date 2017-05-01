@@ -174,10 +174,10 @@ Die Idee hinter diesem Algorithmus war neben der eindimensionalen Zerlegung des 
 Aufgrund dieser Tatsache wird bei unserem ersten Algorithmus eine Datenstruktur zwischen den Prozessoren synchron gehalten, die über alle Knoten des Graphen die Information besitzt, ob ein Knoten besucht wurde oder nicht. Falls wir uns also gerade im Level \(d\) befinden, weiß jeder Prozessor welche Knoten im Graphen bis einschließlich zum Level \(d-1\) besucht wurden. Dazu verwenden wir als Datenstruktur ein Array \lstinline{a[1..n]}, wie in Algorithmus~\ref{par_allvisited} ersichtlich, das zu jedem Knoten die Information speichert, ob dieser Knoten bisher besucht wurde oder nicht. Dies stellen wir durch Abspeichern der Werte 0 (nicht besucht) und 1 (besucht) in \lstinline{a[k]} zu jedem Knoten \(k \in V(G)\) sicher. Da wir anhand dieser Datenstruktur nur wissen, welche Knoten bis einschließlich des letzten Levels besucht wurden, jedoch nicht, welche davon noch nicht von den zuständigen Prozessoren bearbeitet wurden, braucht jeder Prozessor noch ein zweites Array \lstinline{v[1..n/p]}, welches zu jedem lokalen Knoten abspeichert, 0 oder 1, ob dieser Knoten lokal behandelt wurde und damit auch die Nachbarn dieses Knoten besucht wurden. Dieses Hilfsarray hat die Länge \lstinline{n/p}, da jeder Prozessor für \lstinline{n/p} Knoten verantwortlich ist. Dabei ist \lstinline{p} die Anzahl der zur Verfügung stehenden Prozessoren. Zu beachten ist auch, dass alle Prozessoren ein \textit{Parent Array} \lstinline{$\pi$} der Länge \(n\) besitzen. Falls also ein Knoten \(x\) ausgehend von Knoten \(y\) zum ersten Mal besucht wird, dann trägt der Prozessor, der für \(y\) verantwortlich ist, den Knoten \(y\) als Vater von \(x\) ein, also \lstinline{$\pi$[x] = y}, wobei es sich bei \lstinline{$\pi$}, um das auf dem Prozessor lokal gespeicherte \textit{Parent Array} handelt.
 \begin{lstlisting}[caption={Die Prozedur \lstinline{PARALLEL-BFS-ALLREDUCE} wird von allen verfügbaren Prozessoren parallel aufgerufen. Nach jeder Abarbeitung eines Levels findet durch die \lstinline{ALLREDUCE} Operationen eine sogenannte Barrier-Synchronisation statt, bei der zwischen den Prozessoren ausgetauscht wird, ob es überhaupt einen neu besuchten Knoten gibt (\lstinline{isNewLevel}), beziehungsweise wird das Array \lstinline{a} synchronisiert.},label=par_allvisited]
 $\textbf{PARALLEL-BFS-ALLREDUCE}$($G_{p}$,s)
-	$\textbf{for}$ 0 $\leq$ i $<$ n $\textbf{do}$
+	$\textbf{for}$ 1 $\leq$ i $\leq$ n $\textbf{do}$
 		a[i] = 0
 		$\pi$[i] = NIL
-	$\textbf{for}$ 0 $\leq$ i $<$ n/p $\textbf{do}$
+	$\textbf{for}$ 1 $\leq$ i $\leq$ n/p $\textbf{do}$
 		v[i] = 0
 	a[s] = 1
 	isNewLevel = 1
@@ -187,11 +187,11 @@ $\textbf{PARALLEL-BFS-ALLREDUCE}$($G_{p}$,s)
 		$a_{p}$ = a[n/$\textit{p}$*$\textit{rank}$+1..n/$\textit{p}$*($\textit{rank}$+1)]
 		FS = $\textit{GETNEWVISITED}$($a_{p}$,v)
 		$\textbf{for}$ each u $\in$ FS
-			v[u] = 1
-			$\textbf{for}$ each v $\in$ $G_{p}$.Adj[u]
-				$\textbf{if}$ a[v] == 0
-					a[v] = 1
-					$\pi$[v] = u
+			v[u $\textit{\%}$ n/p] = 1
+			$\textbf{for}$ each w $\in$ $G_{p}$.Adj[u]
+				$\textbf{if}$ a[w] == 0
+					a[w] = 1
+					$\pi$[w] = u
 					isNewLevel = 1
 		ALLREDUCE(isNewLevel,OR)
 		ALLREDUCE(a,OR)
@@ -223,9 +223,39 @@ $P_{p-1}$ : $x_{p-1}$ 	&                                 						& $P_{p-1}$ : $x_
 \subsection{Paralleler BFS mit All-to-all Kommunikation}
 \label{sec:bfs_alltoall}
 Im Gegensatz zu Algorithmus~\ref{par_allvisited} setzen wir beim Algorithmus in diesem Kapitel voraus, dass die einzelnen Prozessoren nur über die zugewiesenen Knoten Informationen speichern müssen und dadurch weniger über den Gesamtzustand, also über die nicht zugewiesenen Knoten, wissen. Mit Informationen meinen wir in unserem Fall, ob ein Knoten bereits besucht wurde und deshalb nicht mehr bearbeitet werden muss. Ausgehend von diesem Wissen kann es bei so einem Ansatz vorkommen, dass wenn ein fremder Knoten neu besucht wird, dass der zugehörige Prozessor jedes Mal darüber informiert werden muss und dieser dann im nächsten Level überprüft, ob er diesen Knoten schon bearbeitet hat. Dadurch kann es sein, dass in jedem Level der Breitensuche zwischen den Prozessoren Informationen über Knoten ausgetauscht werden müssen, obwohl diese Knoten bereits besucht und bearbeitet sind, was natürlich zu Redundanzen in der Kommunikation führt.\\
-Bei diesem Algorithmus arbeiten wir wieder mit den zwei Stacks \lstinline{FS} und \lstinline{NS}, ähnlich wie sie bei der sequentiellen Breitensuche in Algorithmus~\ref{stacks} verwendet wurden. Jeder Prozessor hat dabei einen eigenen Stack \lstinline{FS}, den er in jedem Level abarbeiten muss und der jene Knoten enthält, die im letzten Level von einem beliebigen Prozessor besucht wurden und die diesem Prozessor zugehörig sind. Im Stack \lstinline{FS} können auch Knoten enthalten sein, die schon von diesem Prozessor bearbeitet wurden, jedoch diesmal durch eine andere Kante im Graphen besucht wurden. Diese Knoten ignoriert der Prozessor und geht zum nächsten Knoten im Stack über. Außerdem ist es für einen Prozessor nicht ausreichend, wenn er nur einen Stack \lstinline{NS} anlegt, der die neu besuchten Knoten verwaltet. Bei dieser parallelen Variante benötigt der Prozessor zu jedem verfügbaren Prozessor \(i\), wobei \(0 \leq i \leq p\) und \(p\) die Anzahl der verfügbaren Prozessoren ist, einen eigenen Stack \lstinline{$NS_{i}$}. In jedem dieser Stacks \lstinline{$NS_{i}$} werden folgende Knoten abgelegt, die vom arbeitenden Prozessor neu besucht werden und dem Prozessor \(i\) zugehörig sind. Zusätzlich ist für jeden Prozessor eine Datenstruktur \lstinline{$\pi$[1..n/p]} notwendig, die das \textit{Parent Array} darstellt. \lstinline{n} ist die Anzahl der Knoten im Graphen. Zu beachten ist, dass es im Vergleich zu Algorithmus~\ref{par_allvisited} ausreichend ist, ein Array der Länge \lstinline{n/p} zu verwalten, da bei diesem Algorithmus jeder Prozessor nur die Väter der eigenen Knoten abspeichert.\\
+Bei diesem Algorithmus arbeiten wir wieder mit den zwei Stacks \lstinline{FS} und \lstinline{NS}, ähnlich wie sie bei der sequentiellen Breitensuche in Algorithmus~\ref{stacks} verwendet wurden. Jeder Prozessor hat dabei einen eigenen Stack \lstinline{FS}, den er in jedem Level abarbeiten muss und der jene Knoten enthält, die im letzten Level von einem beliebigen Prozessor besucht wurden und die diesem Prozessor zugehörig sind. Im Stack \lstinline{FS} können auch Knoten enthalten sein, die schon von diesem Prozessor bearbeitet wurden, jedoch diesmal durch eine andere Kante im Graphen besucht wurden. Diese Knoten ignoriert der Prozessor und geht zum nächsten Knoten im Stack über. Außerdem ist es für einen Prozessor nicht ausreichend, wenn er nur einen Stack \lstinline{NS} anlegt, der die neu besuchten Knoten verwaltet. Bei dieser parallelen Variante benötigt der Prozessor zu jedem verfügbaren Prozessor \(p_{i}\), wobei \(0 \leq p_{i} \leq p\) und \(p\) die Anzahl der verfügbaren Prozessoren ist, einen eigenen Stack \lstinline{$NS_{p_{i}}$}. In jedem dieser Stacks \lstinline{$NS_{p_{i}}$} werden folgende Knoten abgelegt, die vom arbeitenden Prozessor neu besucht werden und dem Prozessor \(p_{i}\) zugehörig sind. Zusätzlich ist für jeden Prozessor eine Datenstruktur \lstinline{$\pi$[1..n/p]} notwendig, die das \textit{Parent Array} darstellt. \lstinline{n} ist die Anzahl der Knoten im Graphen. Zu beachten ist, dass es im Vergleich zu Algorithmus~\ref{par_allvisited} ausreichend ist, ein Array der Länge \lstinline{n/p} zu verwalten, da bei diesem Algorithmus jeder Prozessor nur die Väter der eigenen Knoten abspeichert.
+\begin{lstlisting}[caption={Die Prozedur \lstinline{PARALLEL-BFS-ALLREDUCE} wird von allen verfügbaren Prozessoren parallel aufgerufen. Nach jeder Abarbeitung eines Levels findet durch die \lstinline{ALLREDUCE} Operationen eine sogenannte Barrier-Synchronisation statt, bei der zwischen den Prozessoren ausgetauscht wird, ob es überhaupt einen neu besuchten Knoten gibt (\lstinline{isNewLevel}), beziehungsweise wird das Array \lstinline{a} synchronisiert.},label=par_alltoall]
+$\textbf{PARALLEL-BFS-ALLTOALL}$($G_{p}$,s)
+	$\textbf{for}$ 1 $\leq$ i $\leq$ n $\textbf{do}$
+		v[i] = 0
+	$\textbf{for}$ 1 $\leq$ i $\leq$ n/p $\textbf{do}$
+		$\pi$[i] = NIL
+	$p_{i}$ = $\textit{FIND\_OWNER}$(s)
+	$\textbf{if}$ $p_{i}$ = rank
+		$\pi$[s $\textit{\%}$ n/p] = s
+		FS = {s}
+	$\textbf{for}$ 0 $\leq$ $p_{i}$ $<$ p $\textbf{do}$
+		$NS_{p_{i}}$ = $\emptyset$
+	isNewLevel = 1
+	$\textbf{while}$ (isNewLevel == 1)
+		isNewLevel = 0
+		$\textbf{for}$ each u $\in$ FS
+			$\textbf{if}$ $\pi$[u $\textit{\%}$ n/p] == NIL
+				$\pi$[u $\textit{\%}$ n/p] = u.$\pi$
+				$\textbf{for}$ each w $\in$ $G_{p}$.Adj[u]
+					$\textbf{if}$ v[w] == 0
+						$p_{i}$ = $\textit{FIND\_OWNER}$(w)
+						$NS_{p_{i}}$ = $NS_{p_{i}}$ $\cup$ {w}
+						isNewLevel = 1
+		NS = $\emptyset$
+		FS = $\emptyset$
+		$\textbf{for}$ 0 $\leq$ $p_{i}$ $<$ p $\textbf{do}$
+			NS = NS $\cup$ $NS_{p_{i}}$
+		ALLREDUCE(isNewLevel,OR)
+		FS = ALLTOALL(NS)
+	GATHER($\pi$, $p_{0}$)
+\end{lstlisting}
 Algorithmus~\ref{par_alltoall} wird wie Algorithmus~\ref{par_allvisited} mit dem eindimensional zerlegtem Teilgraphen \lstinline{$G_{p}$} und dem Startknoten \lstinline{s} von jedem verfügbaren Prozessor aufgerufen.
-
 \section{Implementierungsdetails}
 \label{sec:details}
 Bevor die Algorithmen analysiert und die dazugehörigen Versuchsergebnisse präsentiert werden, werden wir auf gewisse Details der Implementierung der Algorithmen eingehen und erklären, warum wir uns für gewisse Vorgehensweisen und Datenstrukturen entschieden haben. Die verwendete Programmiersprache ist C, für die Kommunikation zwischen der Knoten der DMM (\textit{distributed memory machine}) haben wir MPI und für die Kommunikation innerhalb eines Knoten, im Fall der Implementierung der Hybrid-Varianten, OpenMP verwendet. Das Message-Passing-Programmiermodell hat selbst keine explizite Sicht auf die Topologie eines Rechners mit physikalisch verteiltem Speicher und arbeitet stets mit einer bestimmten Anzahl von Prozessen mit zugeordneten Daten, was zu einer Abstraktion einer DMM führt. Dies führt zu einer Portabilität der Programme, da man keine genauen Informationen über die Rechner kennen muss.\\
