@@ -12,8 +12,8 @@
 #define LOG2(X) ((unsigned) (8*sizeof (unsigned long long) - __builtin_clzll((X)) - 1))
 #define SCALE 20
 #define EDGEFACTOR 32
-#define SEARCHKEY_CNT 8
-#define VALID_CHECKING 0
+#define SEARCHKEY_CNT 1
+#define VALID_CHECKING 1
 #define PARENTFILE "parent"
 #define GRAPHFILE "graph"
 #define SEARCHKEYFILE "keys"
