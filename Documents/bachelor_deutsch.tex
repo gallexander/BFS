@@ -13,6 +13,7 @@
 \usepackage{subcaption}
 \usepackage{multirow}
 \usepackage{rotating}
+\usepackage{makecell}
 
 \definecolor{lstcolor}{rgb}{0.95,0.95,0.95}
 
@@ -167,11 +168,57 @@ Diese Zerlegungen lassen sich sehr gut mit einer Adjazenzmatrix darstellen, es i
     \caption{Es ist möglich, den Graphen ein- oder zweidimensional zu zerlegen. Diese abstrakte Darstellung einer Adjazenzmatrix in Abbildung~\ref{fig:eindim} zeigt, dass im eindimensionalen Fall die Zerlegung nur auf einer Achse erfolgt, im zweidimensionalen Fall in Abbildung~\ref{fig:zweidim} auf zwei Achsen.}
 \label{fig:zerlegung}
 \end{figure}
-\begin{tabular}{l|l|l|l|l|l|l|l|l|l|l|l|l|l|l|l}
-0 & 1 & 2 & 3 & 4 & 5 & 6 & 7 & 8 & 9 & 10 & 11 & 12 & 13 & 14 & 15 \\ 
-\hline
-0 & 1 & 1 & 1 & 0 & 0 & 0 & 1 & 1 & 0 & 0 & 0 & 0 & 0 & 1 & 0 \\ 
-\end{tabular}
+\begin{figure}[t]
+	\centering
+	\scalebox{0.7}{
+	\begin{tabular}{r | *{16}{c}}
+	 & 0 & 1 & 2 & 3 & 4 & 5 & 6 & 7 & 8 & 9 & 10 & 11 & 12 & 13 & 14 & 15 \\ 
+	\hline
+	0 & 0 & 1 & 1 & 1 & 0 & 0 & 0 & 1 & 1 & 0 & 0 & 0 & 0 & 0 & 1 & 0 \\
+	1 & 0 & 1 & 1 & 1 & 0 & 0 & 0 & 1 & 1 & 0 & 0 & 0 & 0 & 0 & 1 & 0 \\
+	2 & 0 & 1 & 1 & 1 & 0 & 0 & 0 & 1 & 1 & 0 & 0 & 0 & 0 & 0 & 1 & 0 \\
+	3 & 0 & 1 & 1 & 1 & 0 & 0 & 0 & 1 & 1 & 0 & 0 & 0 & 0 & 0 & 1 & 0 \\
+	\Xhline{\arrayrulewidth}
+	4 & 0 & 1 & 1 & 1 & 0 & 0 & 0 & 1 & 1 & 0 & 0 & 0 & 0 & 0 & 1 & 0 \\
+	5 & 0 & 1 & 1 & 1 & 0 & 0 & 0 & 1 & 1 & 0 & 0 & 0 & 0 & 0 & 1 & 0 \\
+	6 & 0 & 1 & 1 & 1 & 0 & 0 & 0 & 1 & 1 & 0 & 0 & 0 & 0 & 0 & 1 & 0 \\
+	7 & 0 & 1 & 1 & 1 & 0 & 0 & 0 & 1 & 1 & 0 & 0 & 0 & 0 & 0 & 1 & 0 \\
+	\Xhline{\arrayrulewidth}
+	8 & 0 & 1 & 1 & 1 & 0 & 0 & 0 & 1 & 1 & 0 & 0 & 0 & 0 & 0 & 1 & 0 \\
+	9 & 0 & 1 & 1 & 1 & 0 & 0 & 0 & 1 & 1 & 0 & 0 & 0 & 0 & 0 & 1 & 0 \\
+	10 & 0 & 1 & 1 & 1 & 0 & 0 & 0 & 1 & 1 & 0 & 0 & 0 & 0 & 0 & 1 & 0 \\
+	11 & 0 & 1 & 1 & 1 & 0 & 0 & 0 & 1 & 1 & 0 & 0 & 0 & 0 & 0 & 1 & 0 \\
+	\Xhline{\arrayrulewidth}
+	12 & 0 & 1 & 1 & 1 & 0 & 0 & 0 & 1 & 1 & 0 & 0 & 0 & 0 & 0 & 1 & 0 \\
+	13& 0 & 1 & 1 & 1 & 0 & 0 & 0 & 1 & 1 & 0 & 0 & 0 & 0 & 0 & 1 & 0 \\
+	14 & 0 & 1 & 1 & 1 & 0 & 0 & 0 & 1 & 1 & 0 & 0 & 0 & 0 & 0 & 1 & 0 \\
+	15 & 0 & 1 & 1 & 1 & 0 & 0 & 0 & 1 & 1 & 0 & 0 & 0 & 0 & 0 & 1 & 0 \\
+	\end{tabular}
+	\hspace{1cm}
+	\begin{tabular}{r | *{16}{c}}
+	 & 0 & 1 & 2 & 3 & 4 & 5 & 6 & 7 & 8 & 9 & 10 & 11 & 12 & 13 & 14 & 15 \\ 
+	\hline
+	0 & 0 & 1 & 1 & 1 & 0 & 0 & 0 & 1 & 1 & 0 & 0 & 0 & 0 & 0 & 1 & 0 \\
+	1 & 0 & 1 & 1 & 1 & 0 & 0 & 0 & 1 & 1 & 0 & 0 & 0 & 0 & 0 & 1 & 0 \\
+	2 & 0 & 1 & 1 & 1 & 0 & 0 & 0 & 1 & 1 & 0 & 0 & 0 & 0 & 0 & 1 & 0 \\
+	3 & 0 & 1 & 1 & 1 & 0 & 0 & 0 & 1 & 1 & 0 & 0 & 0 & 0 & 0 & 1 & 0 \\
+	4 & 0 & 1 & 1 & 1 & 0 & 0 & 0 & 1 & 1 & 0 & 0 & 0 & 0 & 0 & 1 & 0 \\
+	5 & 0 & 1 & 1 & 1 & 0 & 0 & 0 & 1 & 1 & 0 & 0 & 0 & 0 & 0 & 1 & 0 \\
+	6 & 0 & 1 & 1 & 1 & 0 & 0 & 0 & 1 & 1 & 0 & 0 & 0 & 0 & 0 & 1 & 0 \\
+	7 & 0 & 1 & 1 & 1 & 0 & 0 & 0 & 1 & 1 & 0 & 0 & 0 & 0 & 0 & 1 & 0 \\
+	8 & 0 & 1 & 1 & 1 & 0 & 0 & 0 & 1 & 1 & 0 & 0 & 0 & 0 & 0 & 1 & 0 \\
+	9 & 0 & 1 & 1 & 1 & 0 & 0 & 0 & 1 & 1 & 0 & 0 & 0 & 0 & 0 & 1 & 0 \\
+	10 & 0 & 1 & 1 & 1 & 0 & 0 & 0 & 1 & 1 & 0 & 0 & 0 & 0 & 0 & 1 & 0 \\
+	11 & 0 & 1 & 1 & 1 & 0 & 0 & 0 & 1 & 1 & 0 & 0 & 0 & 0 & 0 & 1 & 0 \\
+	12 & 0 & 1 & 1 & 1 & 0 & 0 & 0 & 1 & 1 & 0 & 0 & 0 & 0 & 0 & 1 & 0 \\
+	13& 0 & 1 & 1 & 1 & 0 & 0 & 0 & 1 & 1 & 0 & 0 & 0 & 0 & 0 & 1 & 0 \\
+	14 & 0 & 1 & 1 & 1 & 0 & 0 & 0 & 1 & 1 & 0 & 0 & 0 & 0 & 0 & 1 & 0 \\
+	15 & 0 & 1 & 1 & 1 & 0 & 0 & 0 & 1 & 1 & 0 & 0 & 0 & 0 & 0 & 1 & 0 \\
+	\end{tabular}
+	}
+	\caption{a table}
+	\label{tab:onedim}
+\end{figure}
 Abbildung~\ref{fig:zerlegung} zeigt die Zerlegung des Graphen im ein- und zweidimensionalen Fall. Repräsentiert wird der Graph durch eine Adjazenzmatrix. Das heißt, dass auf beiden Achsen die Knoten eingetragen sind und jeder Eintrag in der Matrix die Information speichert, ob eine Kante zwischen diesen Knoten existiert oder nicht.  Im eindimensionalen Fall heißt das, dass die Knoten, die auf der horizontalen Achse eingetragen sind, und alle zugehörigen Kanten, dargestellt durch die Spalten in der Matrix, unter den Prozessoren aufgeteilt werden. Ein Rahmen (\textit{frame}) spiegelt also wider, was in einem Prozessor abgespeichert wird. Im Gegensatz dazu wird bei der zweidimensionalen Zerlegung auch die vertikale Achse auf mehrere Prozessoren aufgeteilt, wodurch es, wie schon weiter oben erwähnt, der Fall ist, dass sich mehrere Prozessoren die gleiche Knotenmenge teilen, aber unterschiedliche Kanten zu diesen Knoten abspeichern beziehungsweise behandeln.\\
 Ausgehend von der level-basierten sequentiellen Breitensuche, dargestellt durch Algorithmus~\ref{stacks}, und der eindimensionalen Zerlegung des Graphen, werden wir zwei Algorithmen zur parallelen Breitensuche abstrakt veranschaulichen. Grundlegender Unterschied dieser zwei Algorithmen ist die Synchronisation zwischen den Prozessoren, also welche Daten werden wie synchronisiert. Außerdem liegen Unterschiede darin, wieviel die Prozessoren über den Gesamtzustand des Systems wissen, also zum Beispiel ob Knoten, die anderen Prozessoren zugeordnet sind, bereits besucht wurden und deshalb im nächsten Level nicht mehr berücksichtigt werden müssen. Wichtig ist jedoch, dass beide Algorithmen mit einer 1D Zerlegung des Graphen arbeiten und als Ausgabe einen \textit{Breadth-First Tree} haben müssen. Falls dieser \textit{Breadth-First Tree} in einem Array abgespeichert ist, bezeichnen wir dieses Array auch als \textit{Parent Array}.  Dabei wollen wir festlegen, dass dieses \textit{Parent Array} am Ende des Algorithmus nicht unbedingt auf einem Prozessor liegen muss, sondern auf den arbeitenden Prozessoren verteilt sein kann. Details über die Implementierung und welche Auswirkungen diese Unterschiede auf die Laufzeit des Algorithmus haben, sind in Kapitel~\ref{sec:details} beziehungsweise Kapitel~\ref{sec:analysechapter} zu finden.
 \subsection{Paralleler BFS mit Allreduce Kommunikation}
