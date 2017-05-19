@@ -154,70 +154,19 @@ Anhand dieser Überlegungen gibt es nun unterschiedliche Wege die Breitensuche z
 Diese Zerlegungen lassen sich sehr gut mit einer Adjazenzmatrix darstellen, es ist jedoch nicht notwendig auch eine Matrix als Graphrepräsentation in der Implementierung zu verwenden, diese Repräsentation soll nur zum Verständnis beitragen.
 \begin{figure}[h]
     \centering
-    \begin{subfigure}[b]{0.3\textwidth}
+    \begin{subfigure}[b]{0.45\textwidth}
         \includegraphics[width=0.9\textwidth]{eindim}
         \caption{eindimensional}
         \label{fig:eindim}
     \end{subfigure}
    \qquad
-    \begin{subfigure}[b]{0.3\textwidth}
+    \begin{subfigure}[b]{0.45\textwidth}
         \includegraphics[width=0.9\textwidth]{zweidim}
         \caption{zweidimensional}
         \label{fig:zweidim}
     \end{subfigure}
     \caption{Es ist möglich, den Graphen ein- oder zweidimensional zu zerlegen. Diese abstrakte Darstellung einer Adjazenzmatrix in Abbildung~\ref{fig:eindim} zeigt, dass im eindimensionalen Fall die Zerlegung nur auf einer Achse erfolgt, im zweidimensionalen Fall in Abbildung~\ref{fig:zweidim} auf zwei Achsen.}
 \label{fig:zerlegung}
-\end{figure}
-\begin{figure}[t]
-	\centering
-	\scalebox{0.7}{
-	\begin{tabular}{r | *{16}{c}}
-	 & 0 & 1 & 2 & 3 & 4 & 5 & 6 & 7 & 8 & 9 & 10 & 11 & 12 & 13 & 14 & 15 \\ 
-	\hline
-	0 & 0 & 1 & 1 & 1 & 0 & 0 & 0 & 1 & 1 & 0 & 0 & 0 & 0 & 0 & 1 & 0 \\
-	1 & 0 & 1 & 1 & 1 & 0 & 0 & 0 & 1 & 1 & 0 & 0 & 0 & 0 & 0 & 1 & 0 \\
-	2 & 0 & 1 & 1 & 1 & 0 & 0 & 0 & 1 & 1 & 0 & 0 & 0 & 0 & 0 & 1 & 0 \\
-	3 & 0 & 1 & 1 & 1 & 0 & 0 & 0 & 1 & 1 & 0 & 0 & 0 & 0 & 0 & 1 & 0 \\
-	\Xhline{\arrayrulewidth}
-	4 & 0 & 1 & 1 & 1 & 0 & 0 & 0 & 1 & 1 & 0 & 0 & 0 & 0 & 0 & 1 & 0 \\
-	5 & 0 & 1 & 1 & 1 & 0 & 0 & 0 & 1 & 1 & 0 & 0 & 0 & 0 & 0 & 1 & 0 \\
-	6 & 0 & 1 & 1 & 1 & 0 & 0 & 0 & 1 & 1 & 0 & 0 & 0 & 0 & 0 & 1 & 0 \\
-	7 & 0 & 1 & 1 & 1 & 0 & 0 & 0 & 1 & 1 & 0 & 0 & 0 & 0 & 0 & 1 & 0 \\
-	\Xhline{\arrayrulewidth}
-	8 & 0 & 1 & 1 & 1 & 0 & 0 & 0 & 1 & 1 & 0 & 0 & 0 & 0 & 0 & 1 & 0 \\
-	9 & 0 & 1 & 1 & 1 & 0 & 0 & 0 & 1 & 1 & 0 & 0 & 0 & 0 & 0 & 1 & 0 \\
-	10 & 0 & 1 & 1 & 1 & 0 & 0 & 0 & 1 & 1 & 0 & 0 & 0 & 0 & 0 & 1 & 0 \\
-	11 & 0 & 1 & 1 & 1 & 0 & 0 & 0 & 1 & 1 & 0 & 0 & 0 & 0 & 0 & 1 & 0 \\
-	\Xhline{\arrayrulewidth}
-	12 & 0 & 1 & 1 & 1 & 0 & 0 & 0 & 1 & 1 & 0 & 0 & 0 & 0 & 0 & 1 & 0 \\
-	13& 0 & 1 & 1 & 1 & 0 & 0 & 0 & 1 & 1 & 0 & 0 & 0 & 0 & 0 & 1 & 0 \\
-	14 & 0 & 1 & 1 & 1 & 0 & 0 & 0 & 1 & 1 & 0 & 0 & 0 & 0 & 0 & 1 & 0 \\
-	15 & 0 & 1 & 1 & 1 & 0 & 0 & 0 & 1 & 1 & 0 & 0 & 0 & 0 & 0 & 1 & 0 \\
-	\end{tabular}
-	\hspace{1cm}
-	\begin{tabular}{r | *{16}{c}}
-	 & 0 & 1 & 2 & 3 & 4 & 5 & 6 & 7 & 8 & 9 & 10 & 11 & 12 & 13 & 14 & 15 \\ 
-	\hline
-	0 & 0 & 1 & 1 & 1 & 0 & 0 & 0 & 1 & 1 & 0 & 0 & 0 & 0 & 0 & 1 & 0 \\
-	1 & 0 & 1 & 1 & 1 & 0 & 0 & 0 & 1 & 1 & 0 & 0 & 0 & 0 & 0 & 1 & 0 \\
-	2 & 0 & 1 & 1 & 1 & 0 & 0 & 0 & 1 & 1 & 0 & 0 & 0 & 0 & 0 & 1 & 0 \\
-	3 & 0 & 1 & 1 & 1 & 0 & 0 & 0 & 1 & 1 & 0 & 0 & 0 & 0 & 0 & 1 & 0 \\
-	4 & 0 & 1 & 1 & 1 & 0 & 0 & 0 & 1 & 1 & 0 & 0 & 0 & 0 & 0 & 1 & 0 \\
-	5 & 0 & 1 & 1 & 1 & 0 & 0 & 0 & 1 & 1 & 0 & 0 & 0 & 0 & 0 & 1 & 0 \\
-	6 & 0 & 1 & 1 & 1 & 0 & 0 & 0 & 1 & 1 & 0 & 0 & 0 & 0 & 0 & 1 & 0 \\
-	7 & 0 & 1 & 1 & 1 & 0 & 0 & 0 & 1 & 1 & 0 & 0 & 0 & 0 & 0 & 1 & 0 \\
-	8 & 0 & 1 & 1 & 1 & 0 & 0 & 0 & 1 & 1 & 0 & 0 & 0 & 0 & 0 & 1 & 0 \\
-	9 & 0 & 1 & 1 & 1 & 0 & 0 & 0 & 1 & 1 & 0 & 0 & 0 & 0 & 0 & 1 & 0 \\
-	10 & 0 & 1 & 1 & 1 & 0 & 0 & 0 & 1 & 1 & 0 & 0 & 0 & 0 & 0 & 1 & 0 \\
-	11 & 0 & 1 & 1 & 1 & 0 & 0 & 0 & 1 & 1 & 0 & 0 & 0 & 0 & 0 & 1 & 0 \\
-	12 & 0 & 1 & 1 & 1 & 0 & 0 & 0 & 1 & 1 & 0 & 0 & 0 & 0 & 0 & 1 & 0 \\
-	13& 0 & 1 & 1 & 1 & 0 & 0 & 0 & 1 & 1 & 0 & 0 & 0 & 0 & 0 & 1 & 0 \\
-	14 & 0 & 1 & 1 & 1 & 0 & 0 & 0 & 1 & 1 & 0 & 0 & 0 & 0 & 0 & 1 & 0 \\
-	15 & 0 & 1 & 1 & 1 & 0 & 0 & 0 & 1 & 1 & 0 & 0 & 0 & 0 & 0 & 1 & 0 \\
-	\end{tabular}
-	}
-	\caption{a table}
-	\label{tab:onedim}
 \end{figure}
 Abbildung~\ref{fig:zerlegung} zeigt die Zerlegung des Graphen im ein- und zweidimensionalen Fall. Repräsentiert wird der Graph durch eine Adjazenzmatrix. Das heißt, dass auf beiden Achsen die Knoten eingetragen sind und jeder Eintrag in der Matrix die Information speichert, ob eine Kante zwischen diesen Knoten existiert oder nicht.  Im eindimensionalen Fall heißt das, dass die Knoten, die auf der horizontalen Achse eingetragen sind, und alle zugehörigen Kanten, dargestellt durch die Spalten in der Matrix, unter den Prozessoren aufgeteilt werden. Ein Rahmen (\textit{frame}) spiegelt also wider, was in einem Prozessor abgespeichert wird. Im Gegensatz dazu wird bei der zweidimensionalen Zerlegung auch die vertikale Achse auf mehrere Prozessoren aufgeteilt, wodurch es, wie schon weiter oben erwähnt, der Fall ist, dass sich mehrere Prozessoren die gleiche Knotenmenge teilen, aber unterschiedliche Kanten zu diesen Knoten abspeichern beziehungsweise behandeln.\\
 Ausgehend von der level-basierten sequentiellen Breitensuche, dargestellt durch Algorithmus~\ref{stacks}, und der eindimensionalen Zerlegung des Graphen, werden wir zwei Algorithmen zur parallelen Breitensuche abstrakt veranschaulichen. Grundlegender Unterschied dieser zwei Algorithmen ist die Synchronisation zwischen den Prozessoren, also welche Daten werden wie synchronisiert. Außerdem liegen Unterschiede darin, wieviel die Prozessoren über den Gesamtzustand des Systems wissen, also zum Beispiel ob Knoten, die anderen Prozessoren zugeordnet sind, bereits besucht wurden und deshalb im nächsten Level nicht mehr berücksichtigt werden müssen. Wichtig ist jedoch, dass beide Algorithmen mit einer 1D Zerlegung des Graphen arbeiten und als Ausgabe einen \textit{Breadth-First Tree} haben müssen. Falls dieser \textit{Breadth-First Tree} in einem Array abgespeichert ist, bezeichnen wir dieses Array auch als \textit{Parent Array}.  Dabei wollen wir festlegen, dass dieses \textit{Parent Array} am Ende des Algorithmus nicht unbedingt auf einem Prozessor liegen muss, sondern auf den arbeitenden Prozessoren verteilt sein kann. Details über die Implementierung und welche Auswirkungen diese Unterschiede auf die Laufzeit des Algorithmus haben, sind in Kapitel~\ref{sec:details} beziehungsweise Kapitel~\ref{sec:analysechapter} zu finden.
@@ -240,7 +189,7 @@ $\textbf{PARALLEL-BFS-ALLREDUCE}$($G_{p}$,s)
 		$a_{p}$ = a[n/$\textit{p}$*$\textit{rank}$+1..n/$\textit{p}$*($\textit{rank}$+1)]
 		FS = $\textit{GETNEWVISITED}$($a_{p}$,v)
 		$\textbf{for}$ each u $\in$ FS
-			v[u $\textit{\%}$ n/p] = 1
+			v[u$_{local}$] = 1
 			$\textbf{for}$ each w $\in$ $G_{p}$.Adj[u]
 				$\textbf{if}$ a[w] == 0
 					a[w] = 1
@@ -294,8 +243,8 @@ $\textbf{PARALLEL-BFS-ALLTOALL}$($G_{p}$,s)
 	$\textbf{while}$ (isNewLevel == 1)
 		isNewLevel = 0
 		$\textbf{for}$ each u $\in$ FS
-			$\textbf{if}$ $\pi$[u $\textit{\%}$ n/p] == NIL
-				$\pi$[u $\textit{\%}$ n/p] = u.$\pi$
+			$\textbf{if}$ $\pi$[u$_{local}$] == NIL
+				$\pi$[u$_{local}$] = u.$\pi$
 				v[u] = 1
 				$\textbf{for}$ each w $\in$ $G_{p}$.Adj[u]
 					$\textbf{if}$ v[w] == 0
@@ -313,7 +262,7 @@ $\textbf{PARALLEL-BFS-ALLTOALL}$($G_{p}$,s)
 	GATHER($\pi$, $p_{0}$)
 \end{lstlisting}
 Algorithmus~\ref{par_alltoall} wird wie Algorithmus~\ref{par_allvisited} mit dem eindimensional zerlegtem Teilgraphen \lstinline{$G_{p}$} und dem Startknoten \lstinline{s} von jedem verfügbaren Prozessor aufgerufen. Zu Beginn werden die Arrays \lstinline{v} und \lstinline{$\pi$} initialisiert. Jeder Prozessor erhält den Startknoten \lstinline{s}, es kann jedoch nur ein Prozessor für diesen Knoten zuständig sein. Deshalb wird mittels der Funktion \lstinline{FIND_OWNER} die Identifikationsnummer oder auch genannt der Rang des Prozessors berechnet. Jeder Prozessor hat einen eindeutigen Rang innerhalb der Prozessorgruppe, die alle verfügbaren Prozessoren enthält. Dabei werden Ränge vergeben von 0 bis \(p-1\). Der Prozessor, der diesen Rang, geprüft durch die Bedingung in Zeile 8, aufweist, also für diesen Startknoten verantwortlich ist, setzt zuerst den Vater für diesen Startknoten durch \lstinline{s.$\pi$ = s}, was beim Wurzelknoten der Breitensuche, der Knoten selbst ist und fügt das erste Element dem Stack \lstinline{FS} zu. Weiters werden die Stacks \lstinline{NS$_{p_{i}}$} zu jedem verfügbaren Prozessor initialisiert. \\
-In der ersten Iteration von Zeile 14-32 beziehungsweise im ersten Superschritt arbeitet nur ein Prozessor, nämlich der jenige, der für den Startknoten zuständig ist. Diesen holt er sich in Zeile 16 aus dem Stack \lstinline{FS} und überprüft, ob bereits ein Vater für diesen Knoten im \textit{Parent Array} gesetzt wurde, was die Information gibt, ob dieser Knoten schon bearbeitet wurde. Dies ist beim Startknoten definitiv nicht der Fall. Damit wird zuerst der Vater des Startknoten im \textit{Parent Array} gesetzt. Auf das Feld im Array \lstinline{$\pi$} in Zeile 17 beziehungsweise 18 müssen wir deshalb mit dem Index \lstinline{u $\textit{\%}$ n/p} zugreifen, da das \textit{Parent Array} insgesamt \(n/p\) Felder hat, die Identifikationsnummern der Knoten jedoch bis zu \(n\) hoch sind und jeder Prozessor nur für einen gewissen Bereich aus diesen \(n\) Identifikationsnummern zuständig ist. Im Zuge der Bearbeitung eines Knoten wird über die Nachbarn dieses Knoten von Zeile 20-26 iteriert, wobei bei jedem dieser Nachbarn überprüft wird, ob dieser bereits im Array \lstinline{v} auf 1 gesetzt ist, also bereits von diesem Prozessor besucht wurde. Ist dies nicht der Fall, wird dieser Nachbar in den jeweiligen Stack \lstinline{NS$_{p_{i}}$} aufgenommen, wobei der für den Nachbarn zuständige Prozessor mittels \lstinline{FIND_OWNER} wieder ausfindig gemacht wird. Für den Algorithmus wichtig ist die Zeile 24, wo das Vaterattribut des Knoten \lstinline{w} auf den Knoten \lstinline{u} gesetzt wird. Damit ist für den Prozessor, der dann diesen Knoten \lstinline{w} im nächsten Level oder Superschritt bearbeitet, nachvollziehbar, von welchen Knoten aus dieser besucht wurde. Sobald ein beliebiger Knoten von arbeitenden Prozessor neu besucht wird, wird auch die Variable \lstinline{isNewLevel} auf 1 gesetzt, damit alle Prozessoren durch die folgende Synchronisation dieser Variablen wissen, ob zumindest ein neuer Knoten im Graphen neu besucht wurde. Nachdem alle Knoten des Stacks \lstinline{FS} abgearbeitet sind, werden die zwei Datenstrukturen \lstinline{FS} und \lstinline{NS} initialisiert beziehungsweise neu initialisiert, um diese für die folgende \lstinline{ALLTOALL} Operation vorzubereiten. Dabei wird \lstinline{NS} in Zeile 29 und 30 so aufgebaut, dass die Knoten die für den Prozessor mit dem Rang \lstinline{$p_{i}+1$} bestimmt sind, neben den Knoten in \lstinline{NS} liegen, die für den Prozessor mit dem Rang \lstinline{$p_{i}$} bestimmt sind. In Zeile 32 findet dann die \lstinline{ALLTOALL} Operation statt, bei der alle Prozessoren unterschiedliche Teile der Datenstruktur \lstinline{NS} an die jeweiligen zuständigen Prozessoren senden. Das Ergebnis dieser Operation wird dann für jeden Prozessor im Stack \lstinline{FS} abgelegt. Dieser enthält nun alle Knoten, für die dieser Prozessor verantwortlich ist und die im aktuellen Level neu besucht wurden und im nächsten Level überprüft beziehungsweise bearbeitet werden müssen.\\
+In der ersten Iteration von Zeile 14-32 beziehungsweise im ersten Superschritt arbeitet nur ein Prozessor, nämlich der jenige, der für den Startknoten zuständig ist. Diesen holt er sich in Zeile 16 aus dem Stack \lstinline{FS} und überprüft, ob bereits ein Vater für diesen Knoten im \textit{Parent Array} gesetzt wurde, was die Information gibt, ob dieser Knoten schon bearbeitet wurde. Dies ist beim Startknoten definitiv nicht der Fall. Damit wird zuerst der Vater des Startknoten im \textit{Parent Array} gesetzt. Auf das Feld im Array \lstinline{$\pi$} in Zeile 17 beziehungsweise 18 müssen wir deshalb mit dem Index \lstinline{u$_{local}$} zugreifen, da das \textit{Parent Array} insgesamt \(n/p\) Felder hat, die Identifikationsnummern der Knoten jedoch bis zu \(n\) hoch sind und jeder Prozessor nur für einen gewissen Bereich aus diesen \(n\) Identifikationsnummern zuständig ist. Im Zuge der Bearbeitung eines Knoten wird über die Nachbarn dieses Knoten von Zeile 20-26 iteriert, wobei bei jedem dieser Nachbarn überprüft wird, ob dieser bereits im Array \lstinline{v} auf 1 gesetzt ist, also bereits von diesem Prozessor besucht wurde. Ist dies nicht der Fall, wird dieser Nachbar in den jeweiligen Stack \lstinline{NS$_{p_{i}}$} aufgenommen, wobei der für den Nachbarn zuständige Prozessor mittels \lstinline{FIND_OWNER} wieder ausfindig gemacht wird. Für den Algorithmus wichtig ist die Zeile 24, wo das Vaterattribut des Knoten \lstinline{w} auf den Knoten \lstinline{u} gesetzt wird. Damit ist für den Prozessor, der dann diesen Knoten \lstinline{w} im nächsten Level oder Superschritt bearbeitet, nachvollziehbar, von welchen Knoten aus dieser besucht wurde. Sobald ein beliebiger Knoten von arbeitenden Prozessor neu besucht wird, wird auch die Variable \lstinline{isNewLevel} auf 1 gesetzt, damit alle Prozessoren durch die folgende Synchronisation dieser Variablen wissen, ob zumindest ein neuer Knoten im Graphen neu besucht wurde. Nachdem alle Knoten des Stacks \lstinline{FS} abgearbeitet sind, werden die zwei Datenstrukturen \lstinline{FS} und \lstinline{NS} initialisiert beziehungsweise neu initialisiert, um diese für die folgende \lstinline{ALLTOALL} Operation vorzubereiten. Dabei wird \lstinline{NS} in Zeile 29 und 30 so aufgebaut, dass die Knoten die für den Prozessor mit dem Rang \lstinline{$p_{i}+1$} bestimmt sind, neben den Knoten in \lstinline{NS} liegen, die für den Prozessor mit dem Rang \lstinline{$p_{i}$} bestimmt sind. In Zeile 32 findet dann die \lstinline{ALLTOALL} Operation statt, bei der alle Prozessoren unterschiedliche Teile der Datenstruktur \lstinline{NS} an die jeweiligen zuständigen Prozessoren senden. Das Ergebnis dieser Operation wird dann für jeden Prozessor im Stack \lstinline{FS} abgelegt. Dieser enthält nun alle Knoten, für die dieser Prozessor verantwortlich ist und die im aktuellen Level neu besucht wurden und im nächsten Level überprüft beziehungsweise bearbeitet werden müssen.\\
 Es folgen nun so viele Iterationen bis keine neuen Knoten mehr gefunden werden. Jeder Prozessor hat nun ein \textit{Parent Array} über die Knoten die ihm zugeordnet sind und werden durch die Operation \lstinline{GATHER} in Zeile 33 vom Prozessor mit dem Rang \lstinline{$p_{0}$} eingesammelt, sodass dieser das gesamte \textit{Parent Array} besitzt.
 \section{Implementierungsdetails}
 \label{sec:details}
