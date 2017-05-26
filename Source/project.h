@@ -10,7 +10,7 @@
 #include <omp.h>
 
 #define LOG2(X) ((unsigned) (8*sizeof (unsigned long long) - __builtin_clzll((X)) - 1))
-#define SCALE 22
+#define SCALE 18
 #define EDGEFACTOR 32
 #define SEARCHKEY_CNT 1
 #define VALID_CHECKING 1

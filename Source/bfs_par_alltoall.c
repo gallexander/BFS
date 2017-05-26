@@ -228,7 +228,7 @@ void bfs_alltoall(uint64_t root, uint64_t *buffer, uint64_t buffer_size, uint64_
     double time_work = 0;
     double time_parent = 0;
     char this_round_active = 0;
-    
+    int count = 0;
     if ((root / nodes_owned) == my_rank){
         edges_count = 2;
         edges_received = (uint64_t *) calloc(2, sizeof(uint64_t));
