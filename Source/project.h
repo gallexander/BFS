@@ -14,7 +14,9 @@
 #define EDGEFACTOR 32
 #define SEARCHKEY_CNT 1
 #define VALID_CHECKING 1
+#define DISTANCE_CHECKING 0
 #define PARENTFILE "parent"
+#define DISTANCEFILE "distance"
 #define GRAPHFILE "graph"
 #define SEARCHKEYFILE "keys"
 #define BITS 64

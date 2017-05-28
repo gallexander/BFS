@@ -122,22 +122,40 @@ uint64_t kernel_2(uint64_t *buffer, uint64_t *index_of_node, int my_rank, int pr
                     fprintf(fp, "%llu\n", (unsigned long long) parent_array[i]);            
                 }
             }else{
-                fp = fopen(PARENTFILE, "r");
-                for (i = 0; i < pow(2,scale); i++){
-                    fscanf(fp, "%llu\n", (unsigned long long *)(&parent));
-                    if (parent != parent_array[i]){
-                        if (distance_array[parent-1] != distance_array[parent_array[i]-1]){
+                if (!DISTANCE_CHECKING){
+                    fp = fopen(PARENTFILE, "r");
+                    for (i = 0; i < pow(2,scale); i++){
+                        fscanf(fp, "%llu\n", (unsigned long long *)(&parent));
+                        if (parent != parent_array[i]){
+                            if (distance_array[parent-1] != distance_array[parent_array[i]-1]){
+                                valid = 0;
+                                positions++;
+                                printf("%llu--> %llu:%i  != %llu:%i \n", (unsigned long long) i, (unsigned long long) parent-1, distance_array[parent-1], (unsigned long long) parent_array[i]-1, distance_array[parent_array[i]-1]);                   
+                            }
+                        }            
+                    }
+                    if (valid){
+                        printf("The parent array from the file is VALID.\n");            
+                    }else{
+                        printf("THE parent array from the file is NOT VALID.\n");
+                        printf("NOT VALID ON %llu positions\n", (unsigned long long) positions);
+                    }
+                }else{
+                    fp = fopen(DISTANCEFILE, "r");
+                    for (i = 0; i < pow(2,scale); i++){
+                        fscanf(fp, "%llu\n", (unsigned long long *)(&parent));
+                        if (parent != distance_array[i]){
                             valid = 0;
                             positions++;
-                            printf("%llu--> %llu:%i  != %llu:%i \n", (unsigned long long) i, (unsigned long long) parent-1, distance_array[parent-1], (unsigned long long) parent_array[i]-1, distance_array[parent_array[i]-1]);                   
-                        }
-                    }            
-                }
-                if (valid){
-                    printf("The parent array from the file is VALID.\n");            
-                }else{
-                    printf("THE parent array from the file is NOT VALID.\n");
-                    printf("NOT VALID ON %llu positions\n", (unsigned long long) positions);
+                            printf("%llu --> %llu  != %llu\n", (unsigned long long) i, (unsigned long long) parent, (unsigned long long)distance_array[i]);                    
+                        }            
+                    }
+                    if (valid){
+                        printf("The distance array from the file is VALID.\n");            
+                    }else{
+                        printf("THE distance array from the file is NOT VALID.\n");
+                        printf("NOT VALID ON %llu positions\n", (unsigned long long) positions);
+                    }               
                 }
             }
             fclose(fp);
@@ -168,7 +186,7 @@ void bfs_seq(uint64_t root, uint64_t *buffer, uint64_t buffer_size, uint64_t *in
     FS[FS_count++] = root;
     parent_array[root] = root + 1;
     if (VALID_CHECKING){
-        distance_array[root] = 0;        
+        distance_array[root] = 1;        
     }
     while (FS_count){
         uint64_t i;
@@ -180,7 +198,7 @@ void bfs_seq(uint64_t root, uint64_t *buffer, uint64_t buffer_size, uint64_t *in
                         NS[NS_count++] = buffer[j];
                         parent_array[buffer[j]] = FS[i] + 1;
                         if (VALID_CHECKING){
-                            distance_array[buffer[j]] = level;
+                            distance_array[buffer[j]] = level+1;
                         }
                     }
                 }
@@ -190,7 +208,7 @@ void bfs_seq(uint64_t root, uint64_t *buffer, uint64_t buffer_size, uint64_t *in
                         NS[NS_count++] = buffer[j];
                         parent_array[buffer[j]] = FS[i] + 1;
                         if (VALID_CHECKING){
-                            distance_array[buffer[j]] = level;
+                            distance_array[buffer[j]] = level+1;
                         }
                     }
                 }
