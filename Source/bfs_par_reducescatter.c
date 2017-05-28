@@ -185,28 +185,21 @@ uint64_t kernel_2(uint64_t *buffer, uint64_t *index_of_node, int my_rank, int pr
         }
         bfs(level, buffer, index_of_node[nodes/procs], index_of_node, my_rank, procs, scale, distance_array, &time_allwork, &time_allreduce, &time_parentreduce);
         if (my_rank == 0){
-            parent_array[root] = root + 1;
             if (SEARCHKEY_CNT == 1){
                 FILE *fp;
                 fp = fopen(PARENTFILE, "w");
                 uint64_t i;
                 for (i = 0; i < pow(2,scale); i++){
-                    fprintf(fp, "%llu\n", (unsigned long long) parent_array[i]);            
+                    fprintf(fp, "%llu\n", (unsigned long long) distance_array[i]);            
                 }
                 fclose(fp);
             }
-            /*uint64_t i;
-            for (i = 0; i < pow(2,scale)*EDGEFACTOR; i++){
-                if (parent_array[startVertex[i]] != 0){
-                    count++;
-                }
-            }*/
         }
         free(distance_array);
         free(level);
     }
     if (my_rank == 0)
-        printf("Time for all reducing: %f\nTime for work without reducing: %f\nTime for reducing parent array: %f\n", time_allreduce/1000000, (time_allwork-time_allreduce)/1000000, time_parentreduce/1000000);
+        printf("Time for all reducing: %f\nTime for work without reducing: %f\nTime for reducing distance array: %f\n", time_allreduce/1000000, (time_allwork-time_allreduce)/1000000, time_parentreduce/1000000);
     free(buffer);
     free(index_of_node);
     return count;
@@ -217,6 +210,7 @@ void bfs(uint64_t *level, uint64_t *buffer, uint64_t buffer_size, uint64_t *inde
     unsigned long *next_level = (unsigned long *) calloc(pow(2,scale) / BITS, sizeof(unsigned long));
     uint64_t *visited = (uint64_t *) calloc(nodes_owned / BITS, sizeof(uint64_t));
     uint64_t *not_visited = (uint64_t *) calloc(nodes_owned / BITS, sizeof(uint64_t));
+    int *recvcounts = (int *) calloc(procs, sizeof(int));
     char oneChildisVisited = 1;
     int level_count = 1;
     uint64_t i;
@@ -224,6 +218,9 @@ void bfs(uint64_t *level, uint64_t *buffer, uint64_t buffer_size, uint64_t *inde
     double time_reduce = 0;
     double time_work = 0;
     double time_parent = 0;
+    for (i = 0; i < procs; i++){
+        recvcounts[i] = nodes_owned / BITS;
+    }
     if (my_rank == 0){
         time_work = mytime();
     }
@@ -264,7 +261,9 @@ void bfs(uint64_t *level, uint64_t *buffer, uint64_t buffer_size, uint64_t *inde
             time_reduce = mytime();
         }
         if (oneChildisVisited){
-            MPI_Allreduce(MPI_IN_PLACE, (void *)level, (pow(2,scale) / BITS), MPI_UINT64_T, MPI_BOR, MPI_COMM_WORLD);
+            memset((void*) level, 0, (nodes_owned / BITS)*sizeof(uint64_t));
+            MPI_Reduce_scatter((void *) next_level, (void *)level, recvcounts, MPI_UINT64_T, MPI_BOR, MPI_COMM_WORLD);
+            memset((void*) next_level, 0, (pow(2,SCALE) / BITS)*sizeof(uint64_t));
             level_count++;
         }
         if (my_rank == 0){
@@ -277,18 +276,19 @@ void bfs(uint64_t *level, uint64_t *buffer, uint64_t buffer_size, uint64_t *inde
         *time_allwork += time_work;
     }
     if (my_rank != 0){
-        MPI_Reduce((void *) parent_array, NULL, pow(2, scale), MPI_UINT64_T, MPI_MAX, 0, MPI_COMM_WORLD);
+        MPI_Gather((void *)distance_array, pow(2,scale)/procs, MPI_UINT64_T, NULL, pow(2,scale)/procs, MPI_UINT64_T, 0, MPI_COMM_WORLD);
     }else{
         time_parent = mytime();
-        MPI_Reduce(MPI_IN_PLACE, (void *) parent_array, pow(2, scale), MPI_UINT64_T, MPI_MAX, 0, MPI_COMM_WORLD);
+        MPI_Gather(MPI_IN_PLACE, pow(2,scale)/procs, MPI_UINT64_T, (void *)distance_array, pow(2,scale)/procs, MPI_UINT64_T, 0, MPI_COMM_WORLD);
     }
     if (my_rank == 0){
         time_parent = mytime() - time_parent;
         *time_parentreduce += time_parent;
     }
-    
+    free(next_level);
     free(visited);
     free(not_visited);
+    free(recvcounts);
 }
 
 uint64_t *create_buffer_from_edgelist(uint64_t *startVertex, uint64_t *endVertex, uint64_t nodes, uint64_t edges, uint64_t proc_number){
