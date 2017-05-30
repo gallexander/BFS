@@ -253,9 +253,12 @@ void bfs_alltoall(uint64_t root, uint64_t *buffer, uint64_t buffer_size, uint64_
         memset((void *) rcounts, 0, sizeof(int)*procs);
         memset((void *) rdispls, 0, sizeof(int)*procs);
         for (i = 0; i < edges_count; i=i+2){
+            //printf("Proc Nr: %i, Level: %i, Visited Edge: %llu\n", my_rank, level_count,(unsigned long long) edges_received[i]);
             intern_node_number = edges_received[i] % nodes_owned;
             if (parent_array[intern_node_number] == 0){
                 parent_array[intern_node_number] = edges_received[i+1]+1;
+                position = (uint64_t) pow(2, (edges_received[i] % BITS));
+                visited[(edges_received[i]/BITS)] = visited[(edges_received[i]/BITS)] | position;
                 uint64_t j = index_of_node[intern_node_number];
                 for (; j < index_of_node[intern_node_number+1]; j++){
                     position = (uint64_t) pow(2, (buffer[j] % BITS));
