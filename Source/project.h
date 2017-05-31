@@ -10,10 +10,10 @@
 #include <omp.h>
 
 #define LOG2(X) ((unsigned) (8*sizeof (unsigned long long) - __builtin_clzll((X)) - 1))
-#define SCALE 18
+#define SCALE 22
 #define EDGEFACTOR 32
-#define SEARCHKEY_CNT 1
-#define VALID_CHECKING 1
+#define SEARCHKEY_CNT 64
+#define VALID_CHECKING 0
 #define DISTANCE_CHECKING 0
 #define PARENTFILE "parent"
 #define DISTANCEFILE "distance"
