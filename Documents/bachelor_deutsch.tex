@@ -371,6 +371,9 @@ Im nächsten Superschritt werden die neu besuchten Knoten genauso behandelt bezi
 Abbildung zeigt die Ausführungszeiten dieser Variante im Vergleich zur reinen MPI Implementierung des Algorithmus mit Allreduce Kommunikation, also der Implementierung, die sehr ähnlich zur dieser ist, nur dass diese am Ende ein Parent Array als Ausgabe erzeugt und deshalb eine \lstinline{ALLREDUCE} Operation zur Synchronisation benötigt.
 \section{Das Graph500 Projekt}
 \label{sec:graph500}
+Die Grundidee, warum das Graph500 Projekt ins Leben gerufen wurde, ist die, dass es lange Zeit keine vernünftigen Benchmarks gegeben hat, die testeten, wie gut ein Hochleistungsrechner mit datenintensiven Anwendungen umgehen kann. Im Zuge dieses Projekts haben 50 internationale HPC (\textit{High Performance Computing}) Experten zusammengearbeitet, um gerade diese Lücke, die es im Bereich der Benchmarks gegeben hat, zu füllen und diese Art von Anwendungen abdeckt. Dadurch soll auch das zukünftige Design von Hardware Architekturen und Softwaresystemen, die solche Probleme lösen sollen, beeinflusst werden.\\
+Aufgrund der Tatsache, dass die Breitensuche bei groß angelegten Graphen ebenfalls ein datenintensives Problem darstellt, steht diese im Mittelpunkt dieses Projekts, weshalb wir uns in dieser Arbeit diesem Projekt widmen und erläutern wie dieser Benchmark funktioniert beziehungsweise aufgebaut ist. 
+Innerhalb des Projekts gibt es auch eine Rangliste.
 \clearpage
 \bibliographystyle{abbrv}
 \bibliography{bachelor}
