@@ -209,7 +209,7 @@ uint64_t kernel_2(uint64_t *buffer, uint64_t *index_of_node, int my_rank, int pr
 
 void bfs_alltoall(uint64_t root, uint64_t *buffer, uint64_t buffer_size, uint64_t *index_of_node, int my_rank, int procs, int scale, uint64_t *parent_array, double *time_allwork, double *time_alltoall, double *time_parentgather){
     uint64_t nodes_owned = pow(2,scale) / procs;
-    uint64_t *visited = (uint64_t *) calloc(pow(2,scale) / BITS, sizeof(uint64_t));
+    //uint64_t *visited = (uint64_t *) calloc(pow(2,scale) / BITS, sizeof(uint64_t));
     int *sdispls = (int *) calloc(procs, sizeof(int));
     int *rcounts = (int *) calloc(procs, sizeof(int));
     int *rdispls = (int *) calloc(procs, sizeof(int));
@@ -257,19 +257,19 @@ void bfs_alltoall(uint64_t root, uint64_t *buffer, uint64_t buffer_size, uint64_
             intern_node_number = edges_received[i] % nodes_owned;
             if (parent_array[intern_node_number] == 0){
                 parent_array[intern_node_number] = edges_received[i+1]+1;
-                position = (uint64_t) pow(2, (edges_received[i] % BITS));
-                visited[(edges_received[i]/BITS)] = visited[(edges_received[i]/BITS)] | position;
+                //position = (uint64_t) pow(2, (edges_received[i] % BITS));
+                //visited[(edges_received[i]/BITS)] = visited[(edges_received[i]/BITS)] | position;
                 uint64_t j = index_of_node[intern_node_number];
                 for (; j < index_of_node[intern_node_number+1]; j++){
-                    position = (uint64_t) pow(2, (buffer[j] % BITS));
-                    if (position & ~visited[(buffer[j]/BITS)]){
-                        visited[(buffer[j]/BITS)] = visited[(buffer[j]/BITS)] | position;
+                    //position = (uint64_t) pow(2, (buffer[j] % BITS));
+                    //if (position & ~visited[(buffer[j]/BITS)]){
+                        //visited[(buffer[j]/BITS)] = visited[(buffer[j]/BITS)] | position;
                         proc_nr = buffer[j] / nodes_owned;
                         prepare_edges[proc_nr][prepare_edges_count[proc_nr]] = buffer[j];
                         prepare_edges[proc_nr][prepare_edges_count[proc_nr]+1] = edges_received[i];
                         prepare_edges_count[proc_nr] += 2;
                         oneChildisVisited = 1;
-                    }
+                    //}
                 }
             }
         }
@@ -323,7 +323,7 @@ void bfs_alltoall(uint64_t root, uint64_t *buffer, uint64_t buffer_size, uint64_
     for (i = 0; i < procs; i++){
         free(prepare_edges[i]);
     }
-    free(visited);
+    //free(visited);
     free(sdispls);
     free(rcounts);
     free(rdispls);
